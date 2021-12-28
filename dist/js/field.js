@@ -424,6 +424,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -432,6 +444,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
   props: ['resourceName', 'resourceId', 'field'],
 
+  mounted: function mounted() {
+    this.addDragAndDropEvents();
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.removeDragAndDropEvents();
+  },
+
+
+  computed: {
+    dragAndDropID: function dragAndDropID() {
+      return 'dragAndDrop_' + this.field.name;
+    }
+  },
+
   methods: {
     /*
      * Set the initial, internal value for the field.
@@ -439,14 +465,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     setInitialValue: function setInitialValue() {
       this.value = this.field.value || '';
     },
+    data: function data() {
+      return {
+        dropzone: null
+      };
+    },
 
 
     /**
      * Fill the given FormData object with the field's internal value.
      */
     fill: function fill(formData) {
-      formData.append(this.field.attribute, this.value || '');
-    }
+      // formData.append(this.field.attribute, this.value || '')
+    },
+    addDragAndDropEvents: function addDragAndDropEvents() {},
+    removeDragAndDropEvents: function removeDragAndDropEvents() {}
   }
 });
 
@@ -26803,32 +26836,23 @@ var render = function() {
     },
     [
       _c("template", { slot: "field" }, [
-        _c("input", {
-          directives: [
-            {
-              name: "model",
-              rawName: "v-model",
-              value: _vm.value,
-              expression: "value"
-            }
-          ],
-          staticClass: "w-full form-control form-input form-input-bordered",
-          class: _vm.errorClasses,
-          attrs: {
-            id: _vm.field.name,
-            type: "text",
-            placeholder: _vm.field.name
+        _c(
+          "div",
+          {
+            staticClass: "media-library-dropzone",
+            attrs: { id: _vm.dragAndDropID }
           },
-          domProps: { value: _vm.value },
-          on: {
-            input: function($event) {
-              if ($event.target.composing) {
-                return
-              }
-              _vm.value = $event.target.value
-            }
-          }
-        })
+          [
+            _c("div", { staticClass: "media-library-dropzone-notice" }, [
+              _vm._v("Drop your images here, or click browse")
+            ]),
+            _vm._v(" "),
+            _c("input", {
+              staticClass: "media-library-dropzone-input",
+              attrs: { type: "file", multiple: "", id: _vm.field.name }
+            })
+          ]
+        )
       ])
     ],
     2

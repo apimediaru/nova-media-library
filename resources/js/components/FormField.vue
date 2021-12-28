@@ -1,25 +1,51 @@
 <template>
   <default-field :field="field" :errors="errors" :show-help-text="showHelpText">
     <template slot="field">
-      <input
-        :id="field.name"
-        type="text"
-        class="w-full form-control form-input form-input-bordered"
-        :class="errorClasses"
-        :placeholder="field.name"
-        v-model="value"
-      />
+<!--      <input-->
+<!--        :id="field.name"-->
+<!--        type="text"-->
+<!--        class="w-full form-control form-input form-input-bordered"-->
+<!--        :class="errorClasses"-->
+<!--        :placeholder="field.name"-->
+<!--        v-model="value"-->
+<!--      />-->
+      <div
+          class="media-library-dropzone"
+          :id="dragAndDropID"
+      >
+        <div class="media-library-dropzone-notice">Drop your images here, or click browse</div>
+        <input
+            type="file"
+            multiple
+            class="media-library-dropzone-input"
+            :id="field.name"
+        >
+      </div>
     </template>
   </default-field>
 </template>
 
 <script>
-import { FormField, HandlesValidationErrors } from 'laravel-nova'
+import { FormField, HandlesValidationErrors } from 'laravel-nova';
 
 export default {
   mixins: [FormField, HandlesValidationErrors],
 
   props: ['resourceName', 'resourceId', 'field'],
+
+  mounted() {
+    this.addDragAndDropEvents();
+  },
+
+  beforeDestroy() {
+    this.removeDragAndDropEvents();
+  },
+
+  computed: {
+    dragAndDropID() {
+      return `dragAndDrop_${this.field.name}`;
+    },
+  },
 
   methods: {
     /*
@@ -29,12 +55,22 @@ export default {
       this.value = this.field.value || ''
     },
 
+    data() {
+      return {
+        dropzone: null,
+      }
+    },
+
     /**
      * Fill the given FormData object with the field's internal value.
      */
     fill(formData) {
-      formData.append(this.field.attribute, this.value || '')
+      // formData.append(this.field.attribute, this.value || '')
     },
+
+    addDragAndDropEvents() {},
+
+    removeDragAndDropEvents() {},
   },
 }
 </script>
