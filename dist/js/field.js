@@ -27262,7 +27262,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27383,7 +27383,17 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
+
+var _window$_ = window._,
+    throttle = _window$_.throttle,
+    debounce = _window$_.debounce;
 
 
 var MODES = Object.freeze({
@@ -27401,6 +27411,9 @@ var MODES = Object.freeze({
   data: function data() {
     return {
       mode: MODES.BROWSING,
+      isDragging: false,
+      isDraggingOverDropzone: false,
+      endDragging: false,
       files: []
     };
   },
@@ -27415,6 +27428,14 @@ var MODES = Object.freeze({
     }
   },
 
+  mounted: function mounted() {
+    this.addDragAndDropEventListeners();
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.removeDragAndDropEventListeners();
+  },
+
+
   computed: {
     isInBrowsingMode: function isInBrowsingMode() {
       return this.mode === MODES.BROWSING;
@@ -27423,7 +27444,7 @@ var MODES = Object.freeze({
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible: function isDropzoneVisible() {
-      return this.isInUploadingMode;
+      return this.isInUploadingMode || this.isDragging;
     },
     filesNotEmpty: function filesNotEmpty() {
       return this.files.length > 0;
@@ -27439,6 +27460,64 @@ var MODES = Object.freeze({
     },
     setBrowsingMode: function setBrowsingMode() {
       this.mode = MODES.BROWSING;
+    },
+
+
+    // File input
+    onFileInputChange: function onFileInputChange(event) {
+      console.log(event);
+    },
+
+
+    // Drag and drop
+    addDragAndDropEventListeners: function addDragAndDropEventListeners() {
+      window.addEventListener('drop', this.onDrop);
+      window.addEventListener('dragover', this.onDragMove);
+      window.addEventListener('dragleave', this.onDragMove);
+      window.addEventListener('dragend', this.onDragEnd);
+    },
+    removeDragAndDropEventListeners: function removeDragAndDropEventListeners() {
+      window.removeEventListener('drop', this.onDrop);
+      window.removeEventListener('dragover', this.onDragMove);
+      window.removeEventListener('dragleave', this.onDragMove);
+      window.removeEventListener('dragend', this.onDragEnd);
+    },
+    onDrop: function onDrop(event) {
+      if (!this.dropzoneIncludes(event.target)) {
+        event.preventDefault();
+      }
+
+      this.isDragging = false;
+    },
+
+    onDragMove: function onDragMove(event) {
+      event.preventDefault();
+
+      var dropzoneOverlapped = this.dropzoneIncludes(event.target);
+
+      if (event.type === 'dragleave' && !dropzoneOverlapped) {
+        this.endDragging = true;
+        this.enforceDragEnd();
+      } else {
+        this.isDragging = true;
+        this.endDragging = false;
+        this.isDraggingOverDropzone = dropzoneOverlapped;
+      }
+    },
+    onDragEnd: function onDragEnd() {
+      this.isDragging = false;
+    },
+
+    enforceDragEnd: debounce(function () {
+      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+      if (this.endDragging || force) {
+        this.isDragging = false;
+        this.isDraggingOverDropzone = false;
+      }
+    }, 200),
+    dropzoneIncludes: function dropzoneIncludes(element) {
+      return element && element.matches('.media-library-dropzone-input');
     }
   }
 });
@@ -27698,7 +27777,11 @@ var render = function() {
                 ? _c("div", [
                     _vm._v(
                       "\n          " +
-                        _vm._s(_vm.__("Media was not found")) +
+                        _vm._s(
+                          _vm.__(
+                            "There are currently no media files in this library"
+                          )
+                        ) +
                         "\n        "
                     )
                   ])
@@ -27710,7 +27793,9 @@ var render = function() {
               {
                 staticClass: "media-library-dropzone",
                 class: {
-                  "media-library-dropzone-visible": _vm.isDropzoneVisible
+                  "media-library-dropzone-visible": _vm.isDropzoneVisible,
+                  "media-library-dropzone-highlighted":
+                    _vm.isDraggingOverDropzone
                 }
               },
               [
@@ -27746,7 +27831,8 @@ var render = function() {
                 _vm._v(" "),
                 _c("input", {
                   staticClass: "media-library-dropzone-input",
-                  attrs: { type: "file", multiple: "" }
+                  attrs: { type: "file", multiple: "" },
+                  on: { change: _vm.onFileInputChange }
                 })
               ]
             )

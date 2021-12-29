@@ -26,6 +26,7 @@
   top: 0;
 }
 
+.media-library-dropzone-highlighted,
 .media-library-dropzone:hover {
   border-color: var(--primary);
 }
@@ -61,7 +62,7 @@
   background-color: #ffffff;
   -webkit-box-shadow: 0 15px 30px 0 rgba(0, 0, 0, 0.11), 0 5px 15px 0 rgba(0, 0, 0, 0.08);
           box-shadow: 0 15px 30px 0 rgba(0, 0, 0, 0.11), 0 5px 15px 0 rgba(0, 0, 0, 0.08);
-  width: 100%;
+  width: 100vw;
   margin: 0 auto;
   min-height: 300px;
   height: 100%;
@@ -83,11 +84,6 @@
       -ms-flex-direction: column;
           flex-direction: column;
   height: 100%;
-}
-
-.media-library-modal > div > div {
-  width: 100%;
-  max-width: calc(100% - 16px);
 }
 
 .media-library-modal-body {

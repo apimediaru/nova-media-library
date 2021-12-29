@@ -19,7 +19,7 @@
           <div
               v-if="!filesNotEmpty"
           >
-            {{ __('Media was not found') }}
+            {{ __('There are currently no media files in this library') }}
           </div>
         </div>
 
@@ -27,6 +27,7 @@
             class="media-library-dropzone"
             :class="{
               'media-library-dropzone-visible': isDropzoneVisible,
+              'media-library-dropzone-highlighted': isDraggingOverDropzone,
             }"
         >
           <p class="media-library-dropzone-icon">
@@ -37,7 +38,12 @@
           <p class="media-library-dropzone-notice">
             {{ __('Drop your images here, or click to browse') }}
           </p>
-          <input type="file" multiple class="media-library-dropzone-input">
+          <input
+              type="file"
+              multiple
+              class="media-library-dropzone-input"
+              @change="onFileInputChange"
+          >
         </div>
       </div>
     </div>
@@ -75,6 +81,7 @@
 
 <script>
 import MediaLibraryModal from "./MediaLibraryModal";
+const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
   BROWSING: 0,
@@ -91,6 +98,9 @@ export default {
   data() {
     return {
       mode: MODES.BROWSING,
+      isDragging: false,
+      isDraggingOverDropzone: false,
+      endDragging: false,
       files: [],
     };
   },
@@ -102,6 +112,14 @@ export default {
     },
   },
 
+  mounted() {
+    this.addDragAndDropEventListeners();
+  },
+
+  beforeDestroy() {
+    this.removeDragAndDropEventListeners();
+  },
+
   computed: {
     isInBrowsingMode() {
       return this.mode === MODES.BROWSING;
@@ -110,7 +128,7 @@ export default {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible() {
-      return this.isInUploadingMode;
+      return this.isInUploadingMode || this.isDragging;
     },
     filesNotEmpty() {
       return this.files.length > 0;
@@ -127,6 +145,58 @@ export default {
     },
     setBrowsingMode() {
       this.mode = MODES.BROWSING;
+    },
+
+    // File input
+    onFileInputChange(event) {
+      console.log(event);
+    },
+
+    // Drag and drop
+    addDragAndDropEventListeners() {
+      window.addEventListener('drop', this.onDrop);
+      window.addEventListener('dragover', this.onDragMove);
+      window.addEventListener('dragleave', this.onDragMove);
+      window.addEventListener('dragend', this.onDragEnd);
+    },
+    removeDragAndDropEventListeners() {
+      window.removeEventListener('drop', this.onDrop);
+      window.removeEventListener('dragover', this.onDragMove);
+      window.removeEventListener('dragleave', this.onDragMove);
+      window.removeEventListener('dragend', this.onDragEnd);
+    },
+    onDrop(event) {
+      if (!this.dropzoneIncludes(event.target)) {
+        event.preventDefault();
+      }
+
+      this.isDragging = false;
+    },
+    onDragMove: function (event) {
+      event.preventDefault();
+
+      const dropzoneOverlapped = this.dropzoneIncludes(event.target);
+
+      if (event.type === 'dragleave' && !dropzoneOverlapped) {
+        this.endDragging = true;
+        this.enforceDragEnd();
+      } else {
+        this.isDragging = true;
+        this.endDragging = false;
+        this.isDraggingOverDropzone = dropzoneOverlapped;
+      }
+    },
+    onDragEnd() {
+      this.isDragging = false;
+    },
+    enforceDragEnd: debounce(function (force = false) {
+      if (this.endDragging || force) {
+        this.isDragging = false;
+        this.isDraggingOverDropzone = false;
+      }
+    }, 200),
+    dropzoneIncludes(element) {
+      return element && element.matches('.media-library-dropzone-input');
     },
   },
 }
