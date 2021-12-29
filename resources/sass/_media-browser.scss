@@ -1,0 +1,102 @@
+.media-library-dropzone {
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  border: 2px dashed #BCCCDC;
+  border-radius: $border-radius;
+  transition: border-color 100ms;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  visibility: hidden;
+  position: absolute;
+  left: 0;
+  top: 0;
+
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &-visible {
+    visibility: visible;
+  }
+}
+
+.media-library-dropzone-icon {
+  margin-bottom: 10px;
+}
+
+.media-library-dropzone-notice {
+  margin: 0;
+}
+
+.media-library-dropzone-input {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.media-library-browser {
+  > div {
+    height: 100%;
+  }
+}
+
+.media-library-modal-frame {
+  border-radius: $border-radius;
+  background-color: #ffffff;
+  box-shadow: 0 15px 30px 0 rgba(0,0,0, .11),0 5px 15px 0 rgba(0,0,0, .08);
+  width: 100%;
+  margin: 0 auto;
+  min-height: 300px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.media-library-browser-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.media-library-modal {
+  > div > div {
+    width: 100%;
+    max-width: calc(100% - 16px);
+  }
+}
+
+.media-library-modal-body {
+  padding: 2rem 2rem 1rem 2rem;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.media-library-modal-controls {
+  height: 60px;
+  align-items: center;
+  padding: .75rem 1.5rem;
+  border-radius: 0 0 $border-radius $border-radius;
+  background-color: var(--#{30});
+}
+
+.media-library-browser-area {
+  position: relative;
+  flex-grow: 1;
+  overflow-y: auto;
+
+  @include scrollbar();
+}
+
+.media-library-layout {
+  display: flex;
+  align-items: center;
+}
