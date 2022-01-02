@@ -15,12 +15,25 @@
       <div
           class="media-library-browser-area"
       >
-        <div class="media-library-layout">
+        <div
+            class="media-library-layout"
+            :class="{
+              'media-library-layout-hidden': !isInBrowsingMode || isDragging,
+            }"
+        >
           <div
               v-if="!filesNotEmpty"
+              class="media-library-layout-message"
           >
             {{ __('There are currently no media files in this library') }}
           </div>
+          <MediaLibraryThumbnail
+            v-else
+            v-for="(file, index) in files"
+            :key="index"
+            :index="index"
+            :name="file.name"
+          />
         </div>
 
         <div
@@ -42,6 +55,7 @@
               type="file"
               multiple
               class="media-library-dropzone-input"
+              ref="upload"
               @change="onFileInputChange"
           >
         </div>
@@ -81,6 +95,8 @@
 
 <script>
 import MediaLibraryModal from "./MediaLibraryModal";
+import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
+
 const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
@@ -93,6 +109,7 @@ export default {
 
   components: {
     MediaLibraryModal,
+    MediaLibraryThumbnail,
   },
 
   data() {
@@ -101,7 +118,15 @@ export default {
       isDragging: false,
       isDraggingOverDropzone: false,
       endDragging: false,
+
+      // Prevent any upload and reorder interactive actions
+      inactive: false,
+
+      // Uploaded files
       files: [],
+
+      // Queue of files to upload
+      queue: [],
     };
   },
 
@@ -147,9 +172,22 @@ export default {
       this.mode = MODES.BROWSING;
     },
 
+    // Files
+    addFile(file) {
+      this.files.push(file);
+    },
+
     // File input
+    getUploadInput() {
+      return this.$refs.upload;
+    },
     onFileInputChange(event) {
       console.log(event);
+      const { files } = this.getUploadInput();
+
+      Array.prototype.forEach.call(files, (file) => {
+        this.addFile(file);
+      });
     },
 
     // Drag and drop

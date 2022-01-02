@@ -487,7 +487,7 @@ function applyToTag (styleElement, obj) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(4);
-module.exports = __webpack_require__(26);
+module.exports = __webpack_require__(31);
 
 
 /***/ }),
@@ -673,7 +673,7 @@ var normalizeComponent = __webpack_require__(0)
 /* script */
 var __vue_script__ = __webpack_require__(12)
 /* template */
-var __vue_template__ = __webpack_require__(25)
+var __vue_template__ = __webpack_require__(30)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -27189,7 +27189,7 @@ var normalizeComponent = __webpack_require__(0)
 /* script */
 var __vue_script__ = __webpack_require__(18)
 /* template */
-var __vue_template__ = __webpack_require__(24)
+var __vue_template__ = __webpack_require__(29)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -27262,7 +27262,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27308,6 +27308,8 @@ module.exports = function listToStyles (parentId, list) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__MediaLibraryModal__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__MediaLibraryModal___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__MediaLibraryModal__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__MediaLibraryThumbnail__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__MediaLibraryThumbnail___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__MediaLibraryThumbnail__);
 //
 //
 //
@@ -27389,6 +27391,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
 
 
 var _window$_ = window._,
@@ -27405,7 +27423,8 @@ var MODES = Object.freeze({
   name: "MediaLibraryBrowser",
 
   components: {
-    MediaLibraryModal: __WEBPACK_IMPORTED_MODULE_0__MediaLibraryModal___default.a
+    MediaLibraryModal: __WEBPACK_IMPORTED_MODULE_0__MediaLibraryModal___default.a,
+    MediaLibraryThumbnail: __WEBPACK_IMPORTED_MODULE_1__MediaLibraryThumbnail___default.a
   },
 
   data: function data() {
@@ -27414,7 +27433,15 @@ var MODES = Object.freeze({
       isDragging: false,
       isDraggingOverDropzone: false,
       endDragging: false,
-      files: []
+
+      // Prevent any upload and reorder interactive actions
+      inactive: false,
+
+      // Uploaded files
+      files: [],
+
+      // Queue of files to upload
+      queue: []
     };
   },
 
@@ -27463,9 +27490,27 @@ var MODES = Object.freeze({
     },
 
 
+    // Files
+    addFile: function addFile(file) {
+      this.files.push(file);
+    },
+
+
     // File input
+    getUploadInput: function getUploadInput() {
+      return this.$refs.upload;
+    },
     onFileInputChange: function onFileInputChange(event) {
+      var _this = this;
+
       console.log(event);
+
+      var _getUploadInput = this.getUploadInput(),
+          files = _getUploadInput.files;
+
+      Array.prototype.forEach.call(files, function (file) {
+        _this.addFile(file);
+      });
     },
 
 
@@ -27739,6 +27784,192 @@ if (false) {
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(25)
+}
+var normalizeComponent = __webpack_require__(0)
+/* script */
+var __vue_script__ = __webpack_require__(27)
+/* template */
+var __vue_template__ = __webpack_require__(28)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-66ac569a"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/js/components/MediaLibraryThumbnail.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-66ac569a", Component.options)
+  } else {
+    hotAPI.reload("data-v-66ac569a", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(26);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(2)("4a6e2bff", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../node_modules/css-loader/index.js!../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-66ac569a\",\"scoped\":true,\"hasInlineConfig\":true}!../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./MediaLibraryThumbnail.vue", function() {
+     var newContent = require("!!../../../node_modules/css-loader/index.js!../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-66ac569a\",\"scoped\":true,\"hasInlineConfig\":true}!../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./MediaLibraryThumbnail.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(1)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  name: "MediaLibraryGalleryItem",
+
+  props: {
+    index: {
+      type: [String, Number],
+      default: null
+    },
+    name: String,
+    active: Boolean,
+    selected: Boolean
+  },
+
+  computed: {
+    hasIndex: function hasIndex() {
+      return this.index !== null;
+    }
+  }
+});
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "media-library-thumbnail", attrs: { title: _vm.name } },
+    [
+      _vm._m(0),
+      _vm._v(" "),
+      _c("div", { staticClass: "media-library-thumbnail-name" }, [
+        _vm.hasIndex
+          ? _c("span", { staticClass: "media-library-thumbnail-name-index" }, [
+              _vm._v(_vm._s(_vm.index))
+            ])
+          : _vm._e(),
+        _vm._v(" "),
+        _c("span", { staticClass: "media-library-thumbnail-name-value" }, [
+          _vm._v(_vm._s(_vm.name))
+        ])
+      ])
+    ]
+  )
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "media-library-thumbnail-head" }, [
+      _c("img", {
+        staticClass: "media-library-thumbnail-head-image",
+        attrs: { src: "https://picsum.photos/200/300", alt: "alt" }
+      })
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-66ac569a", module.exports)
+  }
+}
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -27772,21 +28003,37 @@ var render = function() {
           ]),
           _vm._v(" "),
           _c("div", { staticClass: "media-library-browser-area" }, [
-            _c("div", { staticClass: "media-library-layout" }, [
-              !_vm.filesNotEmpty
-                ? _c("div", [
-                    _vm._v(
-                      "\n          " +
-                        _vm._s(
-                          _vm.__(
-                            "There are currently no media files in this library"
-                          )
-                        ) +
-                        "\n        "
-                    )
-                  ])
-                : _vm._e()
-            ]),
+            _c(
+              "div",
+              {
+                staticClass: "media-library-layout",
+                class: {
+                  "media-library-layout-hidden":
+                    !_vm.isInBrowsingMode || _vm.isDragging
+                }
+              },
+              [
+                !_vm.filesNotEmpty
+                  ? _c("div", { staticClass: "media-library-layout-message" }, [
+                      _vm._v(
+                        "\n          " +
+                          _vm._s(
+                            _vm.__(
+                              "There are currently no media files in this library"
+                            )
+                          ) +
+                          "\n        "
+                      )
+                    ])
+                  : _vm._l(_vm.files, function(file, index) {
+                      return _c("MediaLibraryThumbnail", {
+                        key: index,
+                        attrs: { index: index, name: file.name }
+                      })
+                    })
+              ],
+              2
+            ),
             _vm._v(" "),
             _c(
               "div",
@@ -27830,6 +28077,7 @@ var render = function() {
                 ]),
                 _vm._v(" "),
                 _c("input", {
+                  ref: "upload",
                   staticClass: "media-library-dropzone-input",
                   attrs: { type: "file", multiple: "" },
                   on: { change: _vm.onFileInputChange }
@@ -27904,7 +28152,7 @@ if (false) {
 }
 
 /***/ }),
-/* 25 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -27995,7 +28243,7 @@ if (false) {
 }
 
 /***/ }),
-/* 26 */
+/* 31 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin

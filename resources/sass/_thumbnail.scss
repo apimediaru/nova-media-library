@@ -1,0 +1,35 @@
+.media-library-thumbnail {
+
+}
+
+.media-library-thumbnail-head {
+  padding-top: 75%;
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.media-library-thumbnail-head-image {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: $border-radius;
+}
+
+.media-library-thumbnail-name {
+  font-size: .75rem;
+  @include ellipsis();
+}
+
+.media-library-thumbnail-name-index {
+  padding-right: 4px;
+
+  &::after {
+    content: '.';
+  }
+}
