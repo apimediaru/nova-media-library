@@ -27262,7 +27262,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27405,6 +27405,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
 
 
 
@@ -27441,7 +27443,10 @@ var MODES = Object.freeze({
       files: [],
 
       // Queue of files to upload
-      queue: []
+      queue: [],
+
+      // Array of selected files IDs
+      selected: []
     };
   },
 
@@ -27487,6 +27492,28 @@ var MODES = Object.freeze({
     },
     setBrowsingMode: function setBrowsingMode() {
       this.mode = MODES.BROWSING;
+    },
+
+
+    // Selected files
+    toggleSelection: function toggleSelection(index) {
+      var i = Number(index);
+      if (this.isItemSelected(i)) {
+        this.removeSelection(i);
+      } else {
+        this.addSelection(i);
+      }
+    },
+    isItemSelected: function isItemSelected(index) {
+      return this.selected.includes(Number(index));
+    },
+    removeSelection: function removeSelection(index) {
+      this.selected = this.selected.filter(function (item) {
+        return item !== Number(index);
+      });
+    },
+    addSelection: function addSelection(index) {
+      this.selected.push(Number(index));
     },
 
 
@@ -27866,7 +27893,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27877,6 +27904,10 @@ exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
 //
 //
 //
@@ -27913,6 +27944,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     hasIndex: function hasIndex() {
       return this.index !== null;
     }
+  },
+
+  methods: {
+    onThumbnailClick: function onThumbnailClick(event) {
+      this.$emit('click', event);
+    }
   }
 });
 
@@ -27926,7 +27963,19 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    { staticClass: "media-library-thumbnail", attrs: { title: _vm.name } },
+    {
+      staticClass: "media-library-thumbnail",
+      class: {
+        "media-library-thumbnail-selected": _vm.selected
+      },
+      attrs: { title: _vm.name },
+      on: {
+        click: function($event) {
+          $event.preventDefault()
+          return _vm.onThumbnailClick.apply(null, arguments)
+        }
+      }
+    },
     [
       _vm._m(0),
       _vm._v(" "),
@@ -28028,7 +28077,16 @@ var render = function() {
                   : _vm._l(_vm.files, function(file, index) {
                       return _c("MediaLibraryThumbnail", {
                         key: index,
-                        attrs: { index: index, name: file.name }
+                        attrs: {
+                          index: index,
+                          name: file.name,
+                          selected: _vm.isItemSelected(index)
+                        },
+                        on: {
+                          click: function($event) {
+                            return _vm.toggleSelection(index)
+                          }
+                        }
                       })
                     })
               ],

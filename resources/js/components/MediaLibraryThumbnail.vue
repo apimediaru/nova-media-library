@@ -1,7 +1,11 @@
 <template>
   <div
       class="media-library-thumbnail"
+      :class="{
+        'media-library-thumbnail-selected': selected,
+      }"
       :title="name"
+      @click.prevent="onThumbnailClick"
   >
     <div class="media-library-thumbnail-head">
       <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image">
@@ -34,7 +38,13 @@ export default {
     hasIndex() {
       return this.index !== null;
     },
-  }
+  },
+
+  methods: {
+    onThumbnailClick(event) {
+      this.$emit('click', event);
+    },
+  },
 }
 </script>
 

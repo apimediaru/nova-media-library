@@ -92,7 +92,7 @@
 .media-library-layout {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  grid-gap: .5rem;
+  grid-gap: .75rem;
 
   &-hidden {
     display: none;

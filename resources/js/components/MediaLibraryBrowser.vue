@@ -33,6 +33,8 @@
             :key="index"
             :index="index"
             :name="file.name"
+            @click="toggleSelection(index)"
+            :selected="isItemSelected(index)"
           />
         </div>
 
@@ -127,6 +129,9 @@ export default {
 
       // Queue of files to upload
       queue: [],
+
+      // Array of selected files IDs
+      selected: [],
     };
   },
 
@@ -170,6 +175,25 @@ export default {
     },
     setBrowsingMode() {
       this.mode = MODES.BROWSING;
+    },
+
+    // Selected files
+    toggleSelection(index) {
+      const i = Number(index);
+      if (this.isItemSelected(i)) {
+        this.removeSelection(i);
+      } else {
+        this.addSelection(i);
+      }
+    },
+    isItemSelected(index) {
+      return this.selected.includes(Number(index));
+    },
+    removeSelection(index) {
+      this.selected = this.selected.filter((item) => item !== Number(index));
+    },
+    addSelection(index) {
+      this.selected.push(Number(index));
     },
 
     // Files
