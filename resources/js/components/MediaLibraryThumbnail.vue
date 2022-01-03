@@ -3,12 +3,18 @@
       class="media-library-thumbnail"
       :class="{
         'media-library-thumbnail-selected': selected,
+        'media-library-thumbnail-selectable': selectable,
       }"
       :title="name"
       @click.prevent="onThumbnailClick"
   >
     <div class="media-library-thumbnail-head">
       <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image">
+      <input
+          type="checkbox"
+          class="media-library-thumbnail-head-checkmark checkbox"
+          :checked="selected"
+      />
     </div>
     <div class="media-library-thumbnail-name">
       <span
@@ -32,6 +38,7 @@ export default {
     name: String,
     active: Boolean,
     selected: Boolean,
+    selectable: Boolean,
   },
 
   computed: {

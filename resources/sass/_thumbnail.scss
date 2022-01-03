@@ -8,6 +8,12 @@
       }
     }
   }
+
+  &-selectable {
+    .media-library-thumbnail-head-checkmark {
+      display: block;
+    }
+  }
 }
 
 .media-library-thumbnail-head {
@@ -15,7 +21,7 @@
   position: relative;
   display: block;
   width: 100%;
-  margin-bottom: 6px;
+  margin-bottom: .25rem;
   border-radius: $border-radius;
   overflow: hidden;
   background-color: $color-placeholder;
@@ -31,6 +37,13 @@
     border-radius: inherit;
     transition: box-shadow 75ms;
   }
+}
+
+.media-library-thumbnail-head-checkmark {
+  position: absolute;
+  right: .75rem;
+  top: .75rem;
+  display: none;
 }
 
 .media-library-thumbnail-head-image {

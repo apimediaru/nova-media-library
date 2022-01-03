@@ -8,9 +8,67 @@
         slot="container"
         class="media-library-browser-container"
     >
-      <h2 class="text-90 font-normal text-xl mb-6">
-        <span>{{ __('Browse media library') }}<template v-if="field.name">: {{ field.name }}</template></span>
-      </h2>
+      <div class="media-library-browser-head">
+        <h2 class="media-library-browser-head-title">
+          <span>{{ __('Browse media library') }}<template v-if="field.name">: {{ field.name }}</template></span>
+        </h2>
+
+        <div
+            class="media-library-panel-actions"
+            :class="{
+              'media-library-panel-actions-disabled': !selected.length,
+              'media-library-panel-actions-hidden': !files.length,
+            }"
+        >
+          <div class="media-library-panel-actions-actions media-library-actions">
+            <div class="media-library-actions-action media-library-action">
+              <select
+                  class="w-full form-control form-select cursor-pointer"
+                  :disabled="!selected.length"
+                  v-model="action"
+              >
+                <option value="none" selected>{{ __('Select an action') }}</option>
+                <option value="remove">{{ __('Remove') }}</option>
+                <option value="makeActive">{{ __('Make active') }}</option>
+                <option value="makeInactive">{{ __('Make inactive') }}</option>
+                <option value="regenerateThumbnails">{{ __('Regenerate thumbnails') }}</option>
+              </select>
+            </div>
+            <div class="media-library-actions-action media-library-action">
+              <span class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer">{{ __('Apply') }}</span>
+            </div>
+            <div class="media-library-actions-action media-library-action media-library-action-select-all">
+              <span
+                  class="media-library-action-select-all-positive text-primary dim no-underline cursor-pointer"
+                  @click="selectAll"
+                  v-if="files.length !== selected.length"
+              >
+                {{ __('Select all') }}
+              </span>
+              <span
+                  class="media-library-action-select-all-negative text-primary dim no-underline cursor-pointer"
+                  @click="unselectAll"
+                  v-if="selected.length > 0"
+              >
+                {{ __('Unselect all') }}
+              </span>
+            </div>
+          </div>
+          <div class="media-library-browser-actions-action-search">
+            <input
+                type="text"
+                class="w-full form-control form-input form-input-bordered"
+                :placeholder="__('Search...')"
+            >
+          </div>
+          <div
+              class="media-library-browser-actions-action-for-selected"
+              v-if="files.length > 0"
+          >
+            {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selected.length }} / {{ files.length }}</span>
+          </div>
+        </div>
+      </div>
 
       <div
           class="media-library-browser-area"
@@ -35,6 +93,7 @@
             :name="file.name"
             @click="toggleSelection(index)"
             :selected="isItemSelected(index)"
+            :selectable="selected.length > 0"
           />
         </div>
 
@@ -132,6 +191,8 @@ export default {
 
       // Array of selected files IDs
       selected: [],
+
+      action: 'none',
     };
   },
 
@@ -195,6 +256,13 @@ export default {
     addSelection(index) {
       this.selected.push(Number(index));
     },
+    selectAll() {
+      // TODO: index => id
+      this.selected = this.files.map((file, index) => index);
+    },
+    unselectAll() {
+      this.selected = [];
+    },
 
     // Files
     addFile(file) {
@@ -212,6 +280,8 @@ export default {
       Array.prototype.forEach.call(files, (file) => {
         this.addFile(file);
       });
+
+      this.setBrowsingMode();
     },
 
     // Drag and drop

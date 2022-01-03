@@ -27262,7 +27262,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27407,6 +27407,65 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -27446,7 +27505,9 @@ var MODES = Object.freeze({
       queue: [],
 
       // Array of selected files IDs
-      selected: []
+      selected: [],
+
+      action: 'none'
     };
   },
 
@@ -27515,6 +27576,15 @@ var MODES = Object.freeze({
     addSelection: function addSelection(index) {
       this.selected.push(Number(index));
     },
+    selectAll: function selectAll() {
+      // TODO: index => id
+      this.selected = this.files.map(function (file, index) {
+        return index;
+      });
+    },
+    unselectAll: function unselectAll() {
+      this.selected = [];
+    },
 
 
     // Files
@@ -27538,6 +27608,8 @@ var MODES = Object.freeze({
       Array.prototype.forEach.call(files, function (file) {
         _this.addFile(file);
       });
+
+      this.setBrowsingMode();
     },
 
 
@@ -27893,7 +27965,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27904,6 +27976,12 @@ exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -27937,7 +28015,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     name: String,
     active: Boolean,
-    selected: Boolean
+    selected: Boolean,
+    selectable: Boolean
   },
 
   computed: {
@@ -27966,7 +28045,8 @@ var render = function() {
     {
       staticClass: "media-library-thumbnail",
       class: {
-        "media-library-thumbnail-selected": _vm.selected
+        "media-library-thumbnail-selected": _vm.selected,
+        "media-library-thumbnail-selectable": _vm.selectable
       },
       attrs: { title: _vm.name },
       on: {
@@ -27977,7 +28057,18 @@ var render = function() {
       }
     },
     [
-      _vm._m(0),
+      _c("div", { staticClass: "media-library-thumbnail-head" }, [
+        _c("img", {
+          staticClass: "media-library-thumbnail-head-image",
+          attrs: { src: "https://picsum.photos/200/300", alt: "alt" }
+        }),
+        _vm._v(" "),
+        _c("input", {
+          staticClass: "media-library-thumbnail-head-checkmark checkbox",
+          attrs: { type: "checkbox" },
+          domProps: { checked: _vm.selected }
+        })
+      ]),
       _vm._v(" "),
       _c("div", { staticClass: "media-library-thumbnail-name" }, [
         _vm.hasIndex
@@ -27993,19 +28084,7 @@ var render = function() {
     ]
   )
 }
-var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "media-library-thumbnail-head" }, [
-      _c("img", {
-        staticClass: "media-library-thumbnail-head-image",
-        attrs: { src: "https://picsum.photos/200/300", alt: "alt" }
-      })
-    ])
-  }
-]
+var staticRenderFns = []
 render._withStripped = true
 module.exports = { render: render, staticRenderFns: staticRenderFns }
 if (false) {
@@ -28038,16 +28117,211 @@ var render = function() {
           slot: "container"
         },
         [
-          _c("h2", { staticClass: "text-90 font-normal text-xl mb-6" }, [
+          _c("div", { staticClass: "media-library-browser-head" }, [
+            _c("h2", { staticClass: "media-library-browser-head-title" }, [
+              _c(
+                "span",
+                [
+                  _vm._v(_vm._s(_vm.__("Browse media library"))),
+                  _vm.field.name
+                    ? [_vm._v(": " + _vm._s(_vm.field.name))]
+                    : _vm._e()
+                ],
+                2
+              )
+            ]),
+            _vm._v(" "),
             _c(
-              "span",
+              "div",
+              {
+                staticClass: "media-library-panel-actions",
+                class: {
+                  "media-library-panel-actions-disabled": !_vm.selected.length,
+                  "media-library-panel-actions-hidden": !_vm.files.length
+                }
+              },
               [
-                _vm._v(_vm._s(_vm.__("Browse media library"))),
-                _vm.field.name
-                  ? [_vm._v(": " + _vm._s(_vm.field.name))]
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "media-library-panel-actions-actions media-library-actions"
+                  },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action"
+                      },
+                      [
+                        _c(
+                          "select",
+                          {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.action,
+                                expression: "action"
+                              }
+                            ],
+                            staticClass:
+                              "w-full form-control form-select cursor-pointer",
+                            attrs: { disabled: !_vm.selected.length },
+                            on: {
+                              change: function($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function(o) {
+                                    return o.selected
+                                  })
+                                  .map(function(o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.action = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              }
+                            }
+                          },
+                          [
+                            _c(
+                              "option",
+                              { attrs: { value: "none", selected: "" } },
+                              [_vm._v(_vm._s(_vm.__("Select an action")))]
+                            ),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "remove" } }, [
+                              _vm._v(_vm._s(_vm.__("Remove")))
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "makeActive" } }, [
+                              _vm._v(_vm._s(_vm.__("Make active")))
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "makeInactive" } }, [
+                              _vm._v(_vm._s(_vm.__("Make inactive")))
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "option",
+                              { attrs: { value: "regenerateThumbnails" } },
+                              [_vm._v(_vm._s(_vm.__("Regenerate thumbnails")))]
+                            )
+                          ]
+                        )
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action"
+                      },
+                      [
+                        _c(
+                          "span",
+                          {
+                            staticClass:
+                              "btn btn-default btn-primary whitespace-no-wrap cursor-pointer"
+                          },
+                          [_vm._v(_vm._s(_vm.__("Apply")))]
+                        )
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action media-library-action-select-all"
+                      },
+                      [
+                        _vm.files.length !== _vm.selected.length
+                          ? _c(
+                              "span",
+                              {
+                                staticClass:
+                                  "media-library-action-select-all-positive text-primary dim no-underline cursor-pointer",
+                                on: { click: _vm.selectAll }
+                              },
+                              [
+                                _vm._v(
+                                  "\n              " +
+                                    _vm._s(_vm.__("Select all")) +
+                                    "\n            "
+                                )
+                              ]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.selected.length > 0
+                          ? _c(
+                              "span",
+                              {
+                                staticClass:
+                                  "media-library-action-select-all-negative text-primary dim no-underline cursor-pointer",
+                                on: { click: _vm.unselectAll }
+                              },
+                              [
+                                _vm._v(
+                                  "\n              " +
+                                    _vm._s(_vm.__("Unselect all")) +
+                                    "\n            "
+                                )
+                              ]
+                            )
+                          : _vm._e()
+                      ]
+                    )
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass: "media-library-browser-actions-action-search"
+                  },
+                  [
+                    _c("input", {
+                      staticClass:
+                        "w-full form-control form-input form-input-bordered",
+                      attrs: { type: "text", placeholder: _vm.__("Search...") }
+                    })
+                  ]
+                ),
+                _vm._v(" "),
+                _vm.files.length > 0
+                  ? _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-browser-actions-action-for-selected"
+                      },
+                      [
+                        _vm._v(
+                          "\n          " + _vm._s(_vm.__("Selected:")) + " "
+                        ),
+                        _c(
+                          "span",
+                          {
+                            staticClass:
+                              "media-library-browser-actions-action-for-selected-value"
+                          },
+                          [
+                            _vm._v(
+                              _vm._s(_vm.selected.length) +
+                                " / " +
+                                _vm._s(_vm.files.length)
+                            )
+                          ]
+                        )
+                      ]
+                    )
                   : _vm._e()
-              ],
-              2
+              ]
             )
           ]),
           _vm._v(" "),
@@ -28080,7 +28354,8 @@ var render = function() {
                         attrs: {
                           index: index,
                           name: file.name,
-                          selected: _vm.isItemSelected(index)
+                          selected: _vm.isItemSelected(index),
+                          selectable: _vm.selected.length > 0
                         },
                         on: {
                           click: function($event) {
