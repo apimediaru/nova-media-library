@@ -72,6 +72,7 @@
 
       <div
           class="media-library-browser-area"
+          @click="unselectAll"
       >
         <div
             class="media-library-layout"
@@ -91,9 +92,11 @@
             :key="index"
             :index="index"
             :name="file.name"
-            @click="toggleSelection(index)"
+            @click="onThumbnailClick(index, $event)"
             :selected="isItemSelected(index)"
-            :selectable="selected.length > 0"
+            :highlighted="index === selectedIndex"
+            :data-index="index"
+            active
           />
         </div>
 
@@ -191,6 +194,7 @@ export default {
 
       // Array of selected files IDs
       selected: [],
+      selectedIndex: null,
 
       action: 'none',
     };
@@ -227,6 +231,21 @@ export default {
   },
 
   methods: {
+    // Todo: move
+    onThumbnailClick(index, event) {
+      const { shiftKey, ctrlKey } = event;
+      if (shiftKey && ctrlKey) {
+        this.selectRange(this.selectedIndex, index, true);
+      } else if (shiftKey) {
+        this.selectRange(this.selectedIndex, index);
+      } else if (ctrlKey) {
+        this.setSelectedIndex(index);
+        this.toggleSelection(index);
+      } else {
+        this.beginSelection(index);
+      }
+    },
+
     close() {
       this.$emit('close');
     },
@@ -239,6 +258,21 @@ export default {
     },
 
     // Selected files
+    beginSelection(index) {
+      this.unselectAll();
+      this.addSelection(index);
+      this.setSelectedIndex(index);
+    },
+    setSelectedIndex(index) {
+      this.selectedIndex = Number(index);
+    },
+    selectRange(start, end, keep = false) {
+      const selected = keep ? Array.from(this.selected) : [];
+      for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+        selected.push(i);
+      }
+      this.selected = Array.from(new Set(selected));
+    },
     toggleSelection(index) {
       const i = Number(index);
       if (this.isItemSelected(i)) {
@@ -255,6 +289,13 @@ export default {
     },
     addSelection(index) {
       this.selected.push(Number(index));
+    },
+    toggleSelectAll() {
+      if (this.files.length !== this.selected.length) {
+        this.selectAll();
+      } else {
+        this.unselectAll();
+      }
     },
     selectAll() {
       // TODO: index => id
@@ -290,12 +331,23 @@ export default {
       window.addEventListener('dragover', this.onDragMove);
       window.addEventListener('dragleave', this.onDragMove);
       window.addEventListener('dragend', this.onDragEnd);
+      document.addEventListener('keydown', this.onKeyDown);
     },
     removeDragAndDropEventListeners() {
       window.removeEventListener('drop', this.onDrop);
       window.removeEventListener('dragover', this.onDragMove);
       window.removeEventListener('dragleave', this.onDragMove);
       window.removeEventListener('dragend', this.onDragEnd);
+      document.removeEventListener('keydown', this.onKeyDown);
+    },
+    onKeyDown(event) {
+      const { keyCode } = event;
+      // Check for "A" key
+      if (event.ctrlKey && keyCode === 65) {
+        event.preventDefault();
+        this.toggleSelectAll();
+        return false;
+      }
     },
     onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
@@ -329,6 +381,14 @@ export default {
     }, 200),
     dropzoneIncludes(element) {
       return element && element.matches('.media-library-dropzone-input');
+    },
+  },
+
+  watch: {
+    selected(value) {
+      if (!value.length) {
+        this.selectedIndex = null;
+      }
     },
   },
 }

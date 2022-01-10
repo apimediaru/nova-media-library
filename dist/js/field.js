@@ -27262,7 +27262,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27466,6 +27466,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
 
 
 
@@ -27506,6 +27509,7 @@ var MODES = Object.freeze({
 
       // Array of selected files IDs
       selected: [],
+      selectedIndex: null,
 
       action: 'none'
     };
@@ -27545,6 +27549,22 @@ var MODES = Object.freeze({
   },
 
   methods: {
+    // Todo: move
+    onThumbnailClick: function onThumbnailClick(index, event) {
+      var shiftKey = event.shiftKey,
+          ctrlKey = event.ctrlKey;
+
+      if (shiftKey && ctrlKey) {
+        this.selectRange(this.selectedIndex, index, true);
+      } else if (shiftKey) {
+        this.selectRange(this.selectedIndex, index);
+      } else if (ctrlKey) {
+        this.setSelectedIndex(index);
+        this.toggleSelection(index);
+      } else {
+        this.beginSelection(index);
+      }
+    },
     close: function close() {
       this.$emit('close');
     },
@@ -27557,6 +27577,23 @@ var MODES = Object.freeze({
 
 
     // Selected files
+    beginSelection: function beginSelection(index) {
+      this.unselectAll();
+      this.addSelection(index);
+      this.setSelectedIndex(index);
+    },
+    setSelectedIndex: function setSelectedIndex(index) {
+      this.selectedIndex = Number(index);
+    },
+    selectRange: function selectRange(start, end) {
+      var keep = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      var selected = keep ? Array.from(this.selected) : [];
+      for (var i = Math.min(start, end); i <= Math.max(start, end); i++) {
+        selected.push(i);
+      }
+      this.selected = Array.from(new Set(selected));
+    },
     toggleSelection: function toggleSelection(index) {
       var i = Number(index);
       if (this.isItemSelected(i)) {
@@ -27575,6 +27612,13 @@ var MODES = Object.freeze({
     },
     addSelection: function addSelection(index) {
       this.selected.push(Number(index));
+    },
+    toggleSelectAll: function toggleSelectAll() {
+      if (this.files.length !== this.selected.length) {
+        this.selectAll();
+      } else {
+        this.unselectAll();
+      }
     },
     selectAll: function selectAll() {
       // TODO: index => id
@@ -27619,12 +27663,24 @@ var MODES = Object.freeze({
       window.addEventListener('dragover', this.onDragMove);
       window.addEventListener('dragleave', this.onDragMove);
       window.addEventListener('dragend', this.onDragEnd);
+      document.addEventListener('keydown', this.onKeyDown);
     },
     removeDragAndDropEventListeners: function removeDragAndDropEventListeners() {
       window.removeEventListener('drop', this.onDrop);
       window.removeEventListener('dragover', this.onDragMove);
       window.removeEventListener('dragleave', this.onDragMove);
       window.removeEventListener('dragend', this.onDragEnd);
+      document.removeEventListener('keydown', this.onKeyDown);
+    },
+    onKeyDown: function onKeyDown(event) {
+      var keyCode = event.keyCode;
+      // Check for "A" key
+
+      if (event.ctrlKey && keyCode === 65) {
+        event.preventDefault();
+        this.toggleSelectAll();
+        return false;
+      }
     },
     onDrop: function onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
@@ -27662,6 +27718,14 @@ var MODES = Object.freeze({
     }, 200),
     dropzoneIncludes: function dropzoneIncludes(element) {
       return element && element.matches('.media-library-dropzone-input');
+    }
+  },
+
+  watch: {
+    selected: function selected(value) {
+      if (!value.length) {
+        this.selectedIndex = null;
+      }
     }
   }
 });
@@ -27965,7 +28029,7 @@ exports = module.exports = __webpack_require__(1)(false);
 
 
 // module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
 
 // exports
 
@@ -27976,10 +28040,6 @@ exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
 //
 //
 //
@@ -28016,7 +28076,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     name: String,
     active: Boolean,
     selected: Boolean,
-    selectable: Boolean
+    highlighted: Boolean
   },
 
   computed: {
@@ -28046,29 +28106,20 @@ var render = function() {
       staticClass: "media-library-thumbnail",
       class: {
         "media-library-thumbnail-selected": _vm.selected,
-        "media-library-thumbnail-selectable": _vm.selectable
+        "media-library-thumbnail-disabled": !_vm.active,
+        "media-library-thumbnail-highlighted": _vm.highlighted
       },
       attrs: { title: _vm.name },
       on: {
         click: function($event) {
           $event.preventDefault()
+          $event.stopPropagation()
           return _vm.onThumbnailClick.apply(null, arguments)
         }
       }
     },
     [
-      _c("div", { staticClass: "media-library-thumbnail-head" }, [
-        _c("img", {
-          staticClass: "media-library-thumbnail-head-image",
-          attrs: { src: "https://picsum.photos/200/300", alt: "alt" }
-        }),
-        _vm._v(" "),
-        _c("input", {
-          staticClass: "media-library-thumbnail-head-checkmark checkbox",
-          attrs: { type: "checkbox" },
-          domProps: { checked: _vm.selected }
-        })
-      ]),
+      _vm._m(0),
       _vm._v(" "),
       _c("div", { staticClass: "media-library-thumbnail-name" }, [
         _vm.hasIndex
@@ -28084,7 +28135,19 @@ var render = function() {
     ]
   )
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "media-library-thumbnail-head" }, [
+      _c("img", {
+        staticClass: "media-library-thumbnail-head-image",
+        attrs: { src: "https://picsum.photos/200/300", alt: "alt" }
+      })
+    ])
+  }
+]
 render._withStripped = true
 module.exports = { render: render, staticRenderFns: staticRenderFns }
 if (false) {
@@ -28325,99 +28388,112 @@ var render = function() {
             )
           ]),
           _vm._v(" "),
-          _c("div", { staticClass: "media-library-browser-area" }, [
-            _c(
-              "div",
-              {
-                staticClass: "media-library-layout",
-                class: {
-                  "media-library-layout-hidden":
-                    !_vm.isInBrowsingMode || _vm.isDragging
-                }
-              },
-              [
-                !_vm.filesNotEmpty
-                  ? _c("div", { staticClass: "media-library-layout-message" }, [
-                      _vm._v(
-                        "\n          " +
-                          _vm._s(
-                            _vm.__(
-                              "There are currently no media files in this library"
-                            )
-                          ) +
-                          "\n        "
+          _c(
+            "div",
+            {
+              staticClass: "media-library-browser-area",
+              on: { click: _vm.unselectAll }
+            },
+            [
+              _c(
+                "div",
+                {
+                  staticClass: "media-library-layout",
+                  class: {
+                    "media-library-layout-hidden":
+                      !_vm.isInBrowsingMode || _vm.isDragging
+                  }
+                },
+                [
+                  !_vm.filesNotEmpty
+                    ? _c(
+                        "div",
+                        { staticClass: "media-library-layout-message" },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(
+                                _vm.__(
+                                  "There are currently no media files in this library"
+                                )
+                              ) +
+                              "\n        "
+                          )
+                        ]
                       )
-                    ])
-                  : _vm._l(_vm.files, function(file, index) {
-                      return _c("MediaLibraryThumbnail", {
-                        key: index,
-                        attrs: {
-                          index: index,
-                          name: file.name,
-                          selected: _vm.isItemSelected(index),
-                          selectable: _vm.selected.length > 0
-                        },
-                        on: {
-                          click: function($event) {
-                            return _vm.toggleSelection(index)
+                    : _vm._l(_vm.files, function(file, index) {
+                        return _c("MediaLibraryThumbnail", {
+                          key: index,
+                          attrs: {
+                            index: index,
+                            name: file.name,
+                            selected: _vm.isItemSelected(index),
+                            highlighted: index === _vm.selectedIndex,
+                            "data-index": index,
+                            active: ""
+                          },
+                          on: {
+                            click: function($event) {
+                              return _vm.onThumbnailClick(index, $event)
+                            }
                           }
-                        }
+                        })
                       })
-                    })
-              ],
-              2
-            ),
-            _vm._v(" "),
-            _c(
-              "div",
-              {
-                staticClass: "media-library-dropzone",
-                class: {
-                  "media-library-dropzone-visible": _vm.isDropzoneVisible,
-                  "media-library-dropzone-highlighted":
-                    _vm.isDraggingOverDropzone
-                }
-              },
-              [
-                _c("p", { staticClass: "media-library-dropzone-icon" }, [
-                  _c(
-                    "svg",
-                    {
-                      staticClass: "fill-current w-4 h-4 mx-auto",
-                      attrs: {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        viewBox: "0 0 20 20"
-                      }
-                    },
-                    [
-                      _c("path", {
+                ],
+                2
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                {
+                  staticClass: "media-library-dropzone",
+                  class: {
+                    "media-library-dropzone-visible": _vm.isDropzoneVisible,
+                    "media-library-dropzone-highlighted":
+                      _vm.isDraggingOverDropzone
+                  }
+                },
+                [
+                  _c("p", { staticClass: "media-library-dropzone-icon" }, [
+                    _c(
+                      "svg",
+                      {
+                        staticClass: "fill-current w-4 h-4 mx-auto",
                         attrs: {
-                          d: "M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"
+                          xmlns: "http://www.w3.org/2000/svg",
+                          viewBox: "0 0 20 20"
                         }
-                      })
-                    ]
-                  )
-                ]),
-                _vm._v(" "),
-                _c("p", { staticClass: "media-library-dropzone-notice" }, [
-                  _vm._v(
-                    "\n          " +
-                      _vm._s(
-                        _vm.__("Drop your images here, or click to browse")
-                      ) +
-                      "\n        "
-                  )
-                ]),
-                _vm._v(" "),
-                _c("input", {
-                  ref: "upload",
-                  staticClass: "media-library-dropzone-input",
-                  attrs: { type: "file", multiple: "" },
-                  on: { change: _vm.onFileInputChange }
-                })
-              ]
-            )
-          ])
+                      },
+                      [
+                        _c("path", {
+                          attrs: {
+                            d: "M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"
+                          }
+                        })
+                      ]
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "media-library-dropzone-notice" }, [
+                    _vm._v(
+                      "\n          " +
+                        _vm._s(
+                          _vm.__("Drop your images here, or click to browse")
+                        ) +
+                        "\n        "
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("input", {
+                    ref: "upload",
+                    staticClass: "media-library-dropzone-input",
+                    attrs: { type: "file", multiple: "" },
+                    on: { change: _vm.onFileInputChange }
+                  })
+                ]
+              )
+            ]
+          )
         ]
       ),
       _vm._v(" "),
