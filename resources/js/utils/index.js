@@ -16,3 +16,4 @@ export const keyCodes = Object.freeze({
   pageup: 33,
   pagedown: 34,
 });
+

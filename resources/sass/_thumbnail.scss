@@ -19,8 +19,15 @@
     border-style: solid;
   }
 
-  &-disabled {
+  &-disabled,
+  &-dragged {
     opacity: .5;
+  }
+
+  &-drop {
+    border-color: green;
+    border-style: dashed;
+    background: greenyellow;
   }
 }
 

@@ -35,7 +35,10 @@
               </select>
             </div>
             <div class="media-library-actions-action media-library-action">
-              <span class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer">{{ __('Apply') }}</span>
+              <button
+                  class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer"
+                  :disabled="action === 'none'"
+              >{{ __('Apply') }}</button>
             </div>
             <div class="media-library-actions-action media-library-action media-library-action-select-all">
               <span
@@ -79,6 +82,7 @@
             :class="{
               'media-library-layout-hidden': !isInBrowsingMode || isDragging,
             }"
+            ref="layout"
         >
           <div
               v-if="!filesNotEmpty"
@@ -93,6 +97,8 @@
             :index="index"
             :name="file.name"
             @click="onThumbnailClick(index, $event)"
+            @dragstart="onThumbnailDragStart"
+            @dragend="onThumbnailDragEnd"
             :selected="isItemSelected(index)"
             :highlighted="index === selectedIndex"
             :data-index="index"
@@ -104,7 +110,7 @@
             class="media-library-dropzone"
             :class="{
               'media-library-dropzone-visible': isDropzoneVisible,
-              'media-library-dropzone-highlighted': isDraggingOverDropzone,
+              'media-library-dropzone-highlighted': isDropzoneVisible && isDraggingOverDropzone,
             }"
         >
           <p class="media-library-dropzone-icon">
@@ -161,6 +167,9 @@
 import MediaLibraryModal from "./MediaLibraryModal";
 import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
 
+import DragAndDrop from "../utils/DragAndDrop";
+
+
 const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
@@ -180,8 +189,14 @@ export default {
     return {
       mode: MODES.BROWSING,
       isDragging: false,
+      isDragAndDropEnabled: true,
       isDraggingOverDropzone: false,
+      ghost: null,
       endDragging: false,
+
+      // Sortable drag and drop
+      sortable: null,
+      isReordering: false,
 
       // Prevent any upload and reorder interactive actions
       inactive: false,
@@ -209,10 +224,12 @@ export default {
 
   mounted() {
     this.addDragAndDropEventListeners();
+    this.registerSortable();
   },
 
   beforeDestroy() {
     this.removeDragAndDropEventListeners();
+    this.destroySortable();
   },
 
   computed: {
@@ -223,7 +240,7 @@ export default {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible() {
-      return this.isInUploadingMode || this.isDragging;
+      return this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
     },
     filesNotEmpty() {
       return this.files.length > 0;
@@ -326,6 +343,12 @@ export default {
     },
 
     // Drag and drop
+    disableDragAndDrop() {
+      this.isDragAndDropEnabled = false;
+    },
+    enableDragAndDrop() {
+      this.isDragAndDropEnabled = true;
+    },
     addDragAndDropEventListeners() {
       window.addEventListener('drop', this.onDrop);
       window.addEventListener('dragover', this.onDragMove);
@@ -357,8 +380,9 @@ export default {
       this.isDragging = false;
     },
     onDragMove: function (event) {
-      event.preventDefault();
+      if (!this.isDragAndDropEnabled) { return; }
 
+      event.preventDefault();
       const dropzoneOverlapped = this.dropzoneIncludes(event.target);
 
       if (event.type === 'dragleave' && !dropzoneOverlapped) {
@@ -382,6 +406,68 @@ export default {
     dropzoneIncludes(element) {
       return element && element.matches('.media-library-dropzone-input');
     },
+
+    // Sortable
+    registerSortable() {
+      this.sortable = new DragAndDrop(this.$refs.layout, {
+        on: {
+          // dragStart: () => {
+          //   console.log('dragstart');
+          // },
+        },
+      });
+      // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
+    },
+    destroySortable() {
+      this.sortable.destroy();
+    },
+    // createDragAndDropGhost(element) {
+    //   const rect = element.getBoundingClientRect();
+    //   const ghost = element.cloneNode(true);
+    //
+    //   const styles = {
+    //     margin: 0,
+    //     transform: 'none',
+    //     transition: 'none',
+    //     opacity: 0.8,
+    //     position: 'absolute',
+    //     width: `${rect.width}px`,
+    //     height: `${rect.height}px`,
+    //     // top: `${window.scrollY + rect.top}px`,
+    //     // left: `${rect.left}px`,
+    //     zIndex: '999999',
+    //   };
+    //   Object.keys(styles).forEach((key) => ghost.style[key] = styles[key]);
+    //
+    //   return ghost;
+    // },
+    // onThumbnailDragStart(event) {
+    //   this.disableDragAndDrop();
+    //   const { target } = event;
+    //   const thumbnail = target.closest('.media-library-thumbnail');
+    //
+    //   const ghost = this.createDragAndDropGhost(thumbnail);
+    //   this.ghost = ghost;
+    //   document.body.appendChild(ghost);
+    //   event.dataTransfer.setDragImage(ghost, event.offsetX, event.offsetY);
+    //
+    //
+    //   // thumbnail.addEventListener('dragend', this.onThumbnailDragEnd);
+    //   // const { node, event } = payload;
+    //   // this.disableDragAndDrop();
+    //   // const ghost = this.createDragAndDropGhost(node.$el);
+    //   // this.ghost = ghost;
+    //   // document.body.appendChild(ghost);
+    //   // event.dataTransfer.setDragImage(ghost, 0, 0);
+    // },
+    // onThumbnailDragEnd(event) {
+    //   console.log('dragend');
+    //   const { target } = event;
+    //   const thumbnail = target.closest('.media-library-thumbnail');
+    //   thumbnail.removeEventListener('dragend', this.onDragEnd);
+    //   this.ghost.remove();
+    //   this.enableDragAndDrop();
+    // },
   },
 
   watch: {

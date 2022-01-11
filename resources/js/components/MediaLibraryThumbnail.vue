@@ -5,12 +5,13 @@
         'media-library-thumbnail-selected': selected,
         'media-library-thumbnail-disabled': !active,
         'media-library-thumbnail-highlighted': highlighted,
+        'media-library-thumbnail-dragged': dragged,
       }"
       :title="name"
       @click.prevent.stop="onThumbnailClick"
   >
     <div class="media-library-thumbnail-head">
-      <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image">
+      <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image" draggable="false">
     </div>
     <div class="media-library-thumbnail-name">
       <span
@@ -35,6 +36,7 @@ export default {
     active: Boolean,
     selected: Boolean,
     highlighted: Boolean,
+    dragged: Boolean,
   },
 
   computed: {
