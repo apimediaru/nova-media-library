@@ -97,11 +97,10 @@
             :index="index"
             :name="file.name"
             @click="onThumbnailClick(index, $event)"
-            @dragstart="onThumbnailDragStart"
-            @dragend="onThumbnailDragEnd"
+            :dragged="isReordering && selected.includes(index)"
             :selected="isItemSelected(index)"
             :highlighted="index === selectedIndex"
-            :data-index="index"
+            :data-id="index"
             active
           />
         </div>
@@ -224,7 +223,7 @@ export default {
 
   mounted() {
     this.addDragAndDropEventListeners();
-    this.registerSortable();
+    // this.registerSortable();
   },
 
   beforeDestroy() {
@@ -275,13 +274,13 @@ export default {
     },
 
     // Selected files
-    beginSelection(index) {
+    beginSelection(id) {
       this.unselectAll();
-      this.addSelection(index);
-      this.setSelectedIndex(index);
+      this.addSelection(id);
+      this.setSelectedIndex(id);
     },
-    setSelectedIndex(index) {
-      this.selectedIndex = Number(index);
+    setSelectedIndex(id) {
+      this.selectedIndex = Number(id);
     },
     selectRange(start, end, keep = false) {
       const selected = keep ? Array.from(this.selected) : [];
@@ -290,22 +289,22 @@ export default {
       }
       this.selected = Array.from(new Set(selected));
     },
-    toggleSelection(index) {
-      const i = Number(index);
+    toggleSelection(id) {
+      const i = Number(id);
       if (this.isItemSelected(i)) {
         this.removeSelection(i);
       } else {
         this.addSelection(i);
       }
     },
-    isItemSelected(index) {
-      return this.selected.includes(Number(index));
+    isItemSelected(id) {
+      return this.selected.includes(Number(id));
     },
-    removeSelection(index) {
-      this.selected = this.selected.filter((item) => item !== Number(index));
+    removeSelection(id) {
+      this.selected = this.selected.filter((item) => item !== Number(id));
     },
-    addSelection(index) {
-      this.selected.push(Number(index));
+    addSelection(id) {
+      this.selected.push(Number(id));
     },
     toggleSelectAll() {
       if (this.files.length !== this.selected.length) {
@@ -408,16 +407,22 @@ export default {
     },
 
     // Sortable
-    registerSortable() {
-      this.sortable = new DragAndDrop(this.$refs.layout, {
-        on: {
-          // dragStart: () => {
-          //   console.log('dragstart');
-          // },
-        },
-      });
-      // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
-    },
+    // registerSortable() {
+    //   this.sortable = new DragAndDrop(this.$refs.layout, {
+    //     on: {
+    //       dragStart: (el) => {
+    //         console.log(el);
+    //         this.isReordering = true;
+    //         const { id } = el.dataset;
+    //         this.addSelection(id);
+    //       },
+    //       dragEnd: () => {
+    //         this.isReordering = false;
+    //       },
+    //     },
+    //   });
+    //   // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
+    // },
     destroySortable() {
       this.sortable.destroy();
     },

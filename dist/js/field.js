@@ -181,8 +181,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _MediaLibraryModal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MediaLibraryModal */ "./resources/js/components/MediaLibraryModal.vue");
 /* harmony import */ var _MediaLibraryThumbnail__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MediaLibraryThumbnail */ "./resources/js/components/MediaLibraryThumbnail.vue");
-/* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop.js");
-//
+/* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop/index.js");
 //
 //
 //
@@ -395,8 +394,7 @@ var MODES = Object.freeze({
     }
   },
   mounted: function mounted() {
-    this.addDragAndDropEventListeners();
-    this.registerSortable();
+    this.addDragAndDropEventListeners(); // this.registerSortable();
   },
   beforeDestroy: function beforeDestroy() {
     this.removeDragAndDropEventListeners();
@@ -443,13 +441,13 @@ var MODES = Object.freeze({
       this.mode = MODES.BROWSING;
     },
     // Selected files
-    beginSelection: function beginSelection(index) {
+    beginSelection: function beginSelection(id) {
       this.unselectAll();
-      this.addSelection(index);
-      this.setSelectedIndex(index);
+      this.addSelection(id);
+      this.setSelectedIndex(id);
     },
-    setSelectedIndex: function setSelectedIndex(index) {
-      this.selectedIndex = Number(index);
+    setSelectedIndex: function setSelectedIndex(id) {
+      this.selectedIndex = Number(id);
     },
     selectRange: function selectRange(start, end) {
       var keep = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
@@ -461,8 +459,8 @@ var MODES = Object.freeze({
 
       this.selected = Array.from(new Set(selected));
     },
-    toggleSelection: function toggleSelection(index) {
-      var i = Number(index);
+    toggleSelection: function toggleSelection(id) {
+      var i = Number(id);
 
       if (this.isItemSelected(i)) {
         this.removeSelection(i);
@@ -470,16 +468,16 @@ var MODES = Object.freeze({
         this.addSelection(i);
       }
     },
-    isItemSelected: function isItemSelected(index) {
-      return this.selected.includes(Number(index));
+    isItemSelected: function isItemSelected(id) {
+      return this.selected.includes(Number(id));
     },
-    removeSelection: function removeSelection(index) {
+    removeSelection: function removeSelection(id) {
       this.selected = this.selected.filter(function (item) {
-        return item !== Number(index);
+        return item !== Number(id);
       });
     },
-    addSelection: function addSelection(index) {
-      this.selected.push(Number(index));
+    addSelection: function addSelection(id) {
+      this.selected.push(Number(id));
     },
     toggleSelectAll: function toggleSelectAll() {
       if (this.files.length !== this.selected.length) {
@@ -587,14 +585,22 @@ var MODES = Object.freeze({
       return element && element.matches('.media-library-dropzone-input');
     },
     // Sortable
-    registerSortable: function registerSortable() {
-      this.sortable = new _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__["default"](this.$refs.layout, {
-        on: {// dragStart: () => {
-          //   console.log('dragstart');
-          // },
-        }
-      }); // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
-    },
+    // registerSortable() {
+    //   this.sortable = new DragAndDrop(this.$refs.layout, {
+    //     on: {
+    //       dragStart: (el) => {
+    //         console.log(el);
+    //         this.isReordering = true;
+    //         const { id } = el.dataset;
+    //         this.addSelection(id);
+    //       },
+    //       dragEnd: () => {
+    //         this.isReordering = false;
+    //       },
+    //     },
+    //   });
+    //   // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
+    // },
     destroySortable: function destroySortable() {
       this.sortable.destroy();
     } // createDragAndDropGhost(element) {
@@ -812,10 +818,10 @@ Nova.booting(function (Vue, router, store) {
 
 /***/ }),
 
-/***/ "./resources/js/utils/DragAndDrop.js":
-/*!*******************************************!*\
-  !*** ./resources/js/utils/DragAndDrop.js ***!
-  \*******************************************/
+/***/ "./resources/js/utils/DragAndDrop/index.js":
+/*!*************************************************!*\
+  !*** ./resources/js/utils/DragAndDrop/index.js ***!
+  \*************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -823,15 +829,143 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./resources/js/utils/DragAndDrop/utils.js");
+/* harmony import */ var _manager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./manager */ "./resources/js/utils/DragAndDrop/manager.js");
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+
+
+
+var getClosestDirectChild = function getClosestDirectChild(container, element) {
+  if (!container || !element || container === element) {
+    return false;
+  }
+
+  var children = container.children;
+
+  for (var target = element; target && target !== container; target = target.parentNode) {
+    if (Array.prototype.includes.call(children, target)) {
+      return target;
+    }
+  }
+
+  return false;
+};
+
+var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
+  var _this = this;
+
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  _classCallCheck(this, DragAndDrop);
+
+  _defineProperty(this, "isDragging", false);
+
+  _defineProperty(this, "trigger", null);
+
+  _defineProperty(this, "destroy", function () {});
+
+  _defineProperty(this, "registerEvents", function () {
+    _this.options.container.addEventListener('mousedown', _this.onMouseDown);
+  });
+
+  _defineProperty(this, "stop", function () {
+    window.clearTimeout(_this.clickTimeout);
+    _this.clickTimeout = null;
+
+    _this.onDragEnd();
+  });
+
+  _defineProperty(this, "emit", function (event) {
+    var fn = _this.options.on[event];
+
+    if (fn) {
+      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+
+      fn.apply(_this, args);
+    }
+  });
+
+  _defineProperty(this, "onMouseDown", function (event) {
+    var trigger = getClosestDirectChild(_this.options.container, event.target);
+
+    if (!trigger) {
+      return;
+    }
+
+    _this.trigger = trigger;
+    _this.clickTimeout = window.setTimeout(_this.onDragStart, _this.options.clickDelay);
+  });
+
+  _defineProperty(this, "onMouseMove", function () {// console.log('mousemove');
+  });
+
+  _defineProperty(this, "onDragStart", function () {
+    _this.isDragging = true;
+    console.log('started dragging');
+    document.addEventListener('mousemove', _this.onMouseMove);
+
+    _this.emit('dragStart', _this.trigger);
+  });
+
+  _defineProperty(this, "onDragEnd", function () {
+    if (!_this.isDragging) {
+      return;
+    }
+
+    console.log('ended dragging');
+    document.removeEventListener('mousemove', _this.onMouseMove);
+
+    _this.emit('dragEnd');
+
+    _this.isDragging = false;
+  });
+
+  this.options = Object.assign({
+    container: el,
+    ghostContainer: document.body,
+    clickDelay: 250,
+    on: {
+      dragStart: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
+      dragMove: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
+      dragEnd: _utils__WEBPACK_IMPORTED_MODULE_0__.noop
+    },
+    group: 'default'
+  }, options);
+  this.clickTimeout = null;
+  this.registerEvents();
+  _manager__WEBPACK_IMPORTED_MODULE_1__["default"].registerDD(this.options.group, this);
+});
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (DragAndDrop);
+
+/***/ }),
+
+/***/ "./resources/js/utils/DragAndDrop/manager.js":
+/*!***************************************************!*\
+  !*** ./resources/js/utils/DragAndDrop/manager.js ***!
+  \***************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "manager": () => (/* binding */ manager),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-var noop = function noop() {};
 
 var DragAndDropManager = /*#__PURE__*/function () {
   function DragAndDropManager() {
@@ -871,101 +1005,22 @@ var DragAndDropManager = /*#__PURE__*/function () {
 }();
 
 var manager = new DragAndDropManager();
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (manager);
 
-var DragAndDrop = /*#__PURE__*/function () {
-  function DragAndDrop(el) {
-    var _this2 = this;
+/***/ }),
 
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+/***/ "./resources/js/utils/DragAndDrop/utils.js":
+/*!*************************************************!*\
+  !*** ./resources/js/utils/DragAndDrop/utils.js ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-    _classCallCheck(this, DragAndDrop);
-
-    _defineProperty(this, "isDragging", false);
-
-    _defineProperty(this, "onMouseMove", function () {// console.log('mousemove');
-    });
-
-    _defineProperty(this, "onMouseDown", function () {
-      _this2.clickTimeout = window.setTimeout(_this2.onDragStart, _this2.options.clickDelay);
-    });
-
-    _defineProperty(this, "onDragStart", function () {
-      _this2.isDragging = true;
-      console.log('started dragging');
-      document.addEventListener('mousemove', _this2.onMouseMove);
-
-      _this2.emit('dragStart');
-    });
-
-    _defineProperty(this, "onDragEnd", function () {
-      console.log('here');
-
-      if (!_this2.isDragging) {
-        return;
-      }
-
-      ;
-      console.log('ended dragging');
-      document.removeEventListener('mousemove', _this2.onMouseMove);
-
-      _this2.emit('dragEnd');
-
-      _this2.isDragging = false;
-    });
-
-    this.options = Object.assign({
-      container: el,
-      ghostContainer: document.body,
-      clickDelay: 350,
-      on: {
-        dragStart: noop,
-        dragMove: noop,
-        dragEnd: noop
-      },
-      group: 'default'
-    }, options);
-    this.clickTimeout = null;
-    this.registerEvents(); // Todo: make better
-
-    manager.registerDD(this.options.group, this);
-  }
-
-  _createClass(DragAndDrop, [{
-    key: "destroy",
-    value: function destroy() {}
-  }, {
-    key: "registerEvents",
-    value: function registerEvents() {
-      this.options.container.addEventListener('mousedown', this.onMouseDown);
-    }
-  }, {
-    key: "stop",
-    value: function stop() {
-      window.clearTimeout(this.options.clickTimeout);
-      this.clickTimeout = null;
-      this.onDragEnd();
-    } // Events
-
-  }, {
-    key: "emit",
-    value: function emit() {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-
-      var event = args[0];
-      var fn = this.options.on[event];
-
-      if (fn) {
-        fn.call.apply(fn, [args.slice(0, 1), this]);
-      }
-    }
-  }]);
-
-  return DragAndDrop;
-}();
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (DragAndDrop);
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "noop": () => (/* binding */ noop)
+/* harmony export */ });
+var noop = function noop() {};
 
 /***/ }),
 
@@ -28158,17 +28213,17 @@ var render = function () {
                           attrs: {
                             index: index,
                             name: file.name,
+                            dragged:
+                              _vm.isReordering && _vm.selected.includes(index),
                             selected: _vm.isItemSelected(index),
                             highlighted: index === _vm.selectedIndex,
-                            "data-index": index,
+                            "data-id": index,
                             active: "",
                           },
                           on: {
                             click: function ($event) {
                               return _vm.onThumbnailClick(index, $event)
                             },
-                            dragstart: _vm.onThumbnailDragStart,
-                            dragend: _vm.onThumbnailDragEnd,
                           },
                         })
                       }),

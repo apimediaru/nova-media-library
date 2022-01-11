@@ -1,41 +1,28 @@
-const noop = () => {};
+import { noop } from "./utils";
+import manager from './manager';
 
-class DragAndDropManager {
-  constructor() {
-    this.dds = {};
+const getClosestDirectChild = (container, element) => {
+  if ((!container || !element) || container === element) { return false; }
 
-    this.onMouseUp = () => {
-      Object.keys(this.dds).forEach((group) => this.dds[group].stop());
+  const { children } = container;
+  for (let target = element; target && target !== container; target = target.parentNode) {
+    if (Array.prototype.includes.call(children, target)) {
+      return target;
     }
-
-    this.register();
   }
 
-  register() {
-    document.addEventListener('mouseup', this.onMouseUp);
-  }
-
-  destroy() {
-    document.removeEventListener('mouseup', this.onMouseUp);
-  }
-
-
-
-  registerDD(group, dd) {
-    this.dds[group] = dd;
-  }
-}
-
-const manager = new DragAndDropManager();
+  return false;
+};
 
 class DragAndDrop {
   isDragging = false;
+  trigger = null;
 
   constructor(el, options = {}) {
     this.options = Object.assign({
       container: el,
       ghostContainer: document.body,
-      clickDelay: 350,
+      clickDelay: 250,
       on: {
         dragStart: noop,
         dragMove: noop,
@@ -48,42 +35,50 @@ class DragAndDrop {
 
     this.registerEvents();
 
-    // Todo: make better
     manager.registerDD(this.options.group, this);
   }
 
-  destroy() {
+  destroy = () => {
 
   }
-  registerEvents() {
+
+  registerEvents = () => {
     this.options.container.addEventListener('mousedown', this.onMouseDown);
   }
-  stop() {
-    window.clearTimeout(this.options.clickTimeout);
+
+  stop = () => {
+    window.clearTimeout(this.clickTimeout);
     this.clickTimeout = null;
     this.onDragEnd();
   }
 
   // Events
-  emit(...args) {
-    const event = args[0];
+  emit = (event, ...args) => {
     const fn = this.options.on[event];
     if (fn) {
-      fn.call(...[args.slice(0, 1), this]);
+      fn.apply(this, args);
     }
   }
+
+  // Handlers
+  onMouseDown = (event) => {
+    const trigger = getClosestDirectChild(this.options.container, event.target);
+    if (!trigger) { return; }
+    this.trigger = trigger;
+    this.clickTimeout = window.setTimeout(this.onDragStart, this.options.clickDelay);
+  }
+
   onMouseMove = () => {
     // console.log('mousemove');
   }
-  onMouseDown = () => {
-    this.clickTimeout = window.setTimeout(this.onDragStart, this.options.clickDelay);
-  }
+
   onDragStart = () => {
     this.isDragging = true;
     console.log('started dragging');
     document.addEventListener('mousemove', this.onMouseMove);
-    this.emit('dragStart');
+    this.emit('dragStart', this.trigger);
   }
+
   onDragEnd = () => {
     if (!this.isDragging) { return; }
     console.log('ended dragging');
