@@ -1,5 +1,7 @@
-import { noop } from "./utils";
+import { noop, getXY, createGhost, applyImportantGhostStyles, applyStyles } from "./utils";
+import merge from 'lodash/merge';
 import manager from './manager';
+const { _ } = window;
 
 const getClosestDirectChild = (container, element) => {
   if ((!container || !element) || container === element) { return false; }
@@ -14,15 +16,36 @@ const getClosestDirectChild = (container, element) => {
   return false;
 };
 
+const locateGhost = (element, [top, left] = []) => {
+  if (element) {
+    element.style.setProperty('top', `${top}px`);
+    element.style.setProperty('left', `${left}px`);
+  }
+}
+
 class DragAndDrop {
   isDragging = false;
   trigger = null;
   insideElement = false;
+  ghost = null;
+  clickTimeout = null;
+
+  startX = null;
+  startY = null;
+  deltaX = null;
+  deltaY = null;
+  offsetX = null;
+  offsetY = null;
 
   constructor(el, options = {}) {
-    this.options = Object.assign({
+    this.options = _.merge({
       container: el,
+      createGhost: this.createGhost,
       ghostContainer: document.body,
+      ghostOffset: {
+        top: 20,
+        left: 10,
+      },
       clickDelay: 250,
       on: {
         beforeStart: noop,
@@ -34,8 +57,6 @@ class DragAndDrop {
       },
       group: 'default',
     }, options);
-
-    this.clickTimeout = null;
 
     this.registerEvents();
 
@@ -71,6 +92,11 @@ class DragAndDrop {
     this.trigger = trigger;
     const legit = this.emit('beforeStart', trigger);
     if (legit === false) { return; }
+    const xy = getXY(event);
+    this.startX = xy[0];
+    this.startY = xy[1];
+    this.deltaX = this.startX - trigger.offsetLeft;
+    this.deltaY = this.startY - trigger.offsetTop;
     this.clickTimeout = window.setTimeout(this.onDragStart, this.options.clickDelay);
   }
 
@@ -80,35 +106,41 @@ class DragAndDrop {
     document.addEventListener('mousemove', this.onMouseMove);
     document.body.addEventListener('mouseenter', this.onMouseEnter, true);
     document.body.addEventListener('mouseleave', this.onMouseLeave, true);
-    this.emit('dragStart', this.trigger);
+    this.emit('dragStart', this.trigger, this.stop);
   }
 
-  onMouseMove = () => {
-    // console.log('mousemove');
+  onMouseMove = (event) => {
+    const xy =  getXY(event);
+    this.offsetX = xy[0] - this.startX;
+    this.offsetY = xy[1] - this.startY;
+    const { ghost } = this;
+    if (ghost === null) {
+      this.ghost = this.options.createGhost(this.trigger, createGhost, { applyStyles, applyImportantGhostStyles });
+      if (this.ghost) {
+        this.options.ghostContainer.appendChild(this.ghost);
+      }
+    }
+    const top = window.scrollY + this.startY + this.offsetY + this.options.ghostOffset.top;
+    const left = this.startX + this.offsetX + this.options.ghostOffset.left;
+    locateGhost(ghost, [top, left]);
   }
 
   onMouseEnter = (event) => {
-    console.log('enter');
     const el = getClosestDirectChild(this.options.container, event.target);
-    if (el && this.insideElement !== el) {
+    if (!el) {
+      this.insideElement = null;
+    } else if (this.insideElement !== el) {
       this.insideElement = el;
       this.emit('dragOver', el, event);
     }
   }
 
   onMouseLeave = (event) => {
-    console.log('leave');
-    const el = getClosestDirectChild(this.options.container, event.target);
-    console.log(el, event.target, this.insideElement);
-    if (this.insideElement === el) { return; }
-    if (!el) {
-      this.emit('dragLeave', this.insideElement, event);
+    if (this.insideElement === event.target) {
+      const el = this.insideElement;
       this.insideElement = null;
+      this.emit('dragLeave', el, event);
     }
-  }
-
-  sameElement = (event) => {
-    // return this.lastDragLeaveElement === this.lastDragEnterElement;
   }
 
   onDragEnd = () => {
@@ -118,8 +150,20 @@ class DragAndDrop {
     document.body.removeEventListener('mouseenter', this.onMouseEnter, true);
     document.body.removeEventListener('mouseleave', this.onMouseLeave, true);
     this.cleanup();
+    this.removeGhost();
     this.emit('dragEnd');
     this.isDragging = false;
+  }
+
+  createGhost = (element) => {
+    return createGhost(element);
+  }
+
+  removeGhost = () => {
+    if (this.ghost && this.ghost.remove) {
+      this.ghost.remove();
+    }
+    this.ghost = null;
   }
 
   cleanup = () => {

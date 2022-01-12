@@ -99,6 +99,7 @@
             @click="onThumbnailClick(index, $event)"
             :dragged="isReordering && selected.includes(index)"
             :selected="isItemSelected(index)"
+            ref="thumbnail"
             :highlighted="index === selectedIndex"
             :intersected="index === reorderIntersectionId"
             :data-key="index"
@@ -168,6 +169,7 @@ import MediaLibraryModal from "./MediaLibraryModal";
 import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
 
 import DragAndDrop from "../utils/DragAndDrop";
+import {applyImportantGhostStyles} from "../utils/DragAndDrop/utils";
 
 
 const { throttle, debounce } = window._;
@@ -341,7 +343,10 @@ export default {
       this.selected = this.selected.filter((item) => item !== Number(id));
     },
     addSelection(id) {
-      this.selected.push(Number(id));
+      const key = Number(id);
+      if (!this.selected.includes(key)) {
+        this.selected.push(Number(key));
+      }
     },
     toggleSelectAll() {
       if (this.files.length !== this.selectedCount) {
@@ -436,9 +441,9 @@ export default {
     },
 
     // Sortable
-
     registerSortable() {
       this.sortable = new DragAndDrop(this.$refs.layout, {
+        createGhost: this.createGhost,
         on: {
           beforeStart: this.onSortableBeforeStart,
           dragStart: this.onSortableDragStart,
@@ -448,17 +453,75 @@ export default {
         },
       });
     },
+    createGhost(element, fn, { applyStyles, applyImportantGhostStyles }) {
+      const { selectedCount } = this;
+
+      if (selectedCount === 1) {
+        return fn(element);
+      }
+
+      const ghost = document.createElement('div');
+      applyImportantGhostStyles(ghost);
+      let wrapperSizeSet = false;
+
+      const thumbs = this.$refs.thumbnail
+          .filter((thumb) => this.selected.includes(thumb.index))
+          .slice(0, 5)
+          .map((node) => node.$el);
+
+      thumbs.forEach((thumb, index) => {
+        const clone = thumb.cloneNode(true);
+        if (!wrapperSizeSet) {
+          const rect = thumb.getBoundingClientRect();
+          applyStyles(ghost, {
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+          });
+          wrapperSizeSet = true;
+        }
+        const modifiers = {
+          x: 2,
+          y: -1,
+        };
+
+        applyStyles(clone, {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: '100%',
+          height: '100%',
+          opacity: 1,
+          transform: `translateX(${index * modifiers.x}px) translateY(${index * modifiers.y * -1}px)`,
+          zIndex: thumbs.length - index + 1,
+        });
+        ghost.appendChild(clone);
+      });
+
+      const counter = document.createElement('div');
+      counter.classList.add('media-library-ghost-counter');
+      counter.innerText = selectedCount;
+      ghost.appendChild(counter);
+
+      return ghost;
+    },
     resetIntersection() {
       this.reorderIntersectionId = null;
     },
-    onSortableBeforeStart() {
-      if (this.selectedCount === this.filesCount) { return false; }
+    canBeSorted() {
+      return this.selectedCount !== this.filesCount;
     },
-    onSortableDragStart(trigger) {
+    onSortableBeforeStart() {
+      if (!this.canBeSorted()) { return false; }
+    },
+    onSortableDragStart(trigger, stop) {
       this.isReordering = true;
       const id = this.extractId(trigger);
       this.addSelection(id);
       this.preventNextLayoutClick();
+
+      if (!this.canBeSorted()) {
+        stop();
+      }
     },
     onSortableDragOver(el) {
       const id = this.extractId(el);
@@ -478,53 +541,6 @@ export default {
     destroySortable() {
       this.sortable.destroy();
     },
-    // createDragAndDropGhost(element) {
-    //   const rect = element.getBoundingClientRect();
-    //   const ghost = element.cloneNode(true);
-    //
-    //   const styles = {
-    //     margin: 0,
-    //     transform: 'none',
-    //     transition: 'none',
-    //     opacity: 0.8,
-    //     position: 'absolute',
-    //     width: `${rect.width}px`,
-    //     height: `${rect.height}px`,
-    //     // top: `${window.scrollY + rect.top}px`,
-    //     // left: `${rect.left}px`,
-    //     zIndex: '999999',
-    //   };
-    //   Object.keys(styles).forEach((key) => ghost.style[key] = styles[key]);
-    //
-    //   return ghost;
-    // },
-    // onThumbnailDragStart(event) {
-    //   this.disableDragAndDrop();
-    //   const { target } = event;
-    //   const thumbnail = target.closest('.media-library-thumbnail');
-    //
-    //   const ghost = this.createDragAndDropGhost(thumbnail);
-    //   this.ghost = ghost;
-    //   document.body.appendChild(ghost);
-    //   event.dataTransfer.setDragImage(ghost, event.offsetX, event.offsetY);
-    //
-    //
-    //   // thumbnail.addEventListener('dragend', this.onThumbnailDragEnd);
-    //   // const { node, event } = payload;
-    //   // this.disableDragAndDrop();
-    //   // const ghost = this.createDragAndDropGhost(node.$el);
-    //   // this.ghost = ghost;
-    //   // document.body.appendChild(ghost);
-    //   // event.dataTransfer.setDragImage(ghost, 0, 0);
-    // },
-    // onThumbnailDragEnd(event) {
-    //   console.log('dragend');
-    //   const { target } = event;
-    //   const thumbnail = target.closest('.media-library-thumbnail');
-    //   thumbnail.removeEventListener('dragend', this.onDragEnd);
-    //   this.ghost.remove();
-    //   this.enableDragAndDrop();
-    // },
   },
 
   watch: {
