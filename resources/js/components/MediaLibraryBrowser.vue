@@ -16,7 +16,7 @@
         <div
             class="media-library-panel-actions"
             :class="{
-              'media-library-panel-actions-disabled': !selected.length,
+              'media-library-panel-actions-disabled': !selectedCount,
               'media-library-panel-actions-hidden': !files.length,
             }"
         >
@@ -24,7 +24,7 @@
             <div class="media-library-actions-action media-library-action">
               <select
                   class="w-full form-control form-select cursor-pointer"
-                  :disabled="!selected.length"
+                  :disabled="!selectedCount"
                   v-model="action"
               >
                 <option value="none" selected>{{ __('Select an action') }}</option>
@@ -44,14 +44,14 @@
               <span
                   class="media-library-action-select-all-positive text-primary dim no-underline cursor-pointer"
                   @click="selectAll"
-                  v-if="files.length !== selected.length"
+                  v-if="files.length !== selectedCount"
               >
                 {{ __('Select all') }}
               </span>
               <span
                   class="media-library-action-select-all-negative text-primary dim no-underline cursor-pointer"
                   @click="unselectAll"
-                  v-if="selected.length > 0"
+                  v-if="selectedCount"
               >
                 {{ __('Unselect all') }}
               </span>
@@ -68,14 +68,14 @@
               class="media-library-browser-actions-action-for-selected"
               v-if="files.length > 0"
           >
-            {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selected.length }} / {{ files.length }}</span>
+            {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selectedCount }} / {{ files.length }}</span>
           </div>
         </div>
       </div>
 
       <div
           class="media-library-browser-area"
-          @click="unselectAll"
+          @click="onBrowserAreaClick"
       >
         <div
             class="media-library-layout"
@@ -100,7 +100,8 @@
             :dragged="isReordering && selected.includes(index)"
             :selected="isItemSelected(index)"
             :highlighted="index === selectedIndex"
-            :data-id="index"
+            :intersected="index === reorderIntersectionId"
+            :data-key="index"
             active
           />
         </div>
@@ -196,6 +197,7 @@ export default {
       // Sortable drag and drop
       sortable: null,
       isReordering: false,
+      reorderIntersectionId: null,
 
       // Prevent any upload and reorder interactive actions
       inactive: false,
@@ -211,6 +213,9 @@ export default {
       selectedIndex: null,
 
       action: 'none',
+
+      // Prevent next click on layout grid
+      isBrowserAreaClickPrevented: false,
     };
   },
 
@@ -223,7 +228,7 @@ export default {
 
   mounted() {
     this.addDragAndDropEventListeners();
-    // this.registerSortable();
+    this.registerSortable();
   },
 
   beforeDestroy() {
@@ -244,10 +249,37 @@ export default {
     filesNotEmpty() {
       return this.files.length > 0;
     },
+    selectedCount() {
+      return this.selected.length;
+    },
+    filesCount() {
+      return this.files.length;
+    },
   },
 
   methods: {
-    // Todo: move
+    // Actions
+    close() {
+      this.$emit('close');
+    },
+    setUploadingMode() {
+      this.mode = MODES.UPLOADING;
+    },
+    setBrowsingMode() {
+      this.mode = MODES.BROWSING;
+    },
+    preventNextLayoutClick() {
+      this.isBrowserAreaClickPrevented = true;
+    },
+    resetLayoutClickAbility() {
+      this.isBrowserAreaClickPrevented = false;
+    },
+    extractId(element) {
+      if (!element) { return false; }
+      return Number(element.getAttribute('data-key'));
+    },
+
+    // Events
     onThumbnailClick(index, event) {
       const { shiftKey, ctrlKey } = event;
       if (shiftKey && ctrlKey) {
@@ -261,19 +293,24 @@ export default {
         this.beginSelection(index);
       }
     },
-
-    close() {
-      this.$emit('close');
+    onDocumentKeyDown(event) {
+      const { keyCode } = event;
+      // Check for "A" key
+      if (event.ctrlKey && keyCode === 65) {
+        event.preventDefault();
+        this.toggleSelectAll();
+        return false;
+      }
+    },
+    onBrowserAreaClick() {
+      if (this.isBrowserAreaClickPrevented) {
+        this.resetLayoutClickAbility();
+        return;
+      }
+      this.unselectAll();
     },
 
-    setUploadingMode() {
-      this.mode = MODES.UPLOADING;
-    },
-    setBrowsingMode() {
-      this.mode = MODES.BROWSING;
-    },
-
-    // Selected files
+    // Selection logic
     beginSelection(id) {
       this.unselectAll();
       this.addSelection(id);
@@ -307,7 +344,7 @@ export default {
       this.selected.push(Number(id));
     },
     toggleSelectAll() {
-      if (this.files.length !== this.selected.length) {
+      if (this.files.length !== this.selectedCount) {
         this.selectAll();
       } else {
         this.unselectAll();
@@ -353,24 +390,16 @@ export default {
       window.addEventListener('dragover', this.onDragMove);
       window.addEventListener('dragleave', this.onDragMove);
       window.addEventListener('dragend', this.onDragEnd);
-      document.addEventListener('keydown', this.onKeyDown);
+      document.addEventListener('keydown', this.onDocumentKeyDown);
     },
     removeDragAndDropEventListeners() {
       window.removeEventListener('drop', this.onDrop);
       window.removeEventListener('dragover', this.onDragMove);
       window.removeEventListener('dragleave', this.onDragMove);
       window.removeEventListener('dragend', this.onDragEnd);
-      document.removeEventListener('keydown', this.onKeyDown);
+      document.removeEventListener('keydown', this.onDocumentKeyDown);
     },
-    onKeyDown(event) {
-      const { keyCode } = event;
-      // Check for "A" key
-      if (event.ctrlKey && keyCode === 65) {
-        event.preventDefault();
-        this.toggleSelectAll();
-        return false;
-      }
-    },
+
     onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
         event.preventDefault();
@@ -407,22 +436,45 @@ export default {
     },
 
     // Sortable
-    // registerSortable() {
-    //   this.sortable = new DragAndDrop(this.$refs.layout, {
-    //     on: {
-    //       dragStart: (el) => {
-    //         console.log(el);
-    //         this.isReordering = true;
-    //         const { id } = el.dataset;
-    //         this.addSelection(id);
-    //       },
-    //       dragEnd: () => {
-    //         this.isReordering = false;
-    //       },
-    //     },
-    //   });
-    //   // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
-    // },
+
+    registerSortable() {
+      this.sortable = new DragAndDrop(this.$refs.layout, {
+        on: {
+          beforeStart: this.onSortableBeforeStart,
+          dragStart: this.onSortableDragStart,
+          dragOver: this.onSortableDragOver,
+          dragLeave: this.onSortableDragLeave,
+          dragEnd: this.onSortableDragEnd,
+        },
+      });
+    },
+    resetIntersection() {
+      this.reorderIntersectionId = null;
+    },
+    onSortableBeforeStart() {
+      if (this.selectedCount === this.filesCount) { return false; }
+    },
+    onSortableDragStart(trigger) {
+      this.isReordering = true;
+      const id = this.extractId(trigger);
+      this.addSelection(id);
+      this.preventNextLayoutClick();
+    },
+    onSortableDragOver(el) {
+      const id = this.extractId(el);
+      if (this.selected.includes(id)) {
+        this.resetIntersection();
+      } else {
+        this.reorderIntersectionId = id;
+      }
+    },
+    onSortableDragLeave(el) {
+      this.resetIntersection();
+    },
+    onSortableDragEnd() {
+      this.isReordering = false;
+
+    },
     destroySortable() {
       this.sortable.destroy();
     },

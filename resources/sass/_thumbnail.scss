@@ -29,6 +29,11 @@
     border-style: dashed;
     background: greenyellow;
   }
+
+  &-intersected {
+    background-color: greenyellow;
+    border-color: green;
+  }
 }
 
 .media-library-thumbnail-head {

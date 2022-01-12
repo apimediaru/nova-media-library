@@ -6,9 +6,10 @@
         'media-library-thumbnail-disabled': !active,
         'media-library-thumbnail-highlighted': highlighted,
         'media-library-thumbnail-dragged': dragged,
+        'media-library-thumbnail-intersected': intersected,
       }"
       :title="name"
-      @click.prevent.stop="onThumbnailClick"
+      v-on="listeners"
   >
     <div class="media-library-thumbnail-head">
       <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image" draggable="false">
@@ -37,17 +38,35 @@ export default {
     selected: Boolean,
     highlighted: Boolean,
     dragged: Boolean,
+    processContextMenu: Boolean,
+    intersected: Boolean,
   },
 
   computed: {
     hasIndex() {
       return this.index !== null;
     },
+    listeners() {
+      const listeners = {
+        click: this.onThumbnailClick,
+      };
+      if (this.processContextMenu) {
+        listeners.contextmenu = this.onContextMenu;
+      }
+      return listeners;
+    },
   },
 
   methods: {
     onThumbnailClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
       this.$emit('click', event);
+    },
+    onContextMenu(event) {
+      event.preventDefault();
+      this.$emit('contextmenu', event);
+      return false;
     },
   },
 }

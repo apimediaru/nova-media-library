@@ -193,6 +193,10 @@
   border-style: dashed;
   background: greenyellow;
 }
+.media-library-thumbnail-intersected {
+  background-color: greenyellow;
+  border-color: green;
+}
 
 .media-library-thumbnail-head {
   padding-top: 75%;

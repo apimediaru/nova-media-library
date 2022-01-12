@@ -346,6 +346,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 
@@ -373,6 +374,7 @@ var MODES = Object.freeze({
       // Sortable drag and drop
       sortable: null,
       isReordering: false,
+      reorderIntersectionId: null,
       // Prevent any upload and reorder interactive actions
       inactive: false,
       // Uploaded files
@@ -382,7 +384,9 @@ var MODES = Object.freeze({
       // Array of selected files IDs
       selected: [],
       selectedIndex: null,
-      action: 'none'
+      action: 'none',
+      // Prevent next click on layout grid
+      isBrowserAreaClickPrevented: false
     };
   },
   props: {
@@ -394,7 +398,8 @@ var MODES = Object.freeze({
     }
   },
   mounted: function mounted() {
-    this.addDragAndDropEventListeners(); // this.registerSortable();
+    this.addDragAndDropEventListeners();
+    this.registerSortable();
   },
   beforeDestroy: function beforeDestroy() {
     this.removeDragAndDropEventListeners();
@@ -412,10 +417,39 @@ var MODES = Object.freeze({
     },
     filesNotEmpty: function filesNotEmpty() {
       return this.files.length > 0;
+    },
+    selectedCount: function selectedCount() {
+      return this.selected.length;
+    },
+    filesCount: function filesCount() {
+      return this.files.length;
     }
   },
   methods: {
-    // Todo: move
+    // Actions
+    close: function close() {
+      this.$emit('close');
+    },
+    setUploadingMode: function setUploadingMode() {
+      this.mode = MODES.UPLOADING;
+    },
+    setBrowsingMode: function setBrowsingMode() {
+      this.mode = MODES.BROWSING;
+    },
+    preventNextLayoutClick: function preventNextLayoutClick() {
+      this.isBrowserAreaClickPrevented = true;
+    },
+    resetLayoutClickAbility: function resetLayoutClickAbility() {
+      this.isBrowserAreaClickPrevented = false;
+    },
+    extractId: function extractId(element) {
+      if (!element) {
+        return false;
+      }
+
+      return Number(element.getAttribute('data-key'));
+    },
+    // Events
     onThumbnailClick: function onThumbnailClick(index, event) {
       var shiftKey = event.shiftKey,
           ctrlKey = event.ctrlKey;
@@ -431,16 +465,24 @@ var MODES = Object.freeze({
         this.beginSelection(index);
       }
     },
-    close: function close() {
-      this.$emit('close');
+    onDocumentKeyDown: function onDocumentKeyDown(event) {
+      var keyCode = event.keyCode; // Check for "A" key
+
+      if (event.ctrlKey && keyCode === 65) {
+        event.preventDefault();
+        this.toggleSelectAll();
+        return false;
+      }
     },
-    setUploadingMode: function setUploadingMode() {
-      this.mode = MODES.UPLOADING;
+    onBrowserAreaClick: function onBrowserAreaClick() {
+      if (this.isBrowserAreaClickPrevented) {
+        this.resetLayoutClickAbility();
+        return;
+      }
+
+      this.unselectAll();
     },
-    setBrowsingMode: function setBrowsingMode() {
-      this.mode = MODES.BROWSING;
-    },
-    // Selected files
+    // Selection logic
     beginSelection: function beginSelection(id) {
       this.unselectAll();
       this.addSelection(id);
@@ -480,7 +522,7 @@ var MODES = Object.freeze({
       this.selected.push(Number(id));
     },
     toggleSelectAll: function toggleSelectAll() {
-      if (this.files.length !== this.selected.length) {
+      if (this.files.length !== this.selectedCount) {
         this.selectAll();
       } else {
         this.unselectAll();
@@ -528,23 +570,14 @@ var MODES = Object.freeze({
       window.addEventListener('dragover', this.onDragMove);
       window.addEventListener('dragleave', this.onDragMove);
       window.addEventListener('dragend', this.onDragEnd);
-      document.addEventListener('keydown', this.onKeyDown);
+      document.addEventListener('keydown', this.onDocumentKeyDown);
     },
     removeDragAndDropEventListeners: function removeDragAndDropEventListeners() {
       window.removeEventListener('drop', this.onDrop);
       window.removeEventListener('dragover', this.onDragMove);
       window.removeEventListener('dragleave', this.onDragMove);
       window.removeEventListener('dragend', this.onDragEnd);
-      document.removeEventListener('keydown', this.onKeyDown);
-    },
-    onKeyDown: function onKeyDown(event) {
-      var keyCode = event.keyCode; // Check for "A" key
-
-      if (event.ctrlKey && keyCode === 65) {
-        event.preventDefault();
-        this.toggleSelectAll();
-        return false;
-      }
+      document.removeEventListener('keydown', this.onDocumentKeyDown);
     },
     onDrop: function onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
@@ -585,22 +618,46 @@ var MODES = Object.freeze({
       return element && element.matches('.media-library-dropzone-input');
     },
     // Sortable
-    // registerSortable() {
-    //   this.sortable = new DragAndDrop(this.$refs.layout, {
-    //     on: {
-    //       dragStart: (el) => {
-    //         console.log(el);
-    //         this.isReordering = true;
-    //         const { id } = el.dataset;
-    //         this.addSelection(id);
-    //       },
-    //       dragEnd: () => {
-    //         this.isReordering = false;
-    //       },
-    //     },
-    //   });
-    //   // this.$refs.layout.addEventListener('dragstart', this.onThumbnailDragStart);
-    // },
+    registerSortable: function registerSortable() {
+      this.sortable = new _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__["default"](this.$refs.layout, {
+        on: {
+          beforeStart: this.onSortableBeforeStart,
+          dragStart: this.onSortableDragStart,
+          dragOver: this.onSortableDragOver,
+          dragLeave: this.onSortableDragLeave,
+          dragEnd: this.onSortableDragEnd
+        }
+      });
+    },
+    resetIntersection: function resetIntersection() {
+      this.reorderIntersectionId = null;
+    },
+    onSortableBeforeStart: function onSortableBeforeStart() {
+      if (this.selectedCount === this.filesCount) {
+        return false;
+      }
+    },
+    onSortableDragStart: function onSortableDragStart(trigger) {
+      this.isReordering = true;
+      var id = this.extractId(trigger);
+      this.addSelection(id);
+      this.preventNextLayoutClick();
+    },
+    onSortableDragOver: function onSortableDragOver(el) {
+      var id = this.extractId(el);
+
+      if (this.selected.includes(id)) {
+        this.resetIntersection();
+      } else {
+        this.reorderIntersectionId = id;
+      }
+    },
+    onSortableDragLeave: function onSortableDragLeave(el) {
+      this.resetIntersection();
+    },
+    onSortableDragEnd: function onSortableDragEnd() {
+      this.isReordering = false;
+    },
     destroySortable: function destroySortable() {
       this.sortable.destroy();
     } // createDragAndDropGhost(element) {
@@ -769,6 +826,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MediaLibraryGalleryItem",
   props: {
@@ -780,16 +838,36 @@ __webpack_require__.r(__webpack_exports__);
     active: Boolean,
     selected: Boolean,
     highlighted: Boolean,
-    dragged: Boolean
+    dragged: Boolean,
+    processContextMenu: Boolean,
+    intersected: Boolean
   },
   computed: {
     hasIndex: function hasIndex() {
       return this.index !== null;
+    },
+    listeners: function listeners() {
+      var listeners = {
+        click: this.onThumbnailClick
+      };
+
+      if (this.processContextMenu) {
+        listeners.contextmenu = this.onContextMenu;
+      }
+
+      return listeners;
     }
   },
   methods: {
     onThumbnailClick: function onThumbnailClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
       this.$emit('click', event);
+    },
+    onContextMenu: function onContextMenu(event) {
+      event.preventDefault();
+      this.$emit('contextmenu', event);
+      return false;
     }
   }
 });
@@ -858,7 +936,7 @@ var getClosestDirectChild = function getClosestDirectChild(container, element) {
   return false;
 };
 
-var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
+var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(_el) {
   var _this = this;
 
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -868,6 +946,8 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
   _defineProperty(this, "isDragging", false);
 
   _defineProperty(this, "trigger", null);
+
+  _defineProperty(this, "insideElement", false);
 
   _defineProperty(this, "destroy", function () {});
 
@@ -890,7 +970,7 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
         args[_key - 1] = arguments[_key];
       }
 
-      fn.apply(_this, args);
+      return fn.apply(_this, args);
     }
   });
 
@@ -902,18 +982,57 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
     }
 
     _this.trigger = trigger;
-    _this.clickTimeout = window.setTimeout(_this.onDragStart, _this.options.clickDelay);
-  });
 
-  _defineProperty(this, "onMouseMove", function () {// console.log('mousemove');
+    var legit = _this.emit('beforeStart', trigger);
+
+    if (legit === false) {
+      return;
+    }
+
+    _this.clickTimeout = window.setTimeout(_this.onDragStart, _this.options.clickDelay);
   });
 
   _defineProperty(this, "onDragStart", function () {
     _this.isDragging = true;
     console.log('started dragging');
     document.addEventListener('mousemove', _this.onMouseMove);
+    document.body.addEventListener('mouseenter', _this.onMouseEnter, true);
+    document.body.addEventListener('mouseleave', _this.onMouseLeave, true);
 
     _this.emit('dragStart', _this.trigger);
+  });
+
+  _defineProperty(this, "onMouseMove", function () {// console.log('mousemove');
+  });
+
+  _defineProperty(this, "onMouseEnter", function (event) {
+    console.log('enter');
+    var el = getClosestDirectChild(_this.options.container, event.target);
+
+    if (el && _this.insideElement !== el) {
+      _this.insideElement = el;
+
+      _this.emit('dragOver', el, event);
+    }
+  });
+
+  _defineProperty(this, "onMouseLeave", function (event) {
+    console.log('leave');
+    var el = getClosestDirectChild(_this.options.container, event.target);
+    console.log(el, event.target, _this.insideElement);
+
+    if (_this.insideElement === el) {
+      return;
+    }
+
+    if (!el) {
+      _this.emit('dragLeave', _this.insideElement, event);
+
+      _this.insideElement = null;
+    }
+  });
+
+  _defineProperty(this, "sameElement", function (event) {// return this.lastDragLeaveElement === this.lastDragEnterElement;
   });
 
   _defineProperty(this, "onDragEnd", function () {
@@ -923,18 +1042,30 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(el) {
 
     console.log('ended dragging');
     document.removeEventListener('mousemove', _this.onMouseMove);
+    document.body.removeEventListener('mouseenter', _this.onMouseEnter, true);
+    document.body.removeEventListener('mouseleave', _this.onMouseLeave, true);
+
+    _this.cleanup();
 
     _this.emit('dragEnd');
 
     _this.isDragging = false;
   });
 
+  _defineProperty(this, "cleanup", function () {
+    _this.lastDragEnterElement = null;
+    _this.lastDragLeaveElement = null;
+  });
+
   this.options = Object.assign({
-    container: el,
+    container: _el,
     ghostContainer: document.body,
     clickDelay: 250,
     on: {
+      beforeStart: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
       dragStart: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
+      dragOver: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
+      dragLeave: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
       dragMove: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
       dragEnd: _utils__WEBPACK_IMPORTED_MODULE_0__.noop
     },
@@ -27983,7 +28114,7 @@ var render = function () {
               {
                 staticClass: "media-library-panel-actions",
                 class: {
-                  "media-library-panel-actions-disabled": !_vm.selected.length,
+                  "media-library-panel-actions-disabled": !_vm.selectedCount,
                   "media-library-panel-actions-hidden": !_vm.files.length,
                 },
               },
@@ -28015,7 +28146,7 @@ var render = function () {
                             ],
                             staticClass:
                               "w-full form-control form-select cursor-pointer",
-                            attrs: { disabled: !_vm.selected.length },
+                            attrs: { disabled: !_vm.selectedCount },
                             on: {
                               change: function ($event) {
                                 var $$selectedVal = Array.prototype.filter
@@ -28087,7 +28218,7 @@ var render = function () {
                           "media-library-actions-action media-library-action media-library-action-select-all",
                       },
                       [
-                        _vm.files.length !== _vm.selected.length
+                        _vm.files.length !== _vm.selectedCount
                           ? _c(
                               "span",
                               {
@@ -28105,7 +28236,7 @@ var render = function () {
                             )
                           : _vm._e(),
                         _vm._v(" "),
-                        _vm.selected.length > 0
+                        _vm.selectedCount
                           ? _c(
                               "span",
                               {
@@ -28160,7 +28291,7 @@ var render = function () {
                           },
                           [
                             _vm._v(
-                              _vm._s(_vm.selected.length) +
+                              _vm._s(_vm.selectedCount) +
                                 " / " +
                                 _vm._s(_vm.files.length)
                             ),
@@ -28177,7 +28308,7 @@ var render = function () {
             "div",
             {
               staticClass: "media-library-browser-area",
-              on: { click: _vm.unselectAll },
+              on: { click: _vm.onBrowserAreaClick },
             },
             [
               _c(
@@ -28217,7 +28348,8 @@ var render = function () {
                               _vm.isReordering && _vm.selected.includes(index),
                             selected: _vm.isItemSelected(index),
                             highlighted: index === _vm.selectedIndex,
-                            "data-id": index,
+                            intersected: index === _vm.reorderIntersectionId,
+                            "data-key": index,
                             active: "",
                           },
                           on: {
@@ -28423,23 +28555,20 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    {
-      staticClass: "media-library-thumbnail",
-      class: {
-        "media-library-thumbnail-selected": _vm.selected,
-        "media-library-thumbnail-disabled": !_vm.active,
-        "media-library-thumbnail-highlighted": _vm.highlighted,
-        "media-library-thumbnail-dragged": _vm.dragged,
-      },
-      attrs: { title: _vm.name },
-      on: {
-        click: function ($event) {
-          $event.preventDefault()
-          $event.stopPropagation()
-          return _vm.onThumbnailClick.apply(null, arguments)
+    _vm._g(
+      {
+        staticClass: "media-library-thumbnail",
+        class: {
+          "media-library-thumbnail-selected": _vm.selected,
+          "media-library-thumbnail-disabled": !_vm.active,
+          "media-library-thumbnail-highlighted": _vm.highlighted,
+          "media-library-thumbnail-dragged": _vm.dragged,
+          "media-library-thumbnail-intersected": _vm.intersected,
         },
+        attrs: { title: _vm.name },
       },
-    },
+      _vm.listeners
+    ),
     [
       _vm._m(0),
       _vm._v(" "),
