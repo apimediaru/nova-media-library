@@ -1,15 +1,11 @@
 class DragAndDropManager {
+  dds = {}
+
   constructor() {
-    this.dds = {};
-
-    this.onMouseUp = () => {
-      Object.keys(this.dds).forEach((group) => this.dds[group].stop());
-    }
-
-    this.register();
+    this.initialize();
   }
 
-  register() {
+  initialize() {
     document.addEventListener('mouseup', this.onMouseUp);
   }
 
@@ -17,8 +13,24 @@ class DragAndDropManager {
     document.removeEventListener('mouseup', this.onMouseUp);
   }
 
-  registerDD(group, dd) {
+  onMouseUp = () => {
+    Object.keys(this.dds).forEach(this.stop);
+  }
+
+  stop = (group) => {
+    const { dds } = this;
+    if (dds[group]) {
+      dds[group].stop();
+    }
+  }
+
+  register = (group, dd) => {
     this.dds[group] = dd;
+  }
+
+  unregister = (group) => {
+    this.stop(group);
+    delete this.dds[group];
   }
 }
 

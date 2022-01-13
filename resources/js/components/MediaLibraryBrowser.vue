@@ -450,7 +450,7 @@ export default {
           dragStart: this.onSortableDragStart,
           dragOver: this.onSortableDragOver,
           dragLeave: this.onSortableDragLeave,
-          dragEnd: this.onSortableDragEnd,
+          drop: this.onSortableDrop,
         },
       });
     },
@@ -481,7 +481,7 @@ export default {
           wrapperSizeSet = true;
         }
         const modifiers = {
-          x: 2,
+          x: 3,
           y: -1,
         };
 
@@ -540,9 +540,11 @@ export default {
     onSortableDragLeave(el) {
       this.resetIntersection();
     },
-    onSortableDragEnd() {
+    onSortableDrop(element) {
       this.isReordering = false;
 
+      // Todo: remove
+      console.log(element);
     },
     destroySortable() {
       this.sortable.destroy();

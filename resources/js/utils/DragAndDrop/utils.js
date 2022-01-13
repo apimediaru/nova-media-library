@@ -31,3 +31,16 @@ export const createGhost = (element) => {
 
   return ghost;
 }
+
+export const getClosestDirectChild = (container, element) => {
+  if ((!container || !element) || container === element) { return false; }
+
+  const { children } = container;
+  for (let target = element; target && target !== container; target = target.parentNode) {
+    if (Array.prototype.includes.call(children, target)) {
+      return target;
+    }
+  }
+
+  return false;
+};

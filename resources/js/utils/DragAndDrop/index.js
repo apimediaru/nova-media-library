@@ -1,28 +1,27 @@
-import { noop, getXY, createGhost, applyImportantGhostStyles, applyStyles } from "./utils";
-import merge from 'lodash/merge';
+import { noop, getXY, createGhost, applyImportantGhostStyles, applyStyles, getClosestDirectChild } from "./utils";
 import manager from './manager';
-const { _ } = window;
-
-const getClosestDirectChild = (container, element) => {
-  if ((!container || !element) || container === element) { return false; }
-
-  const { children } = container;
-  for (let target = element; target && target !== container; target = target.parentNode) {
-    if (Array.prototype.includes.call(children, target)) {
-      return target;
-    }
-  }
-
-  return false;
-};
+const { merge, throttle } = window._;
 
 class DragAndDrop {
+  // Dragging flag
   isDragging = false;
+
+  // Trigger that activated drag&drop
   trigger = null;
-  insideElement = false;
+
+  // Link to ghost element
   ghost = null;
+
+  // Click threshold timeout id
   clickTimeout = null;
 
+  // Options
+  options = {}
+
+  // Currently hovered element
+  current = null;
+
+  // Mouse coordinates properties
   startX = null;
   startY = null;
   deltaX = null;
@@ -31,7 +30,8 @@ class DragAndDrop {
   offsetY = null;
 
   constructor(el, options = {}) {
-    this.options = _.merge({
+    // Merge options
+    this.options = merge({
       container: el,
       createGhost: this.createGhost,
       ghostContainer: document.body,
@@ -47,18 +47,22 @@ class DragAndDrop {
         dragOver: noop,
         dragLeave: noop,
         dragMove: noop,
-        dragEnd: noop,
+        drop: noop,
       },
       group: 'default',
+      throttle: 25,
     }, options);
 
     this.registerEvents();
 
-    manager.registerDD(this.options.group, this);
+    // Throttle mousemove event handler
+    this.onMouseMove = throttle(this.onMouseMove.bind(this), Number(this.options.throttle));
+
+    manager.register(this.options.group, this);
   }
 
   destroy = () => {
-
+    manager.unregister(this.options.group);
   }
 
   registerEvents = () => {
@@ -112,6 +116,9 @@ class DragAndDrop {
     // Set dragging flag
     this.isDragging = true;
 
+    // Todo: remove
+    console.log('started dragging');
+
     // Create ghost and locate it
     const ghost = this.options.createGhost(this.trigger, createGhost, { applyStyles, applyImportantGhostStyles });
     this.ghost = ghost;
@@ -161,30 +168,42 @@ class DragAndDrop {
   onMouseEnter = (event) => {
     const el = getClosestDirectChild(this.options.container, event.target);
     if (!el) {
-      this.insideElement = null;
-    } else if (this.insideElement !== el) {
-      this.insideElement = el;
+      this.current = null;
+    } else if (this.current !== el) {
+      this.current = el;
       this.emit('dragOver', el, event);
     }
   }
 
   onMouseLeave = (event) => {
-    if (this.insideElement === event.target) {
-      const el = this.insideElement;
-      this.insideElement = null;
+    if (this.current === event.target) {
+      const el = this.current;
+      this.current = null;
       this.emit('dragLeave', el, event);
     }
   }
 
   onDragEnd = () => {
     if (!this.isDragging) { return; }
+
+    // Todo: remove
     console.log('ended dragging');
+
+    // Remove event listeners
     document.removeEventListener('mousemove', this.onMouseMove);
     document.body.removeEventListener('mouseenter', this.onMouseEnter, true);
     document.body.removeEventListener('mouseleave', this.onMouseLeave, true);
-    this.cleanup();
+
+    // Remove ghost from its container
     this.removeGhost();
-    this.emit('dragEnd');
+
+    // Emit 'drop' event
+    this.emit('drop', this.current);
+
+    // Reset core logic properties
+    this.cleanup();
+
+    // Reset dragging flag
     this.isDragging = false;
   }
 
@@ -201,8 +220,7 @@ class DragAndDrop {
   }
 
   cleanup = () => {
-    this.lastDragEnterElement = null;
-    this.lastDragLeaveElement = null;
+    this.current = null;
 
     this.startX = null;
     this.startY = null;
