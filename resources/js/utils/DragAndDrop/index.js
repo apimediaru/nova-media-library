@@ -16,13 +16,6 @@ const getClosestDirectChild = (container, element) => {
   return false;
 };
 
-const locateGhost = (element, [top, left] = []) => {
-  if (element) {
-    element.style.setProperty('top', `${top}px`);
-    element.style.setProperty('left', `${left}px`);
-  }
-}
-
 class DragAndDrop {
   isDragging = false;
   trigger = null;
@@ -49,6 +42,7 @@ class DragAndDrop {
       clickDelay: 250,
       on: {
         beforeStart: noop,
+        beforeDragStart: (trigger, stop, next) => next(),
         dragStart: noop,
         dragOver: noop,
         dragLeave: noop,
@@ -85,44 +79,83 @@ class DragAndDrop {
     }
   }
 
-  // Handlers
   onMouseDown = (event) => {
+    // Get trigger and save it
     const trigger = getClosestDirectChild(this.options.container, event.target);
     if (!trigger) { return; }
     this.trigger = trigger;
-    const legit = this.emit('beforeStart', trigger);
-    if (legit === false) { return; }
+
+    // Check that further processing is allowed
+    const proceed = this.emit('beforeStart', trigger);
+    if (proceed === false) { return; }
+
+    // Get event mouse position and save deltas
     const xy = getXY(event);
     this.startX = xy[0];
     this.startY = xy[1];
     this.deltaX = this.startX - trigger.offsetLeft;
     this.deltaY = this.startY - trigger.offsetTop;
-    this.clickTimeout = window.setTimeout(this.onDragStart, this.options.clickDelay);
+
+    // Track mousemove event
+    document.addEventListener('mousemove', this.onMouseMove);
+
+    // Set timeout that prevents element from being dragging instantly
+    this.clickTimeout = window.setTimeout(this.onBeforeDragStart, this.options.clickDelay);
   }
 
-  onDragStart = () => {
+  onBeforeDragStart = () => {
+    // Emit 'beforeDragStart' event that should call next callback to proceed, or stop to stop dragging
+    this.emit('beforeDragStart', this.trigger, this.stop, this.startDragging);
+  }
+
+  startDragging = () => {
+    // Set dragging flag
     this.isDragging = true;
-    console.log('started dragging');
-    document.addEventListener('mousemove', this.onMouseMove);
+
+    // Create ghost and locate it
+    const ghost = this.options.createGhost(this.trigger, createGhost, { applyStyles, applyImportantGhostStyles });
+    this.ghost = ghost;
+    if (ghost) {
+      this.options.ghostContainer.appendChild(ghost);
+      this.updateGhostPosition();
+    }
+
+    // Attach mouseenter and mouseleave events to track intersections
     document.body.addEventListener('mouseenter', this.onMouseEnter, true);
     document.body.addEventListener('mouseleave', this.onMouseLeave, true);
+
+    // Emit 'dragStart' event
     this.emit('dragStart', this.trigger, this.stop);
   }
 
   onMouseMove = (event) => {
-    const xy =  getXY(event);
+    // Store coordinates
+    const xy = getXY(event);
     this.offsetX = xy[0] - this.startX;
     this.offsetY = xy[1] - this.startY;
-    const { ghost } = this;
-    if (ghost === null) {
-      this.ghost = this.options.createGhost(this.trigger, createGhost, { applyStyles, applyImportantGhostStyles });
-      if (this.ghost) {
-        this.options.ghostContainer.appendChild(this.ghost);
-      }
+
+    // If dragging in progress perform actions
+    if (this.isDragging) {
+      // Update ghost position
+      this.updateGhostPosition();
     }
-    const top = window.scrollY + this.startY + this.offsetY + this.options.ghostOffset.top;
-    const left = this.startX + this.offsetX + this.options.ghostOffset.left;
-    locateGhost(ghost, [top, left]);
+  }
+
+  updateGhostPosition = () => {
+    const { ghost } = this;
+    if (ghost) {
+      const [left, top] = this.getGhostXYPosition();
+      ghost.style.setProperty('top', `${top}px`);
+      ghost.style.setProperty('left', `${left}px`);
+    }
+  }
+
+  // Return [x, y] ghost position
+  getGhostXYPosition = () => {
+    return [
+      this.startX + this.offsetX + this.options.ghostOffset.left,
+      window.scrollY + this.offsetY + this.deltaY + this.options.ghostOffset.top,
+    ];
   }
 
   onMouseEnter = (event) => {
@@ -155,6 +188,7 @@ class DragAndDrop {
     this.isDragging = false;
   }
 
+  // Utilities
   createGhost = (element) => {
     return createGhost(element);
   }
@@ -169,6 +203,15 @@ class DragAndDrop {
   cleanup = () => {
     this.lastDragEnterElement = null;
     this.lastDragLeaveElement = null;
+
+    this.startX = null;
+    this.startY = null;
+
+    this.deltaX = null;
+    this.deltaY = null;
+
+    this.offsetX = null;
+    this.offsetY = null;
   }
 }
 

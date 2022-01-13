@@ -630,6 +630,7 @@ var MODES = Object.freeze({
         createGhost: this.createGhost,
         on: {
           beforeStart: this.onSortableBeforeStart,
+          beforeDragStart: this.onSortableBeforeDragStart,
           dragStart: this.onSortableDragStart,
           dragOver: this.onSortableDragOver,
           dragLeave: this.onSortableDragLeave,
@@ -694,18 +695,21 @@ var MODES = Object.freeze({
       this.reorderIntersectionId = null;
     },
     canBeSorted: function canBeSorted() {
-      return this.selectedCount !== this.filesCount;
+      return this.selectedCount && this.selectedCount !== this.filesCount;
     },
     onSortableBeforeStart: function onSortableBeforeStart() {
-      if (!this.canBeSorted()) {
-        return false;
-      }
+      return this.canBeSorted();
     },
-    onSortableDragStart: function onSortableDragStart(trigger, stop) {
-      this.isReordering = true;
+    onSortableBeforeDragStart: function onSortableBeforeDragStart(trigger, stop, next) {
       var id = this.extractId(trigger);
       this.addSelection(id);
       this.preventNextLayoutClick();
+      this.$nextTick(function () {
+        next();
+      });
+    },
+    onSortableDragStart: function onSortableDragStart(trigger, stop) {
+      this.isReordering = true;
 
       if (!this.canBeSorted()) {
         stop();
@@ -848,6 +852,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MediaLibraryGalleryItem",
   props: {
@@ -861,7 +866,11 @@ __webpack_require__.r(__webpack_exports__);
     highlighted: Boolean,
     dragged: Boolean,
     processContextMenu: Boolean,
-    intersected: Boolean
+    intersected: Boolean,
+    extension: {
+      type: [Boolean, String],
+      "default": false
+    }
   },
   computed: {
     hasIndex: function hasIndex() {
@@ -932,14 +941,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lodash_merge__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash/merge */ "./node_modules/lodash/merge.js");
 /* harmony import */ var lodash_merge__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_merge__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _manager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./manager */ "./resources/js/utils/DragAndDrop/manager.js");
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -951,6 +952,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -972,18 +981,6 @@ var getClosestDirectChild = function getClosestDirectChild(container, element) {
   }
 
   return false;
-};
-
-var locateGhost = function locateGhost(element) {
-  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [],
-      _ref2 = _slicedToArray(_ref, 2),
-      top = _ref2[0],
-      left = _ref2[1];
-
-  if (element) {
-    element.style.setProperty('top', "".concat(top, "px"));
-    element.style.setProperty('left', "".concat(left, "px"));
-  }
 };
 
 var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(_el) {
@@ -1041,58 +1038,90 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(_el) {
   });
 
   _defineProperty(this, "onMouseDown", function (event) {
+    // Get trigger and save it
     var trigger = getClosestDirectChild(_this.options.container, event.target);
 
     if (!trigger) {
       return;
     }
 
-    _this.trigger = trigger;
+    _this.trigger = trigger; // Check that further processing is allowed
 
-    var legit = _this.emit('beforeStart', trigger);
+    var proceed = _this.emit('beforeStart', trigger);
 
-    if (legit === false) {
+    if (proceed === false) {
       return;
-    }
+    } // Get event mouse position and save deltas
+
 
     var xy = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getXY)(event);
     _this.startX = xy[0];
     _this.startY = xy[1];
     _this.deltaX = _this.startX - trigger.offsetLeft;
-    _this.deltaY = _this.startY - trigger.offsetTop;
-    _this.clickTimeout = window.setTimeout(_this.onDragStart, _this.options.clickDelay);
+    _this.deltaY = _this.startY - trigger.offsetTop; // Track mousemove event
+
+    document.addEventListener('mousemove', _this.onMouseMove); // Set timeout that prevents element from being dragging instantly
+
+    _this.clickTimeout = window.setTimeout(_this.onBeforeDragStart, _this.options.clickDelay);
   });
 
-  _defineProperty(this, "onDragStart", function () {
-    _this.isDragging = true;
-    console.log('started dragging');
-    document.addEventListener('mousemove', _this.onMouseMove);
+  _defineProperty(this, "onBeforeDragStart", function () {
+    // Emit 'beforeDragStart' event that should call next callback to proceed, or stop to stop dragging
+    _this.emit('beforeDragStart', _this.trigger, _this.stop, _this.startDragging);
+  });
+
+  _defineProperty(this, "startDragging", function () {
+    // Set dragging flag
+    _this.isDragging = true; // Create ghost and locate it
+
+    var ghost = _this.options.createGhost(_this.trigger, _utils__WEBPACK_IMPORTED_MODULE_0__.createGhost, {
+      applyStyles: _utils__WEBPACK_IMPORTED_MODULE_0__.applyStyles,
+      applyImportantGhostStyles: _utils__WEBPACK_IMPORTED_MODULE_0__.applyImportantGhostStyles
+    });
+
+    _this.ghost = ghost;
+
+    if (ghost) {
+      _this.options.ghostContainer.appendChild(ghost);
+
+      _this.updateGhostPosition();
+    } // Attach mouseenter and mouseleave events to track intersections
+
+
     document.body.addEventListener('mouseenter', _this.onMouseEnter, true);
-    document.body.addEventListener('mouseleave', _this.onMouseLeave, true);
+    document.body.addEventListener('mouseleave', _this.onMouseLeave, true); // Emit 'dragStart' event
 
     _this.emit('dragStart', _this.trigger, _this.stop);
   });
 
   _defineProperty(this, "onMouseMove", function (event) {
+    // Store coordinates
     var xy = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getXY)(event);
     _this.offsetX = xy[0] - _this.startX;
-    _this.offsetY = xy[1] - _this.startY;
+    _this.offsetY = xy[1] - _this.startY; // If dragging in progress perform actions
+
+    if (_this.isDragging) {
+      // Update ghost position
+      _this.updateGhostPosition();
+    }
+  });
+
+  _defineProperty(this, "updateGhostPosition", function () {
     var ghost = _this.ghost;
 
-    if (ghost === null) {
-      _this.ghost = _this.options.createGhost(_this.trigger, _utils__WEBPACK_IMPORTED_MODULE_0__.createGhost, {
-        applyStyles: _utils__WEBPACK_IMPORTED_MODULE_0__.applyStyles,
-        applyImportantGhostStyles: _utils__WEBPACK_IMPORTED_MODULE_0__.applyImportantGhostStyles
-      });
+    if (ghost) {
+      var _this$getGhostXYPosit = _this.getGhostXYPosition(),
+          _this$getGhostXYPosit2 = _slicedToArray(_this$getGhostXYPosit, 2),
+          left = _this$getGhostXYPosit2[0],
+          top = _this$getGhostXYPosit2[1];
 
-      if (_this.ghost) {
-        _this.options.ghostContainer.appendChild(_this.ghost);
-      }
+      ghost.style.setProperty('top', "".concat(top, "px"));
+      ghost.style.setProperty('left', "".concat(left, "px"));
     }
+  });
 
-    var top = window.scrollY + _this.startY + _this.offsetY + _this.options.ghostOffset.top;
-    var left = _this.startX + _this.offsetX + _this.options.ghostOffset.left;
-    locateGhost(ghost, [top, left]);
+  _defineProperty(this, "getGhostXYPosition", function () {
+    return [_this.startX + _this.offsetX + _this.options.ghostOffset.left, window.scrollY + _this.offsetY + _this.deltaY + _this.options.ghostOffset.top];
   });
 
   _defineProperty(this, "onMouseEnter", function (event) {
@@ -1150,6 +1179,12 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(_el) {
   _defineProperty(this, "cleanup", function () {
     _this.lastDragEnterElement = null;
     _this.lastDragLeaveElement = null;
+    _this.startX = null;
+    _this.startY = null;
+    _this.deltaX = null;
+    _this.deltaY = null;
+    _this.offsetX = null;
+    _this.offsetY = null;
   });
 
   this.options = _.merge({
@@ -1163,6 +1198,9 @@ var DragAndDrop = /*#__PURE__*/_createClass(function DragAndDrop(_el) {
     clickDelay: 250,
     on: {
       beforeStart: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
+      beforeDragStart: function beforeDragStart(trigger, stop, next) {
+        return next();
+      },
       dragStart: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
       dragOver: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
       dragLeave: _utils__WEBPACK_IMPORTED_MODULE_0__.noop,
@@ -32080,7 +32118,7 @@ var render = function () {
           "media-library-thumbnail-dragged": _vm.dragged,
           "media-library-thumbnail-intersected": _vm.intersected,
         },
-        attrs: { title: _vm.name },
+        attrs: { title: _vm.name, "data-extension": _vm.extension || false },
       },
       _vm.listeners
     ),

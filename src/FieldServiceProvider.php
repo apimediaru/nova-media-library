@@ -19,6 +19,11 @@ class FieldServiceProvider extends ServiceProvider
             Nova::script('nova-media-library', __DIR__.'/../dist/js/field.js');
             Nova::style('nova-media-library', __DIR__.'/../dist/css/field.css');
         });
+
+        // Publish public assets
+        $this->publishes([
+            __DIR__.'/../public' => public_path('vendor/nova-media-library'),
+        ], 'nova-media-library-assets');
     }
 
     /**

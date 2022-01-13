@@ -10,6 +10,7 @@
       }"
       :title="name"
       v-on="listeners"
+      :data-extension="extension || false"
   >
     <div class="media-library-thumbnail-head">
       <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image" draggable="false">
@@ -40,6 +41,10 @@ export default {
     dragged: Boolean,
     processContextMenu: Boolean,
     intersected: Boolean,
+    extension: {
+      type: [Boolean, String],
+      default: false,
+    },
   },
 
   computed: {

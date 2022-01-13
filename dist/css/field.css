@@ -194,8 +194,11 @@
   background: greenyellow;
 }
 .media-library-thumbnail-intersected {
-  background-color: #FFBA01;
-  border-color: #FFA701;
+  background-color: #F3F3F3;
+  border-color: #DDDDDD;
+}
+.media-library-thumbnail[data-extension=png] .media-library-thumbnail-head-image {
+  background-image: url("/vendor/nova-media-library/img/transparency-pattern.png");
 }
 
 .media-library-thumbnail-head {
@@ -255,4 +258,5 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  border: 1px solid #ffffff;
 }

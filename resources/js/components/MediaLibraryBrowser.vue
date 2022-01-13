@@ -446,6 +446,7 @@ export default {
         createGhost: this.createGhost,
         on: {
           beforeStart: this.onSortableBeforeStart,
+          beforeDragStart: this.onSortableBeforeDragStart,
           dragStart: this.onSortableDragStart,
           dragOver: this.onSortableDragOver,
           dragLeave: this.onSortableDragLeave,
@@ -508,16 +509,21 @@ export default {
       this.reorderIntersectionId = null;
     },
     canBeSorted() {
-      return this.selectedCount !== this.filesCount;
+      return this.selectedCount && this.selectedCount !== this.filesCount;
     },
     onSortableBeforeStart() {
-      if (!this.canBeSorted()) { return false; }
+      return this.canBeSorted();
     },
-    onSortableDragStart(trigger, stop) {
-      this.isReordering = true;
+    onSortableBeforeDragStart(trigger, stop, next) {
       const id = this.extractId(trigger);
       this.addSelection(id);
       this.preventNextLayoutClick();
+      this.$nextTick(() => {
+        next();
+      });
+    },
+    onSortableDragStart(trigger, stop) {
+      this.isReordering = true;
 
       if (!this.canBeSorted()) {
         stop();
