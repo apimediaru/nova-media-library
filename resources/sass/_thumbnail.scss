@@ -42,9 +42,12 @@
   }
 
   &-intersected {
-    background-color: #E5F3FF;
-    border-color: #99D1FF;
-    border-style: dashed;
+    &,
+    &:hover {
+      background-color: #E5F3FF;
+      border-color: #99D1FF;
+      border-style: dashed;
+    }
   }
 
   &[data-extension=png] {

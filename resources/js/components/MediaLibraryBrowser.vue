@@ -1,8 +1,8 @@
 <template>
   <MediaLibraryModal
-    @close="close"
-    :closes-via-backdrop="closesViaBackdrop"
-    modal-class="media-library-browser"
+    @modal-close="close"
+    :closes-via-backdrop="onBackdropClick"
+    class="media-library-browser"
     width="1400"
   >
     <div
@@ -168,9 +168,7 @@
 <script>
 import MediaLibraryModal from "./MediaLibraryModal";
 import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
-
-import DragAndDrop from "../utils/DragAndDrop";
-
+import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
@@ -220,8 +218,8 @@ export default {
       // Prevent next click on layout grid
       isBrowserAreaClickPrevented: false,
 
-      // Modal props
-      closesViaBackdrop: true,
+      // Prevent next click on modal backdrop
+      isBackdropClickPrevented: false,
     };
   },
 
@@ -296,6 +294,17 @@ export default {
     extractId(element) {
       if (!element) { return false; }
       return Number(element.getAttribute('data-key'));
+    },
+    preventNextBackdropClick() {
+      this.isBackdropClickPrevented = true;
+    },
+    onBackdropClick() {
+      let resolution = true;
+      if (this.isBackdropClickPrevented) {
+        resolution = false;
+        this.isBackdropClickPrevented = false;
+      }
+      return resolution;
     },
 
     // Events
@@ -378,6 +387,7 @@ export default {
     },
     unselectAll() {
       this.selected = [];
+      this.selectedIndex = null;
     },
 
     // Files
@@ -408,17 +418,13 @@ export default {
       this.isDragAndDropEnabled = true;
     },
     resetPointerEventsOutsideFrame() {
-      console.log('allow');
       document.body.classList.remove(bodyLockedClass);
-      this.closesViaBackdrop = true;
     },
     preventPointerEventsOutsideFrame() {
-      console.log('prevent');
       const { body } = document;
       if (body.classList.contains(bodyLockedClass)) {
         body.classList.add(bodyLockedClass);
       }
-      this.closesViaBackdrop = false;
     },
     addDragAndDropEventListeners() {
       window.addEventListener('drop', this.onDrop);
@@ -476,12 +482,12 @@ export default {
       this.sortable = new DragAndDrop(this.$refs.layout, {
         createGhost: this.createGhost,
         on: {
-          beforeStart: this.onSortableBeforeStart,
-          beforeDragStart: this.onSortableBeforeDragStart,
-          dragStart: this.onSortableDragStart,
-          dragOver: this.onSortableDragOver,
-          dragLeave: this.onSortableDragLeave,
-          drop: this.onSortableDrop,
+          [DragAndDropEvents.beforeStart]: this.onSortableBeforeStart,
+          [DragAndDropEvents.drag.beforeStart]: this.onSortableBeforeDragStart,
+          [DragAndDropEvents.drag.start]: this.onSortableDragStart,
+          [DragAndDropEvents.drag.over]: this.onSortableDragOver,
+          [DragAndDropEvents.drag.out]: this.onSortableDragOut,
+          [DragAndDropEvents.drag.drop]: this.onSortableDrop,
         },
       });
     },
@@ -540,44 +546,50 @@ export default {
       this.reorderIntersectionId = null;
     },
 
-    onSortableBeforeStart() {
-      return this.canBeSorted;
+    onSortableBeforeStart(event) {
+      if (!this.canBeSorted) {
+        event.cancel();
+      }
     },
-    onSortableBeforeDragStart(trigger, stop, next) {
-      const id = this.extractId(trigger);
+    onSortableBeforeDragStart(event) {
+      const id = this.extractId(event.source);
       this.addSelection(id);
       this.preventNextLayoutClick();
       this.$nextTick(() => {
-        next();
+        event.proceed();
       });
     },
-    onSortableDragStart(trigger, stop) {
+    onSortableDragStart(event) {
       if (!this.canBeSorted) {
-        return stop();
+        return event.cancel();
       }
 
       this.preventPointerEventsOutsideFrame();
 
       this.isReordering = true;
     },
-    onSortableDragOver(el) {
-      const id = this.extractId(el);
+    onSortableDragOver(event) {
+      const id = this.extractId(event.target);
       if (this.selected.includes(id)) {
         this.resetIntersection();
       } else {
         this.reorderIntersectionId = id;
       }
     },
-    onSortableDragLeave(el) {
+    onSortableDragOut() {
       this.resetIntersection();
     },
-    onSortableDrop(element) {
-      this.isReordering = false;
-
+    onSortableDrop(event) {
       this.resetPointerEventsOutsideFrame();
 
+      // Prevent modal closing if dropped tarted is backdrop
+      if (event.originalEvent.target.classList.contains('media-library-modal-backdrop')) {
+        this.preventNextBackdropClick();
+      }
+
+      this.isReordering = false;
       // Todo: remove
-      console.log(element);
+      console.log('drop:', event.target);
     },
     destroySortable() {
       this.sortable.destroy();

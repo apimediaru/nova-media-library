@@ -204,7 +204,7 @@ body.media-library-locked {
   border-style: dashed;
   background: greenyellow;
 }
-.media-library-thumbnail-intersected {
+.media-library-thumbnail-intersected, .media-library-thumbnail-intersected:hover {
   background-color: #E5F3FF;
   border-color: #99D1FF;
   border-style: dashed;

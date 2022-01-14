@@ -22,6 +22,7 @@
         "vue-template-compiler": "^2.6.12"
     },
     "dependencies": {
-        "bourbon": "^7.0.0"
+        "bourbon": "^7.0.0",
+        "vue-clickaway": "^2.2.2"
     }
 }

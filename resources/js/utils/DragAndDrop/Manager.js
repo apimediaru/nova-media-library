@@ -13,13 +13,16 @@ class DragAndDropManager {
     document.removeEventListener('mouseup', this.onMouseUp);
   }
 
-  onMouseUp = () => {
+  onMouseUp = (event) => {
+    this.event = event;
     Object.keys(this.dds).forEach(this.stop);
   }
 
   stop = (group) => {
     const { dds } = this;
     if (dds[group]) {
+      const dd = dds[group];
+      dd.setLastEvent(this.event);
       dds[group].stop();
     }
   }
