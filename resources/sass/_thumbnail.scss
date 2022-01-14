@@ -5,18 +5,29 @@
   border-radius: $border-radius;
   line-height: 1;
 
+  &:hover {
+    background-color: #E5F3FF;
+    border-color: #E5F3FF;
+  }
+
   &-highlighted {
     border-style: dashed;
   }
 
   &-highlighted,
   &-selected {
-    border-color: #99D1FF;
+    &,
+    &:hover {
+      border-color: #99D1FF;
+    }
   }
 
   &-selected {
-    background-color: #CDE8FF;
-    border-style: solid;
+    &,
+    &:hover {
+      background-color: #CDE8FF;
+      border-style: solid;
+    }
   }
 
   &-disabled,
@@ -31,8 +42,9 @@
   }
 
   &-intersected {
-    background-color: #F3F3F3;
-    border-color: #DDDDDD;
+    background-color: #E5F3FF;
+    border-color: #99D1FF;
+    border-style: dashed;
   }
 
   &[data-extension=png] {

@@ -1,3 +1,7 @@
+body.media-library-locked {
+  pointer-events: none;
+}
+
 .media-library-dropzone {
   height: 100%;
   width: 100%;
@@ -54,6 +58,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .media-library-browser-container {
@@ -99,6 +104,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   grid-gap: 0.75rem;
+  padding-right: 0.5rem;
 }
 .media-library-layout-hidden {
   display: none;
@@ -125,6 +131,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   color: #5c6470;
+  min-width: 130px;
 }
 .media-library-browser-actions-action-for-selected-value {
   color: #333333;
@@ -175,13 +182,17 @@
   border-radius: 0.5rem;
   line-height: 1;
 }
+.media-library-thumbnail:hover {
+  background-color: #E5F3FF;
+  border-color: #E5F3FF;
+}
 .media-library-thumbnail-highlighted {
   border-style: dashed;
 }
-.media-library-thumbnail-highlighted, .media-library-thumbnail-selected {
+.media-library-thumbnail-highlighted, .media-library-thumbnail-highlighted:hover, .media-library-thumbnail-selected, .media-library-thumbnail-selected:hover {
   border-color: #99D1FF;
 }
-.media-library-thumbnail-selected {
+.media-library-thumbnail-selected, .media-library-thumbnail-selected:hover {
   background-color: #CDE8FF;
   border-style: solid;
 }
@@ -194,8 +205,9 @@
   background: greenyellow;
 }
 .media-library-thumbnail-intersected {
-  background-color: #F3F3F3;
-  border-color: #DDDDDD;
+  background-color: #E5F3FF;
+  border-color: #99D1FF;
+  border-style: dashed;
 }
 .media-library-thumbnail[data-extension=png] .media-library-thumbnail-head-image {
   background-image: url("/vendor/nova-media-library/img/transparency-pattern.png");

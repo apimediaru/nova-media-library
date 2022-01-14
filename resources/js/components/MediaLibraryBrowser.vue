@@ -1,6 +1,7 @@
 <template>
   <MediaLibraryModal
     @close="close"
+    :closes-via-backdrop="closesViaBackdrop"
     modal-class="media-library-browser"
     width="1400"
   >
@@ -169,8 +170,6 @@ import MediaLibraryModal from "./MediaLibraryModal";
 import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
 
 import DragAndDrop from "../utils/DragAndDrop";
-import {applyImportantGhostStyles} from "../utils/DragAndDrop/utils";
-
 
 const { throttle, debounce } = window._;
 
@@ -178,6 +177,8 @@ const MODES = Object.freeze({
   BROWSING: 0,
   UPLOADING: 1,
 });
+
+const bodyLockedClass = 'media-library-locked';
 
 export default {
   name: "MediaLibraryBrowser",
@@ -218,6 +219,9 @@ export default {
 
       // Prevent next click on layout grid
       isBrowserAreaClickPrevented: false,
+
+      // Modal props
+      closesViaBackdrop: true,
     };
   },
 
@@ -229,6 +233,7 @@ export default {
   },
 
   mounted() {
+    this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -257,9 +262,21 @@ export default {
     filesCount() {
       return this.files.length;
     },
+    canBeSorted() {
+      return this.selectedCount && (this.selectedCount !== this.filesCount);
+    },
   },
 
   methods: {
+    // Todo: Dev
+    fakeFiles() {
+      for (let i = 0; i < 100; i += 1) {
+        this.addFile({
+          name: i,
+        });
+      }
+    },
+
     // Actions
     close() {
       this.$emit('close');
@@ -390,6 +407,19 @@ export default {
     enableDragAndDrop() {
       this.isDragAndDropEnabled = true;
     },
+    resetPointerEventsOutsideFrame() {
+      console.log('allow');
+      document.body.classList.remove(bodyLockedClass);
+      this.closesViaBackdrop = true;
+    },
+    preventPointerEventsOutsideFrame() {
+      console.log('prevent');
+      const { body } = document;
+      if (body.classList.contains(bodyLockedClass)) {
+        body.classList.add(bodyLockedClass);
+      }
+      this.closesViaBackdrop = false;
+    },
     addDragAndDropEventListeners() {
       window.addEventListener('drop', this.onDrop);
       window.addEventListener('dragover', this.onDragMove);
@@ -404,18 +434,19 @@ export default {
       window.removeEventListener('dragend', this.onDragEnd);
       document.removeEventListener('keydown', this.onDocumentKeyDown);
     },
-
     onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
         event.preventDefault();
       }
-
+      this.resetPointerEventsOutsideFrame();
       this.isDragging = false;
     },
     onDragMove: function (event) {
       if (!this.isDragAndDropEnabled) { return; }
 
       event.preventDefault();
+      this.preventPointerEventsOutsideFrame();
+
       const dropzoneOverlapped = this.dropzoneIncludes(event.target);
 
       if (event.type === 'dragleave' && !dropzoneOverlapped) {
@@ -508,11 +539,9 @@ export default {
     resetIntersection() {
       this.reorderIntersectionId = null;
     },
-    canBeSorted() {
-      return this.selectedCount && this.selectedCount !== this.filesCount;
-    },
+
     onSortableBeforeStart() {
-      return this.canBeSorted();
+      return this.canBeSorted;
     },
     onSortableBeforeDragStart(trigger, stop, next) {
       const id = this.extractId(trigger);
@@ -523,11 +552,13 @@ export default {
       });
     },
     onSortableDragStart(trigger, stop) {
-      this.isReordering = true;
-
-      if (!this.canBeSorted()) {
-        stop();
+      if (!this.canBeSorted) {
+        return stop();
       }
+
+      this.preventPointerEventsOutsideFrame();
+
+      this.isReordering = true;
     },
     onSortableDragOver(el) {
       const id = this.extractId(el);
@@ -542,6 +573,8 @@ export default {
     },
     onSortableDrop(element) {
       this.isReordering = false;
+
+      this.resetPointerEventsOutsideFrame();
 
       // Todo: remove
       console.log(element);

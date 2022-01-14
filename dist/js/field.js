@@ -182,7 +182,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _MediaLibraryModal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MediaLibraryModal */ "./resources/js/components/MediaLibraryModal.vue");
 /* harmony import */ var _MediaLibraryThumbnail__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MediaLibraryThumbnail */ "./resources/js/components/MediaLibraryThumbnail.vue");
 /* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop/index.js");
-/* harmony import */ var _utils_DragAndDrop_utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/DragAndDrop/utils */ "./resources/js/utils/DragAndDrop/utils.js");
 //
 //
 //
@@ -349,7 +348,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-
+//
 
 
 
@@ -360,6 +359,7 @@ var MODES = Object.freeze({
   BROWSING: 0,
   UPLOADING: 1
 });
+var bodyLockedClass = 'media-library-locked';
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MediaLibraryBrowser",
   components: {
@@ -389,7 +389,9 @@ var MODES = Object.freeze({
       selectedIndex: null,
       action: 'none',
       // Prevent next click on layout grid
-      isBrowserAreaClickPrevented: false
+      isBrowserAreaClickPrevented: false,
+      // Modal props
+      closesViaBackdrop: true
     };
   },
   props: {
@@ -401,6 +403,7 @@ var MODES = Object.freeze({
     }
   },
   mounted: function mounted() {
+    this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -426,9 +429,20 @@ var MODES = Object.freeze({
     },
     filesCount: function filesCount() {
       return this.files.length;
+    },
+    canBeSorted: function canBeSorted() {
+      return this.selectedCount && this.selectedCount !== this.filesCount;
     }
   },
   methods: {
+    // Todo: Dev
+    fakeFiles: function fakeFiles() {
+      for (var i = 0; i < 100; i += 1) {
+        this.addFile({
+          name: i
+        });
+      }
+    },
     // Actions
     close: function close() {
       this.$emit('close');
@@ -572,6 +586,22 @@ var MODES = Object.freeze({
     enableDragAndDrop: function enableDragAndDrop() {
       this.isDragAndDropEnabled = true;
     },
+    resetPointerEventsOutsideFrame: function resetPointerEventsOutsideFrame() {
+      console.log('allow');
+      document.body.classList.remove(bodyLockedClass);
+      this.closesViaBackdrop = true;
+    },
+    preventPointerEventsOutsideFrame: function preventPointerEventsOutsideFrame() {
+      console.log('prevent');
+      var _document = document,
+          body = _document.body;
+
+      if (body.classList.contains(bodyLockedClass)) {
+        body.classList.add(bodyLockedClass);
+      }
+
+      this.closesViaBackdrop = false;
+    },
     addDragAndDropEventListeners: function addDragAndDropEventListeners() {
       window.addEventListener('drop', this.onDrop);
       window.addEventListener('dragover', this.onDragMove);
@@ -591,6 +621,7 @@ var MODES = Object.freeze({
         event.preventDefault();
       }
 
+      this.resetPointerEventsOutsideFrame();
       this.isDragging = false;
     },
     onDragMove: function onDragMove(event) {
@@ -599,6 +630,7 @@ var MODES = Object.freeze({
       }
 
       event.preventDefault();
+      this.preventPointerEventsOutsideFrame();
       var dropzoneOverlapped = this.dropzoneIncludes(event.target);
 
       if (event.type === 'dragleave' && !dropzoneOverlapped) {
@@ -694,11 +726,8 @@ var MODES = Object.freeze({
     resetIntersection: function resetIntersection() {
       this.reorderIntersectionId = null;
     },
-    canBeSorted: function canBeSorted() {
-      return this.selectedCount && this.selectedCount !== this.filesCount;
-    },
     onSortableBeforeStart: function onSortableBeforeStart() {
-      return this.canBeSorted();
+      return this.canBeSorted;
     },
     onSortableBeforeDragStart: function onSortableBeforeDragStart(trigger, stop, next) {
       var id = this.extractId(trigger);
@@ -709,11 +738,12 @@ var MODES = Object.freeze({
       });
     },
     onSortableDragStart: function onSortableDragStart(trigger, stop) {
-      this.isReordering = true;
-
-      if (!this.canBeSorted()) {
-        stop();
+      if (!this.canBeSorted) {
+        return stop();
       }
+
+      this.preventPointerEventsOutsideFrame();
+      this.isReordering = true;
     },
     onSortableDragOver: function onSortableDragOver(el) {
       var id = this.extractId(el);
@@ -728,7 +758,8 @@ var MODES = Object.freeze({
       this.resetIntersection();
     },
     onSortableDrop: function onSortableDrop(element) {
-      this.isReordering = false; // Todo: remove
+      this.isReordering = false;
+      this.resetPointerEventsOutsideFrame(); // Todo: remove
 
       console.log(element);
     },
@@ -801,6 +832,10 @@ __webpack_require__.r(__webpack_exports__);
     modalClass: {
       type: [Array, Object, String],
       "default": ''
+    },
+    closesViaBackdrop: {
+      type: Boolean,
+      "default": true
     }
   },
   methods: {
@@ -1001,10 +1036,6 @@ function DragAndDrop(_el) {
 
   _defineProperty(this, "deltaY", null);
 
-  _defineProperty(this, "offsetX", null);
-
-  _defineProperty(this, "offsetY", null);
-
   _defineProperty(this, "destroy", function () {
     _manager__WEBPACK_IMPORTED_MODULE_1__["default"].unregister(_this.options.group);
   });
@@ -1046,14 +1077,12 @@ function DragAndDrop(_el) {
 
     if (proceed === false) {
       return;
-    } // Get event mouse position and save deltas
+    } // Get event mouse start position and save it
 
 
     var xy = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getXY)(event);
     _this.startX = xy[0];
-    _this.startY = xy[1];
-    _this.deltaX = _this.startX - trigger.offsetLeft;
-    _this.deltaY = _this.startY - trigger.offsetTop; // Track mousemove event
+    _this.startY = xy[1]; // Start tracking 'mousemove' event
 
     document.addEventListener('mousemove', _this.onMouseMove); // Set timeout that prevents element from being dragging instantly
 
@@ -1094,8 +1123,8 @@ function DragAndDrop(_el) {
   _defineProperty(this, "onMouseMove", function (event) {
     // Store coordinates
     var xy = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getXY)(event);
-    _this.offsetX = xy[0] - _this.startX;
-    _this.offsetY = xy[1] - _this.startY; // If dragging in progress perform actions
+    _this.deltaX = xy[0] - _this.startX;
+    _this.deltaY = xy[1] - _this.startY; // If dragging in progress perform actions
 
     if (_this.isDragging) {
       // Update ghost position
@@ -1112,13 +1141,17 @@ function DragAndDrop(_el) {
           left = _this$getGhostXYPosit2[0],
           top = _this$getGhostXYPosit2[1];
 
-      ghost.style.setProperty('top', "".concat(top, "px"));
-      ghost.style.setProperty('left', "".concat(left, "px"));
+      window.requestAnimationFrame(function () {
+        ghost.style.setProperty('top', "".concat(top, "px"));
+        ghost.style.setProperty('left', "".concat(left, "px"));
+      });
     }
   });
 
   _defineProperty(this, "getGhostXYPosition", function () {
-    return [_this.startX + _this.offsetX + _this.options.ghostOffset.left, window.scrollY + _this.offsetY + _this.deltaY + _this.options.ghostOffset.top];
+    var x = _this.startX + _this.deltaX + _this.options.ghostOffset.x;
+    var y = _this.startY + window.scrollY + _this.deltaY + _this.options.ghostOffset.y;
+    return [x, y];
   });
 
   _defineProperty(this, "onMouseEnter", function (event) {
@@ -1143,6 +1176,9 @@ function DragAndDrop(_el) {
   });
 
   _defineProperty(this, "onDragEnd", function () {
+    // Always stop tracking 'mousemove' event
+    document.removeEventListener('mousemove', _this.onMouseMove);
+
     if (!_this.isDragging) {
       return;
     } // Todo: remove
@@ -1150,7 +1186,6 @@ function DragAndDrop(_el) {
 
     console.log('ended dragging'); // Remove event listeners
 
-    document.removeEventListener('mousemove', _this.onMouseMove);
     document.body.removeEventListener('mouseenter', _this.onMouseEnter, true);
     document.body.removeEventListener('mouseleave', _this.onMouseLeave, true); // Remove ghost from its container
 
@@ -1184,18 +1219,37 @@ function DragAndDrop(_el) {
     _this.startY = null;
     _this.deltaX = null;
     _this.deltaY = null;
-    _this.offsetX = null;
-    _this.offsetY = null;
+  });
+
+  _defineProperty(this, "getContainerScrollTop", function () {
+    var container = _this.options.scrollContainer || _this.options.container;
+    var offset = 0;
+
+    if (container) {
+      offset = container.scrollTop;
+    }
+
+    return offset;
   });
 
   // Merge options
   this.options = merge({
     container: _el,
+    behavior: {
+      scrolling: {
+        speedDivider: 10,
+        manualSpeed: 750,
+        startScrollMargins: {
+          x: 0,
+          y: 0
+        }
+      }
+    },
     createGhost: this.createGhost,
     ghostContainer: document.body,
     ghostOffset: {
-      top: 20,
-      left: 10
+      x: 20,
+      y: 10
     },
     clickDelay: 250,
     on: {
@@ -28289,7 +28343,11 @@ var render = function () {
   return _c(
     "MediaLibraryModal",
     {
-      attrs: { "modal-class": "media-library-browser", width: "1400" },
+      attrs: {
+        "closes-via-backdrop": _vm.closesViaBackdrop,
+        "modal-class": "media-library-browser",
+        width: "1400",
+      },
       on: { close: _vm.close },
     },
     [
@@ -28706,7 +28764,10 @@ var render = function () {
     {
       staticClass: "media-library-modal",
       class: _vm.modalClass,
-      attrs: { "closes-via-backdrop": "", "closes-via-escape": "" },
+      attrs: {
+        "closes-via-backdrop": _vm.closesViaBackdrop,
+        "closes-via-escape": "",
+      },
       on: { "modal-close": _vm.close },
     },
     [

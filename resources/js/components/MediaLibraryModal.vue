@@ -1,6 +1,6 @@
 <template>
   <modal
-      closes-via-backdrop
+      :closes-via-backdrop="closesViaBackdrop"
       closes-via-escape
       @modal-close="close"
       class="media-library-modal"
@@ -43,6 +43,10 @@ export default {
     modalClass: {
       type: [Array, Object, String],
       default: '',
+    },
+    closesViaBackdrop: {
+      type: Boolean,
+      default: true,
     },
   },
 

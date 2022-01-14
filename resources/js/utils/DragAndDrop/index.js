@@ -24,20 +24,26 @@ class DragAndDrop {
   // Mouse coordinates properties
   startX = null;
   startY = null;
+
   deltaX = null;
   deltaY = null;
-  offsetX = null;
-  offsetY = null;
 
   constructor(el, options = {}) {
     // Merge options
     this.options = merge({
       container: el,
+      behavior: {
+        scrolling: {
+          speedDivider: 10,
+          manualSpeed: 750,
+          startScrollMargins: { x: 0, y: 0 },
+        },
+      },
       createGhost: this.createGhost,
       ghostContainer: document.body,
       ghostOffset: {
-        top: 20,
-        left: 10,
+        x: 20,
+        y: 10,
       },
       clickDelay: 250,
       on: {
@@ -93,14 +99,13 @@ class DragAndDrop {
     const proceed = this.emit('beforeStart', trigger);
     if (proceed === false) { return; }
 
-    // Get event mouse position and save deltas
+    // Get event mouse start position and save it
     const xy = getXY(event);
+
     this.startX = xy[0];
     this.startY = xy[1];
-    this.deltaX = this.startX - trigger.offsetLeft;
-    this.deltaY = this.startY - trigger.offsetTop;
 
-    // Track mousemove event
+    // Start tracking 'mousemove' event
     document.addEventListener('mousemove', this.onMouseMove);
 
     // Set timeout that prevents element from being dragging instantly
@@ -138,8 +143,8 @@ class DragAndDrop {
   onMouseMove = (event) => {
     // Store coordinates
     const xy = getXY(event);
-    this.offsetX = xy[0] - this.startX;
-    this.offsetY = xy[1] - this.startY;
+    this.deltaX = xy[0] - this.startX;
+    this.deltaY = xy[1] - this.startY;
 
     // If dragging in progress perform actions
     if (this.isDragging) {
@@ -152,17 +157,18 @@ class DragAndDrop {
     const { ghost } = this;
     if (ghost) {
       const [left, top] = this.getGhostXYPosition();
-      ghost.style.setProperty('top', `${top}px`);
-      ghost.style.setProperty('left', `${left}px`);
+      window.requestAnimationFrame(() => {
+        ghost.style.setProperty('top', `${top}px`);
+        ghost.style.setProperty('left', `${left}px`);
+      });
     }
   }
 
   // Return [x, y] ghost position
   getGhostXYPosition = () => {
-    return [
-      this.startX + this.offsetX + this.options.ghostOffset.left,
-      window.scrollY + this.offsetY + this.deltaY + this.options.ghostOffset.top,
-    ];
+    const x = this.startX + this.deltaX + this.options.ghostOffset.x;
+    const y = this.startY + window.scrollY + this.deltaY + this.options.ghostOffset.y;
+    return [x, y];
   }
 
   onMouseEnter = (event) => {
@@ -184,13 +190,15 @@ class DragAndDrop {
   }
 
   onDragEnd = () => {
+    // Always stop tracking 'mousemove' event
+    document.removeEventListener('mousemove', this.onMouseMove);
+
     if (!this.isDragging) { return; }
 
     // Todo: remove
     console.log('ended dragging');
 
     // Remove event listeners
-    document.removeEventListener('mousemove', this.onMouseMove);
     document.body.removeEventListener('mouseenter', this.onMouseEnter, true);
     document.body.removeEventListener('mouseleave', this.onMouseLeave, true);
 
@@ -227,9 +235,14 @@ class DragAndDrop {
 
     this.deltaX = null;
     this.deltaY = null;
-
-    this.offsetX = null;
-    this.offsetY = null;
+  }
+  getContainerScrollTop = () => {
+    const container = this.options.scrollContainer || this.options.container;
+    let offset = 0;
+    if (container) {
+      offset = container.scrollTop;
+    }
+    return offset;
   }
 }
 
