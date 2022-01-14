@@ -1132,7 +1132,7 @@ var defaultOptions = {
 
 var DragAndDrop = /*#__PURE__*/function () {
   /**
-   * Default plugins draggable uses
+   * Default plugins library uses
    * @static
    * @property {Object} Plugins
    * @property {Scrollable} Plugins.Scrollable
@@ -29948,8 +29948,8 @@ var render = function () {
                               [_vm._v(_vm._s(_vm.__("Select an action")))]
                             ),
                             _vm._v(" "),
-                            _c("option", { attrs: { value: "remove" } }, [
-                              _vm._v(_vm._s(_vm.__("Remove"))),
+                            _c("option", { attrs: { value: "delete" } }, [
+                              _vm._v(_vm._s(_vm.__("Delete"))),
                             ]),
                             _vm._v(" "),
                             _c("option", { attrs: { value: "makeActive" } }, [

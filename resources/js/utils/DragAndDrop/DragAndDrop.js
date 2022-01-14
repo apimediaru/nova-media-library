@@ -34,7 +34,7 @@ export const defaultOptions = {
 
 class DragAndDrop {
   /**
-   * Default plugins draggable uses
+   * Default plugins library uses
    * @static
    * @property {Object} Plugins
    * @property {Scrollable} Plugins.Scrollable

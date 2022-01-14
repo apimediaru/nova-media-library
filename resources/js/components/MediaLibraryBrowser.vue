@@ -29,7 +29,7 @@
                   v-model="action"
               >
                 <option value="none" selected>{{ __('Select an action') }}</option>
-                <option value="remove">{{ __('Remove') }}</option>
+                <option value="delete">{{ __('Delete') }}</option>
                 <option value="makeActive">{{ __('Make active') }}</option>
                 <option value="makeInactive">{{ __('Make inactive') }}</option>
                 <option value="regenerateThumbnails">{{ __('Regenerate thumbnails') }}</option>
