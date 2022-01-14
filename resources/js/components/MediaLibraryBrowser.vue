@@ -479,7 +479,8 @@ export default {
 
     // Sortable
     registerSortable() {
-      this.sortable = new DragAndDrop(this.$refs.layout, {
+      this.sortable = new DragAndDrop({
+        container: this.$refs.layout,
         createGhost: this.createGhost,
         on: {
           [DragAndDropEvents.beforeStart]: this.onSortableBeforeStart,

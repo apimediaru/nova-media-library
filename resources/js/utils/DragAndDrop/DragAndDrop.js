@@ -4,6 +4,29 @@ import Emitter from "./Emitter";
 import { DragAndDropEvents, BeforeStartEvent, BeforeDragStartEvent, DragStartEvent, DragOverEvent, DragOutEvent, DragMoveEvent, DragDropEvent } from './Events';
 const { merge, throttle } = window._;
 
+export const defaultOptions = {
+  container: document.body,
+  behavior: {
+    scrolling: {
+      speedDivider: 10,
+      manualSpeed: 750,
+      startScrollMargins: { x: 0, y: 0 },
+    },
+  },
+  createGhost: null,
+  ghostContainer: document.body,
+  ghostOffset: {
+    x: 20,
+    y: 10,
+  },
+  clickDelay: 250,
+  on: {
+    [DragAndDropEvents.drag.beforeStart]: (event) => event.proceed(),
+  },
+  group: 'default',
+  throttle: 25,
+}
+
 class DragAndDrop {
   // Dragging flag
   isDragging = false;
@@ -32,36 +55,17 @@ class DragAndDrop {
 
   lastEvent = null;
 
-  constructor(el, options = {}) {
-    // Merge options
-    this.options = merge({
-      container: el,
-      behavior: {
-        scrolling: {
-          speedDivider: 10,
-          manualSpeed: 750,
-          startScrollMargins: { x: 0, y: 0 },
-        },
-      },
-      createGhost: this.createGhost,
-      ghostContainer: document.body,
-      ghostOffset: {
-        x: 20,
-        y: 10,
-      },
-      clickDelay: 250,
-      on: {
-        [DragAndDropEvents.drag.beforeStart]: (event) => event.proceed(),
-      },
-      group: 'default',
-      throttle: 25,
-    }, options);
+  constructor(options = {}) {
+    // Merge options with defaults
+    this.options = merge(defaultOptions, options);
 
+    // Create new events emitter
     this.emitter = new Emitter();
 
+    // Add provided listeners
     const listeners = this.options.on;
     Object.keys(listeners).forEach((type) => {
-      this.emitter.on(type, listeners[type]);
+      this.on(type, listeners[type]);
     });
 
     this.registerEvents();
@@ -91,7 +95,36 @@ class DragAndDrop {
     this.onDragEnd();
   }
 
-  // Events
+  /**
+   * Adds listener for draggable events
+   * @param {String} type - Event name
+   * @param {...Function} callbacks - Event callbacks
+   * @return {DragAndDrop}
+   * @example dd.on('drag:start', (dragEvent) => dragEvent.cancel());
+   */
+  on = (type, ...callbacks) => {
+    this.emitter.on(type, ...callbacks);
+    return this;
+  }
+
+  /**
+   * Removes listener from draggable
+   * @param {String} type - Event name
+   * @param {Function} callback - Event callback
+   * @return {DragAndDrop}
+   * @example dd.off('drag:start', handlerFunction);
+   */
+  off = (type, callback) => {
+    this.emitter.off(type, callback);
+    return this;
+  }
+
+  /**
+   * Emit draggable event
+   * @param {AbstractEvent} event - Event instance
+   * @return {DragAndDrop}
+   * @example dd.emit(event);
+   */
   emit = (event) => {
     this.emitter.emit(event);
     return this;
@@ -254,7 +287,10 @@ class DragAndDrop {
   }
 
   // Utilities
-  createGhost = createGhost
+  createGhost = (...args) => {
+    const fn = this.options.createGhost || createGhost;
+    return fn(args);
+  }
 
   removeGhost = () => {
     if (this.ghost && this.ghost.remove) {

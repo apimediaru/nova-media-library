@@ -671,7 +671,8 @@ var bodyLockedClass = 'media-library-locked';
     registerSortable: function registerSortable() {
       var _on;
 
-      this.sortable = new _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDrop(this.$refs.layout, {
+      this.sortable = new _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDrop({
+        container: this.$refs.layout,
         createGhost: this.createGhost,
         on: (_on = {}, _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.beforeStart, this.onSortableBeforeStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.drag.beforeStart, this.onSortableBeforeDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.drag.start, this.onSortableDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.drag.over, this.onSortableDragOver), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.drag.out, this.onSortableDragOut), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_2__.DragAndDropEvents.drag.drop, this.onSortableDrop), _on)
       });
@@ -1050,6 +1051,7 @@ Nova.booting(function (Vue, router, store) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "defaultOptions": () => (/* binding */ defaultOptions),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./resources/js/utils/DragAndDrop/Utils/index.js");
@@ -1083,6 +1085,31 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var _window$_ = window._,
     merge = _window$_.merge,
     throttle = _window$_.throttle;
+var defaultOptions = {
+  container: document.body,
+  behavior: {
+    scrolling: {
+      speedDivider: 10,
+      manualSpeed: 750,
+      startScrollMargins: {
+        x: 0,
+        y: 0
+      }
+    }
+  },
+  createGhost: null,
+  ghostContainer: document.body,
+  ghostOffset: {
+    x: 20,
+    y: 10
+  },
+  clickDelay: 250,
+  on: _defineProperty({}, _Events__WEBPACK_IMPORTED_MODULE_3__.DragAndDropEvents.drag.beforeStart, function (event) {
+    return event.proceed();
+  }),
+  group: 'default',
+  throttle: 25
+};
 
 var DragAndDrop = /*#__PURE__*/_createClass( // Dragging flag
 // Source that activated drag&drop
@@ -1091,10 +1118,10 @@ var DragAndDrop = /*#__PURE__*/_createClass( // Dragging flag
 // Options
 // Currently hovered element
 // Mouse coordinates properties
-function DragAndDrop(_el) {
+function DragAndDrop() {
   var _this = this;
 
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   _classCallCheck(this, DragAndDrop);
 
@@ -1138,6 +1165,24 @@ function DragAndDrop(_el) {
     _this.clickTimeout = null;
 
     _this.onDragEnd();
+  });
+
+  _defineProperty(this, "on", function (type) {
+    var _this$emitter;
+
+    for (var _len = arguments.length, callbacks = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      callbacks[_key - 1] = arguments[_key];
+    }
+
+    (_this$emitter = _this.emitter).on.apply(_this$emitter, [type].concat(callbacks));
+
+    return _this;
+  });
+
+  _defineProperty(this, "off", function (type, callback) {
+    _this.emitter.off(type, callback);
+
+    return _this;
   });
 
   _defineProperty(this, "emit", function (event) {
@@ -1315,7 +1360,15 @@ function DragAndDrop(_el) {
     _this.isDragging = false;
   });
 
-  _defineProperty(this, "createGhost", _Utils__WEBPACK_IMPORTED_MODULE_0__.createGhost);
+  _defineProperty(this, "createGhost", function () {
+    var fn = _this.options.createGhost || _Utils__WEBPACK_IMPORTED_MODULE_0__.createGhost;
+
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    return fn(args);
+  });
 
   _defineProperty(this, "removeGhost", function () {
     if (_this.ghost && _this.ghost.remove) {
@@ -1334,36 +1387,14 @@ function DragAndDrop(_el) {
     _this.lastEvent = null;
   });
 
-  // Merge options
-  this.options = merge({
-    container: _el,
-    behavior: {
-      scrolling: {
-        speedDivider: 10,
-        manualSpeed: 750,
-        startScrollMargins: {
-          x: 0,
-          y: 0
-        }
-      }
-    },
-    createGhost: this.createGhost,
-    ghostContainer: document.body,
-    ghostOffset: {
-      x: 20,
-      y: 10
-    },
-    clickDelay: 250,
-    on: _defineProperty({}, _Events__WEBPACK_IMPORTED_MODULE_3__.DragAndDropEvents.drag.beforeStart, function (event) {
-      return event.proceed();
-    }),
-    group: 'default',
-    throttle: 25
-  }, options);
-  this.emitter = new _Emitter__WEBPACK_IMPORTED_MODULE_2__["default"]();
+  // Merge options with defaults
+  this.options = merge(defaultOptions, options); // Create new events emitter
+
+  this.emitter = new _Emitter__WEBPACK_IMPORTED_MODULE_2__["default"](); // Add provided listeners
+
   var listeners = this.options.on;
   Object.keys(listeners).forEach(function (type) {
-    _this.emitter.on(type, listeners[type]);
+    _this.on(type, listeners[type]);
   });
   this.registerEvents(); // Throttle mousemove event handler
 
