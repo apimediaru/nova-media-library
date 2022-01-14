@@ -115,7 +115,6 @@ export default class Scrollable extends AbstractPlugin {
 
   /**
    * Returns true if at least one scrollable element have been defined via options
-   * @param {HTMLElement} target
    * @return {Boolean}
    */
   hasDefinedScrollableElements() {
@@ -123,7 +122,7 @@ export default class Scrollable extends AbstractPlugin {
   }
 
   /**
-   * Drag start handler. Finds closest scrollable parent in separate frame
+   * Drag start handler. Finds the closest scrollable parent in separate frame
    * @param {DragStartEvent} dragEvent
    * @private
    */

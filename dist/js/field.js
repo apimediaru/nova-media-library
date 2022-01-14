@@ -2144,7 +2144,6 @@ var Scrollable = /*#__PURE__*/function (_AbstractPlugin) {
     }
     /**
      * Returns true if at least one scrollable element have been defined via options
-     * @param {HTMLElement} target
      * @return {Boolean}
      */
 
@@ -2154,7 +2153,7 @@ var Scrollable = /*#__PURE__*/function (_AbstractPlugin) {
       return Boolean(this.options.scrollableElements.length !== 0);
     }
     /**
-     * Drag start handler. Finds closest scrollable parent in separate frame
+     * Drag start handler. Finds the closest scrollable parent in separate frame
      * @param {DragStartEvent} dragEvent
      * @private
      */
