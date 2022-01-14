@@ -26,7 +26,6 @@ export const createGhost = (element) => {
   const ghost = element.cloneNode(true);
   applyImportantGhostStyles(ghost);
   applyStyles(ghost, {
-    opacity: 0.8,
     width: `${rect.width}px`,
     height: `${rect.height}px`,
   });

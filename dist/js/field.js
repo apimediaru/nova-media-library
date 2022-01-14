@@ -2755,7 +2755,6 @@ var createGhost = function createGhost(element) {
   var ghost = element.cloneNode(true);
   applyImportantGhostStyles(ghost);
   applyStyles(ghost, {
-    opacity: 0.8,
     width: "".concat(rect.width, "px"),
     height: "".concat(rect.height, "px")
   });
