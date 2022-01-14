@@ -1,3 +1,5 @@
+export { default as closest } from './closest';
+
 export const noop = () => {};
 
 export const getXY = (event) => {

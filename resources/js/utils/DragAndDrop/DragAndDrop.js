@@ -1,5 +1,6 @@
-import { getXY, createGhost, applyImportantGhostStyles, applyStyles, getClosestDirectChild } from "./Utils";
+import { getXY, createGhost, applyImportantGhostStyles, applyStyles, getClosestDirectChild } from "./utils";
 import manager from './Manager';
+import { Scrollable } from "./Plugins";
 import Emitter from "./Emitter";
 import { DragAndDropEvents, BeforeStartEvent, BeforeDragStartEvent, DragStartEvent, DragOverEvent, DragOutEvent, DragMoveEvent, DragDropEvent } from './Events';
 const { merge, throttle } = window._;
@@ -13,6 +14,7 @@ export const defaultOptions = {
       startScrollMargins: { x: 0, y: 0 },
     },
   },
+  throttle: 25,
   createGhost: null,
   ghostContainer: document.body,
   ghostOffset: {
@@ -24,10 +26,22 @@ export const defaultOptions = {
     [DragAndDropEvents.drag.beforeStart]: (event) => event.proceed(),
   },
   group: 'default',
-  throttle: 25,
+  plugins: [],
+  exclude: {
+    plugins: [],
+  },
 }
 
 class DragAndDrop {
+  /**
+   * Default plugins draggable uses
+   * @static
+   * @property {Object} Plugins
+   * @property {Scrollable} Plugins.Scrollable
+   * @type {Object}
+   */
+  static Plugins = { Scrollable };
+
   // Dragging flag
   isDragging = false;
 
@@ -62,6 +76,13 @@ class DragAndDrop {
     // Create new events emitter
     this.emitter = new Emitter();
 
+    /**
+     * Active plugins
+     * @property plugins
+     * @type {Plugin[]}
+     */
+    this.plugins = [];
+
     // Add provided listeners
     const listeners = this.options.on;
     Object.keys(listeners).forEach((type) => {
@@ -69,6 +90,12 @@ class DragAndDrop {
     });
 
     this.registerEvents();
+
+    const defaultPlugins = Object.values(DragAndDrop.Plugins).filter(
+      (Plugin) => !this.options.exclude.plugins.includes(Plugin),
+    );
+
+    this.addPlugin(...[...defaultPlugins, ...this.options.plugins]);
 
     // Throttle mousemove event handler
     this.onMouseMove = throttle(this.onMouseMove.bind(this), Number(this.options.throttle));
@@ -78,6 +105,37 @@ class DragAndDrop {
 
   destroy = () => {
     manager.unregister(this.options.group);
+  }
+
+  /**
+   * Adds plugin to this draggable instance. This will end up calling the attached method of the plugin
+   * @param {...typeof Plugin} plugins - Plugins that you want attached to draggable
+   * @return {DragAndDrop}
+   * @example dd.addPlugin(CustomA11yPlugin, CustomMirrorPlugin)
+   */
+  addPlugin(...plugins) {
+    const activePlugins = plugins.map((Plugin) => new Plugin(this));
+
+    activePlugins.forEach((plugin) => plugin.attach());
+    this.plugins = [...this.plugins, ...activePlugins];
+
+    return this;
+  }
+
+  /**
+   * Removes plugins that are already attached to this draggable instance. This will end up calling
+   * the detach method of the plugin
+   * @param {...typeof Plugin} plugins - Plugins that you want detached from draggable
+   * @return {DragAndDrop}
+   * @example dd.removePlugin(MirrorPlugin, CustomMirrorPlugin)
+   */
+  removePlugin(...plugins) {
+    const removedPlugins = this.plugins.filter((plugin) => plugins.includes(plugin.constructor));
+
+    removedPlugins.forEach((plugin) => plugin.detach());
+    this.plugins = this.plugins.filter((plugin) => !plugins.includes(plugin.constructor));
+
+    return this;
   }
 
   registerEvents = () => {
@@ -205,6 +263,10 @@ class DragAndDrop {
     const xy = getXY(event);
     this.deltaX = xy[0] - this.startX;
     this.deltaY = xy[1] - this.startY;
+
+    this.emit(new DragMoveEvent({
+      originalEvent: event,
+    }));
 
     // If dragging in progress perform actions
     if (this.isDragging) {

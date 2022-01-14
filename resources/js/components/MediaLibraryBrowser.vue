@@ -77,6 +77,7 @@
       <div
           class="media-library-browser-area"
           @click="onBrowserAreaClick"
+          ref="area"
       >
         <div
             class="media-library-layout"
@@ -489,6 +490,10 @@ export default {
           [DragAndDropEvents.drag.over]: this.onSortableDragOver,
           [DragAndDropEvents.drag.out]: this.onSortableDragOut,
           [DragAndDropEvents.drag.drop]: this.onSortableDrop,
+        },
+        scrollable: {
+          scrollableElements: [this.$refs.area],
+          strict: true,
         },
       });
     },
