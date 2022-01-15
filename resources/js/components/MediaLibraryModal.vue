@@ -1,19 +1,30 @@
 <template>
   <div
-      class="media-library-modal modal select-none fixed pin z-50 overflow-x-hidden overflow-y-auto"
+      class="media-library-modal"
   >
-    <div class="media-library-modal-backdrop relative mx-auto flex justify-center z-20 py-view">
-      <div v-on-clickaway="backdropClose">
+    <div
+        class="media-library-modal-backdrop"
+        @click="backdropClose"
+    />
+    <div class="media-library-modal-viewport">
+      <div
+          class="media-library-modal-viewport-element"
+          :style="style"
+          :class="[
+              elementClass,
+              {
+                'media-library-modal-viewport-element--has-controls': !!$slots.buttons,
+              },
+          ]"
+      >
+        <div class="media-library-modal-viewport-element-body">
+          <slot name="container" />
+        </div>
         <div
-            class="media-library-modal-frame"
-            ref="container"
-            :style="style"
+            class="media-library-modal-viewport-element-controls"
+            v-if="$slots.buttons"
         >
-          <div class="media-library-modal-body"><slot name="container"></slot></div>
-
-          <div class="media-library-modal-controls" v-if="$slots.buttons">
-            <slot name="buttons"></slot>
-          </div>
+          <slot name="buttons" />
         </div>
       </div>
     </div>
@@ -32,6 +43,8 @@ export default {
   props: {
     classWhitelist: [Array, String],
 
+    elementClass: [Array, String],
+
     closesViaEscape: {
       type: Boolean,
       default: true,
@@ -42,6 +55,8 @@ export default {
       default: true,
     },
 
+    paused: Boolean,
+
     width: {
       type: [Number, String],
       default: 600,
@@ -51,14 +66,17 @@ export default {
 
   created() {
     document.addEventListener('keydown', this.handleEscape);
-    document.body.classList.add('overflow-hidden');
+    if (document.body.classList.contains('media-library-open')) {
+      this.nested = true;
+    } else {
+      document.body.classList.add('media-library-open', 'overflow-hidden');
+    }
+  },
 
-    const modalBg = document.createElement('div');
-    modalBg.classList = 'fixed pin bg-80 z-20 opacity-75';
-
-    this.modalBg = modalBg;
-
-    document.body.appendChild(this.modalBg);
+  data() {
+    return {
+      nested: false,
+    };
   },
 
   mounted() {
@@ -67,13 +85,12 @@ export default {
 
   destroyed() {
     document.removeEventListener('keydown', this.handleEscape);
-    document.body.classList.remove('overflow-hidden');
-    document.body.removeChild(this.modalBg);
+    if (!this.nested) {
+      document.body.classList.remove('media-library-open', 'overflow-hidden');
+    }
 
     Nova.resumeShortcuts();
   },
-
-  data: () => ({ modalBg: null }),
 
   computed: {
     style() {
@@ -83,6 +100,8 @@ export default {
 
   methods: {
     handleEscape(e) {
+      if (this.paused) { return; }
+
       e.stopPropagation();
 
       if (e.keyCode == 27 && this.closesViaEscape === true) {
@@ -91,7 +110,7 @@ export default {
     },
 
     backdropClose(e) {
-      if (!e.isTrusted) return;
+      if (!e.isTrusted || this.paused) return;
 
       if (typeof this.closesViaBackdrop === 'function' && this.closesViaBackdrop()) {
         this.close(e);

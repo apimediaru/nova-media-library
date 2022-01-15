@@ -1,0 +1,115 @@
+$modal-controls-height: 60px;
+
+.media-library-modal {
+  overflow: hidden;
+  direction: ltr;
+  transform: translateZ(0);
+  z-index: 99994;
+  position: fixed;
+
+  &--entire-scrollable {
+    > .media-library-modal-viewport {
+      overflow-y: auto;
+
+      &-element {
+        height: auto;
+        max-height: initial;
+      }
+    }
+  }
+
+  &,
+  &-backdrop,
+  &-viewport {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  &-backdrop,
+  &-viewport {
+    position: absolute;
+  }
+
+  &-backdrop {
+    background-color: rgba(30, 30, 30, 0.9);
+  }
+
+  &-viewport {
+    backface-visibility: hidden;
+    height: 100%;
+    outline: none;
+    padding: 3.125rem .5rem;
+    position: absolute;
+    text-align: center;
+    transition-property: transform, opacity;
+    white-space: normal;
+    width: 100%;
+    z-index: 99994;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      font-size: 0;
+      height: 100%;
+      vertical-align: middle;
+      width: 0;
+    }
+
+    &,
+    &-element {
+      @include scrollbars();
+
+      -webkit-overflow-scrolling: touch;
+      overflow-y: auto;
+    }
+
+    &-element {
+      background: #fff;
+      display: inline-flex;
+      flex-direction: column;
+      margin: 0;
+      max-width: 100%;
+      position: relative;
+      text-align: left;
+      vertical-align: middle;
+      width: 100%;
+      max-height: 100%;
+      cursor: default;
+      border-radius: $border-radius;
+      box-shadow: 0 15px 30px 0 rgba(0,0,0, .11),0 5px 15px 0 rgba(0,0,0, .08);
+
+      &-body {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: hidden;
+      }
+
+      &-controls {
+        height: $modal-controls-height;
+        align-items: center;
+        padding: .75rem 1.5rem;
+        border-radius: 0 0 $border-radius $border-radius;
+        background-color: var(--#{30});
+      }
+    }
+  }
+}
+
+.library-modal-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  &-scrollable {
+    @include scrollbars();
+
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}

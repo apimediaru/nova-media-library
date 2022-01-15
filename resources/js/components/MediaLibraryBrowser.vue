@@ -2,8 +2,9 @@
   <MediaLibraryModal
     @modal-close="close"
     :closes-via-backdrop="onBackdropClick"
-    class="media-library-browser"
+    class="media-library-browser media-library-modal--entire-scrollable"
     width="1400"
+    :paused="paused"
   >
     <div
         slot="container"
@@ -221,6 +222,9 @@ export default {
 
       // Prevent next click on modal backdrop
       isBackdropClickPrevented: false,
+
+      // Pause modal events
+      paused: false,
     };
   },
 
@@ -228,7 +232,17 @@ export default {
     field: {
       type: Object,
       default: () => ({}),
+      required: true,
     },
+    resource: {
+      type: Object,
+      default: () => ({}),
+      required: true,
+    },
+  },
+
+  created() {
+    this.uploader = window.MediaLibraryUploader;
   },
 
   mounted() {
@@ -244,13 +258,13 @@ export default {
 
   computed: {
     isInBrowsingMode() {
-      return this.mode === MODES.BROWSING;
+      return this.mode === MODES.BROWSING || this.paused;
     },
     isInUploadingMode() {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible() {
-      return this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
+      return !this.paused && this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
     },
     filesNotEmpty() {
       return this.files.length > 0;
@@ -262,7 +276,7 @@ export default {
       return this.files.length;
     },
     canBeSorted() {
-      return this.selectedCount && (this.selectedCount !== this.filesCount);
+      return !this.paused && this.selectedCount && (this.selectedCount !== this.filesCount);
     },
   },
 
@@ -270,7 +284,7 @@ export default {
     // Todo: Dev
     fakeFiles() {
       for (let i = 0; i < 100; i += 1) {
-        this.addFile({
+        this.files.push({
           name: i,
         });
       }
@@ -391,22 +405,31 @@ export default {
       this.selectedIndex = null;
     },
 
-    // Files
-    addFile(file) {
-      this.files.push(file);
-    },
-
     // File input
     getUploadInput() {
       return this.$refs.upload;
     },
-    onFileInputChange(event) {
-      console.log(event);
-      const { files } = this.getUploadInput();
+    async onFileInputChange(event) {
+      this.paused = true;
+
+      const input = this.getUploadInput()
+      const { files } = input;
 
       Array.prototype.forEach.call(files, (file) => {
-        this.addFile(file);
+        this.files.push(file);
       });
+
+      await this.uploader.upload({
+        files,
+        resource: this.resource,
+        field: this.field,
+      });
+
+      // Reset file input so if you upload the same image sequentially
+      input.value = null;
+
+      // Todo: shitty
+      // this.paused = false;
 
       this.setBrowsingMode();
     },

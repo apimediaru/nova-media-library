@@ -35,6 +35,13 @@
     opacity: .5;
   }
 
+  &-dragged {
+    &,
+    &:hover {
+      border-style: solid;
+    }
+  }
+
   &-drop {
     border-color: green;
     border-style: dashed;

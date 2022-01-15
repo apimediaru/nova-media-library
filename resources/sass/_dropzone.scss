@@ -1,0 +1,44 @@
+.media-library-dropzone {
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  border: 2px dashed #BCCCDC;
+  border-radius: $border-radius;
+  transition: border-color 100ms;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  visibility: hidden;
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  &-highlighted,
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &-visible {
+    visibility: visible;
+  }
+
+  &-icon {
+    margin-bottom: 10px;
+  }
+
+  &-notice {
+    margin: 0;
+  }
+
+  &-input {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}

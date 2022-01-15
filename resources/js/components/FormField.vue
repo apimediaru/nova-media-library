@@ -25,6 +25,7 @@
         <MediaLibraryBrowser
           v-if="isBrowsingModalOpen"
           @close="onBrowsingModalClose"
+          :resource="resource"
           :field="field"
         />
       </portal>
