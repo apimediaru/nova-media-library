@@ -1,7 +1,7 @@
 import { getXY, createGhost, applyImportantGhostStyles, applyStyles, getClosestDirectChild } from "./utils";
 import manager from './Manager';
 import { Scrollable } from "./Plugins";
-import Emitter from "./Emitter";
+import Emitter from '../Emitter';
 import { DragAndDropEvents, BeforeStartEvent, BeforeDragStartEvent, DragStartEvent, DragOverEvent, DragOutEvent, DragMoveEvent, DragDropEvent } from './Events';
 const { merge, throttle } = window._;
 

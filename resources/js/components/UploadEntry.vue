@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    class="media-upload-entry"
+  >
     {{ name }}
   </div>
 </template>
@@ -10,6 +12,7 @@ export default {
 
   props: {
     name: String,
+    progress: [Number],
   },
 }
 </script>

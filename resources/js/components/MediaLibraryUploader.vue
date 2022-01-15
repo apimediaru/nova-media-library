@@ -13,12 +13,14 @@
         </div>
 
         <div class="media-upload-files library-modal-layout-scrollable">
-          <UploadEntry
-            v-for="(file, index) in files"
-            :key="index"
-            :name="file.name"
-          />
-        </div>
+          <div class="media-library-uploads">
+            <UploadEntry
+              v-for="(file, index) in files"
+              :key="index"
+              :name="file.name"
+            />
+          </div>
+          </div>
       </div>
 
       <div slot="buttons" class="w-full flex justify-end">
@@ -67,19 +69,21 @@ export default {
 
   methods: {
     async upload({ resource = {}, field = {}, files = [] }) {
-      if (!files.length) return;
+      return new Promise((resolve, reject) => {
+        if (!files.length) return;
 
-      // this.files = Array.prototype.map.call(files, (entry) => ({
-      //   name: entry.name,
-      // }));
-      //
-      // console.log(this.files);
+        // this.files = Array.prototype.map.call(files, (entry) => ({
+        //   name: entry.name,
+        // }));
+        //
+        // console.log(this.files);
 
-      this.visible = true;
+        this.visible = true;
 
-      this.files = files;
+        this.files = files;
 
-      console.log(files);
+        console.log(files);
+      });
     },
     cancel() {
       this.visible = false;

@@ -1,31 +1,11 @@
 <template>
   <default-field :field="field" :errors="errors" :show-help-text="showHelpText">
     <template slot="field">
-<!--      <input-->
-<!--        :id="field.name"-->
-<!--        type="text"-->
-<!--        class="w-full form-control form-input form-input-bordered"-->
-<!--        :class="errorClasses"-->
-<!--        :placeholder="field.name"-->
-<!--        v-model="value"-->
-<!--      />-->
-<!--      <div-->
-<!--          class="media-library-dropzone"-->
-<!--          :id="dragAndDropID"-->
-<!--      >-->
-<!--        <div class="media-library-dropzone-notice">Drop your images here, or click to browse</div>-->
-<!--        <input-->
-<!--            type="file"-->
-<!--            multiple-->
-<!--            class="media-library-dropzone-input"-->
-<!--            :id="field.name"-->
-<!--        >-->
-<!--      </div>-->
       <portal to="modals" transition="fade-transition">
         <MediaLibraryBrowser
           v-if="isBrowsingModalOpen"
           @close="onBrowsingModalClose"
-          :resource="resource"
+          :resourceId="resourceId"
           :field="field"
         />
       </portal>
@@ -73,20 +53,6 @@ export default {
     }
   },
 
-  mounted() {
-    this.addDragAndDropEvents();
-  },
-
-  beforeDestroy() {
-    this.removeDragAndDropEvents();
-  },
-
-  computed: {
-    dragAndDropID() {
-      return `dragAndDrop_${this.field.name}`;
-    },
-  },
-
   methods: {
     /*
      * Set the initial, internal value for the field.
@@ -95,22 +61,12 @@ export default {
       this.value = this.field.value || ''
     },
 
-    data() {
-      return {
-        dropzone: null,
-      }
-    },
-
     /**
      * Fill the given FormData object with the field's internal value.
      */
     fill(formData) {
       // formData.append(this.field.attribute, this.value || '')
     },
-
-    addDragAndDropEvents() {},
-
-    removeDragAndDropEvents() {},
 
     // actual
     openMediaBrowser() {

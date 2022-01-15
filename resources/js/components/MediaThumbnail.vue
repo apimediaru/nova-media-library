@@ -27,7 +27,7 @@
 
 <script>
 export default {
-  name: "MediaLibraryGalleryItem",
+  name: "MediaThumbnail",
 
   props: {
     index: {

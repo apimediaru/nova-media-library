@@ -15,9 +15,23 @@ body.media-library-locked {
   height: 100%;
 }
 
+.media-library-browser-grid {
+  display: flex;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.media-library-browser-uploads {
+  margin-left: 1rem;
+  flex: 0 0 260px;
+  overflow-y: auto;
+
+  @include scrollbars();
+}
+
 .media-library-browser-area {
   position: relative;
-  flex-grow: 1;
+  flex: 1 0 auto;
   overflow-y: auto;
 
   @include scrollbars();

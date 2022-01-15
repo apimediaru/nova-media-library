@@ -75,65 +75,72 @@
         </div>
       </div>
 
-      <div
-          class="media-library-browser-area"
-          @click="onBrowserAreaClick"
-          ref="area"
-      >
+      <div class="media-library-browser-grid">
         <div
-            class="media-library-layout"
-            :class="{
-              'media-library-layout-hidden': !isInBrowsingMode || isDragging,
-            }"
-            ref="layout"
+            class="media-library-browser-area"
+            @click="onBrowserAreaClick"
+            ref="area"
         >
           <div
-              v-if="!filesNotEmpty"
-              class="media-library-layout-message"
+              class="media-library-layout"
+              :class="{
+              'media-library-layout-hidden': !isInBrowsingMode || isDragging,
+            }"
+              ref="layout"
           >
-            {{ __('There are currently no media files in this library') }}
+            <div
+                v-if="!filesNotEmpty"
+                class="media-library-layout-message"
+            >
+              {{ __('There are currently no media files in this library') }}
+            </div>
+            <MediaThumbnail
+              v-else
+              v-for="(file, index) in files"
+              :key="index"
+              :index="index"
+              :name="file.name"
+              @click="onThumbnailClick(index, $event)"
+              :dragged="isReordering && selected.includes(index)"
+              :selected="isItemSelected(index)"
+              ref="thumbnail"
+              :highlighted="index === selectedIndex"
+              :intersected="index === reorderIntersectionId"
+              :data-key="index"
+              active
+            />
           </div>
-          <MediaLibraryThumbnail
-            v-else
-            v-for="(file, index) in files"
-            :key="index"
-            :index="index"
-            :name="file.name"
-            @click="onThumbnailClick(index, $event)"
-            :dragged="isReordering && selected.includes(index)"
-            :selected="isItemSelected(index)"
-            ref="thumbnail"
-            :highlighted="index === selectedIndex"
-            :intersected="index === reorderIntersectionId"
-            :data-key="index"
-            active
-          />
-        </div>
 
-        <div
-            class="media-library-dropzone"
-            :class="{
+          <div
+              class="media-library-dropzone"
+              :class="{
               'media-library-dropzone-visible': isDropzoneVisible,
               'media-library-dropzone-highlighted': isDropzoneVisible && isDraggingOverDropzone,
             }"
-        >
-          <p class="media-library-dropzone-icon">
-            <svg class="fill-current w-4 h-4 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-              <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-            </svg>
-          </p>
-          <p class="media-library-dropzone-notice">
-            {{ __('Drop your images here, or click to browse') }}
-          </p>
-          <input
+          >
+            <p class="media-library-dropzone-icon">
+              <svg class="fill-current w-4 h-4 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
+              </svg>
+            </p>
+            <p class="media-library-dropzone-notice">
+              {{ __('Drop your images here, or click to browse') }}
+            </p>
+            <input
               type="file"
               multiple
               class="media-library-dropzone-input"
               ref="upload"
               @change="onFileInputChange"
-          >
+            >
+          </div>
         </div>
+        <UploadsList
+          v-if="uploadsDetails"
+          class="media-library-browser-uploads"
+        />
       </div>
+
     </div>
 
     <div slot="buttons" class="w-full flex">
@@ -169,8 +176,10 @@
 
 <script>
 import MediaLibraryModal from "./MediaLibraryModal";
-import MediaLibraryThumbnail from "./MediaLibraryThumbnail";
+import MediaThumbnail from "./MediaThumbnail";
+import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
+import { MediaUploader } from "../utils/MediaUploader";
 const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
@@ -185,7 +194,8 @@ export default {
 
   components: {
     MediaLibraryModal,
-    MediaLibraryThumbnail,
+    MediaThumbnail,
+    UploadsList,
   },
 
   data() {
@@ -225,6 +235,9 @@ export default {
 
       // Pause modal events
       paused: false,
+
+      // Uploads
+      uploadsDetails: true,
     };
   },
 
@@ -234,15 +247,20 @@ export default {
       default: () => ({}),
       required: true,
     },
-    resource: {
-      type: Object,
-      default: () => ({}),
+    resourceId: {
+      type: Number,
+      default: null,
       required: true,
-    },
+    }
   },
 
   created() {
-    this.uploader = window.MediaLibraryUploader;
+    this.uploader = new MediaUploader({
+      object: this.field.object,
+      attribute: this.field.attribute,
+      id: this.resourceId,
+    });
+    this.uploader.on('upload', this.onFileUpload);
   },
 
   mounted() {
@@ -312,6 +330,15 @@ export default {
     },
     preventNextBackdropClick() {
       this.isBackdropClickPrevented = true;
+    },
+    resetPointerEventsOutsideFrame() {
+      document.body.classList.remove(bodyLockedClass);
+    },
+    preventPointerEventsOutsideFrame() {
+      const { body } = document;
+      if (body.classList.contains(bodyLockedClass)) {
+        body.classList.add(bodyLockedClass);
+      }
     },
     onBackdropClick() {
       let resolution = true;
@@ -410,28 +437,34 @@ export default {
       return this.$refs.upload;
     },
     async onFileInputChange(event) {
-      this.paused = true;
+      const { target: { files } } = event;
 
-      const input = this.getUploadInput()
-      const { files } = input;
-
-      Array.prototype.forEach.call(files, (file) => {
-        this.files.push(file);
-      });
-
-      await this.uploader.upload({
-        files,
-        resource: this.resource,
-        field: this.field,
-      });
-
-      // Reset file input so if you upload the same image sequentially
-      input.value = null;
-
-      // Todo: shitty
-      // this.paused = false;
-
-      this.setBrowsingMode();
+      await this.uploader.upload([...files]);
+      // this.paused = true;
+      //
+      // const input = this.getUploadInput()
+      // const { files } = input;
+      //
+      // Array.prototype.forEach.call(files, (file) => {
+      //   this.files.push(file);
+      // });
+      //
+      // await uploadMedia({
+      //   files,
+      //   resource: this.resource,
+      //   field: this.field,
+      // });
+      //
+      // // Reset file input so if you upload the same image sequentially
+      // input.value = null;
+      //
+      // // Todo: shitty
+      // // this.paused = false;
+      //
+      // this.setBrowsingMode();
+    },
+    onFileUpload(event) {
+      console.log(event);
     },
 
     // Drag and drop
@@ -440,15 +473,6 @@ export default {
     },
     enableDragAndDrop() {
       this.isDragAndDropEnabled = true;
-    },
-    resetPointerEventsOutsideFrame() {
-      document.body.classList.remove(bodyLockedClass);
-    },
-    preventPointerEventsOutsideFrame() {
-      const { body } = document;
-      if (body.classList.contains(bodyLockedClass)) {
-        body.classList.add(bodyLockedClass);
-      }
     },
     addDragAndDropEventListeners() {
       window.addEventListener('drop', this.onDrop);
@@ -464,6 +488,11 @@ export default {
       window.removeEventListener('dragend', this.onDragEnd);
       document.removeEventListener('keydown', this.onDocumentKeyDown);
     },
+    dropzoneIncludes(element) {
+      return element && element.matches('.media-library-dropzone-input');
+    },
+
+    // Drag and drop events
     onDrop(event) {
       if (!this.dropzoneIncludes(event.target)) {
         event.preventDefault();
@@ -497,9 +526,7 @@ export default {
         this.isDraggingOverDropzone = false;
       }
     }, 200),
-    dropzoneIncludes(element) {
-      return element && element.matches('.media-library-dropzone-input');
-    },
+
 
     // Sortable
     registerSortable() {
@@ -519,6 +546,9 @@ export default {
           strict: true,
         },
       });
+    },
+    destroySortable() {
+      this.sortable.destroy();
     },
     createGhost(element, fn, { applyStyles, applyImportantGhostStyles }) {
       const { selectedCount } = this;
@@ -575,6 +605,7 @@ export default {
       this.reorderIntersectionId = null;
     },
 
+    // Sortable events
     onSortableBeforeStart(event) {
       if (!this.canBeSorted) {
         event.cancel();
@@ -619,9 +650,6 @@ export default {
       this.isReordering = false;
       // Todo: remove
       console.log('drop:', event.target);
-    },
-    destroySortable() {
-      this.sortable.destroy();
     },
   },
 
