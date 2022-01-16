@@ -1485,7 +1485,12 @@ var DragAndDrop = /*#__PURE__*/function () {
     });
 
     _defineProperty(this, "onMouseDown", function (event) {
-      // Get source and save it
+      // Check that click was made exactly by LBM
+      if (event.buttons !== 1) {
+        return;
+      } // Get source and save it
+
+
       var source = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getClosestDirectChild)(_this.options.container, event.target);
 
       if (!source) {

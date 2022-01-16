@@ -189,6 +189,9 @@ class DragAndDrop {
   }
 
   onMouseDown = (event) => {
+    // Check that click was made exactly by LBM
+    if (event.buttons !== 1) { return; }
+
     // Get source and save it
     const source = getClosestDirectChild(this.options.container, event.target);
     if (!source) { return; }
