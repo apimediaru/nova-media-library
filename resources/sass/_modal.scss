@@ -4,7 +4,7 @@ $modal-controls-height: 60px;
   overflow: hidden;
   direction: ltr;
   transform: translateZ(0);
-  z-index: 99994;
+  z-index: 9999;
   position: fixed;
 
   &--entire-scrollable {
@@ -46,7 +46,6 @@ $modal-controls-height: 60px;
     transition-property: transform, opacity;
     white-space: normal;
     width: 100%;
-    z-index: 99994;
 
     &::before {
       content: "";

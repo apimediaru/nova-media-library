@@ -2,12 +2,13 @@
   <div class="media-uploads-browser">
     <div
         class="media-uploads-status"
-    >{{ __('Processed') }}: 5 / 12</div>
+    >{{ __('Processed') }}: {{ processedCount }} / {{ totalCount }}</div>
     <div class="media-uploads">
       <UploadsListItem
-          v-for="i in 100"
-          name="testadsasdasdasdasd adas asdd asdasdasdas asdasdasd asdas"
-          :size="1214124"
+          v-for="(upload, i) in uploads"
+          :media="upload"
+          :name="upload.name"
+          :size="upload.humanSize"
           :key="i"
           uploaded
       />
@@ -15,15 +16,15 @@
     <div class="media-uploads-info">
       <div class="media-uploads-info-item media-uploads-info-item--queued">
         <span class="media-uploads-info-item-name">{{ 'In queue' }}:</span>
-        <div class="media-uploads-info-item-value">2</div>
+        <div class="media-uploads-info-item-value">{{ queuedCount }}</div>
       </div>
       <div class="media-uploads-info-item media-uploads-info-item--succeeded">
         <span class="media-uploads-info-item-name">{{ 'Succeeded' }}:</span>
-        <div class="media-uploads-info-item-value">2</div>
+        <div class="media-uploads-info-item-value">{{ succeededCount }}</div>
       </div>
       <div class="media-uploads-info-item media-uploads-info-item--failed">
         <span class="media-uploads-info-item-name">{{ 'Failed' }}:</span>
-        <div class="media-uploads-info-item-value">0</div>
+        <div class="media-uploads-info-item-value">{{ failedCount }}</div>
       </div>
     </div>
   </div>
@@ -37,7 +38,32 @@ export default {
 
   components: {
     UploadsListItem,
-  }
+  },
+
+  computed: {
+    totalCount() {
+      return this.uploads.length;
+    },
+    processedCount() {
+      return this.uploads.filter((upload) => upload.isProcessed()).length;
+    },
+    queuedCount() {
+      return this.uploads.filter((upload) => upload.queued()).length;
+    },
+    succeededCount() {
+      return this.uploads.filter((upload) => upload.uploaded()).length;
+    },
+    failedCount() {
+      return this.uploads.filter((upload) => upload.failed()).length;
+    },
+  },
+
+  props: {
+    uploads: {
+      type: Array,
+      default: () => ([]),
+    },
+  },
 }
 </script>
 

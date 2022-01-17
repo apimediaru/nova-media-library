@@ -44,3 +44,11 @@ export function composedPath(evt) {
 
   return [target].concat(getParents(target)).concat([window])
 }
+
+export const uid = (() => {
+  let index = 0;
+  return () => {
+    index += 1;
+    return Number(index);
+  };
+})();

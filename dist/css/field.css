@@ -67,7 +67,7 @@
   overflow: hidden;
   direction: ltr;
   transform: translateZ(0);
-  z-index: 99994;
+  z-index: 9999;
   position: fixed;
 }
 .media-library-modal--entire-scrollable > .media-library-modal-viewport {
@@ -100,7 +100,6 @@
   transition-property: transform, opacity;
   white-space: normal;
   width: 100%;
-  z-index: 99994;
 }
 .media-library-modal-viewport::before {
   content: "";
@@ -469,6 +468,8 @@ body.media-library-locked {
 .media-uploads {
   overflow-y: auto;
   padding: 0;
+  flex-grow: 1;
+  min-height: 0;
 }
 .media-uploads::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
@@ -496,6 +497,10 @@ body.media-library-locked {
 }
 .media-upload--failed .media-upload-info-name {
   color: var(--danger);
+}
+.media-upload-info {
+  display: flex;
+  flex-direction: column;
 }
 .media-upload-info-name {
   display: inline-block;

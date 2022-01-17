@@ -19,7 +19,7 @@
             class="media-library-panel-actions"
             :class="{
               'media-library-panel-actions-disabled': !selectedCount,
-              'media-library-panel-actions-hidden': !filesCount,
+              'media-library-panel-actions-hidden': !filesCount && !hasUploads,
             }"
         >
           <div class="media-library-actions-panel media-library-actions-panel-left media-library-actions">
@@ -84,12 +84,12 @@
           <div
               class="media-library-layout"
               :class="{
-              'media-library-layout--hidden': !isInBrowsingMode || isDragging,
+              'media-library-layout--hidden': isDragging,
             }"
               ref="layout"
           >
             <div
-                v-if="!hasFiles"
+                v-if="!hasFiles && !hasUploads"
                 class="media-library-layout-message"
                 :class="{
                   'cursor-pointer': canAddFiles,
@@ -154,8 +154,9 @@
           </div>
         </div>
         <UploadsList
-          v-if="hasFiles && uploadDetailsVisible"
+          v-if="(hasFiles || hasUploads) && uploadDetailsVisible"
           class="media-library-browser-uploads"
+          :uploads="this.uploads"
         />
       </div>
 
@@ -168,7 +169,9 @@ import MediaLibraryModal from "./MediaLibraryModal";
 import MediaThumbnail from "./MediaThumbnail";
 import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
-import { MediaUploader } from "../utils/MediaUploader";
+import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
+import Vue from 'vue';
+
 const { throttle, debounce } = window._;
 
 const MODES = Object.freeze({
@@ -207,9 +210,6 @@ export default {
       // Uploaded files
       files: [],
 
-      // Queue of files to upload
-      queue: [],
-
       // Array of selected files IDs
       selected: [],
       selectedIndex: null,
@@ -227,6 +227,7 @@ export default {
 
       // Uploads
       uploadDetailsVisible: true,
+      uploads: [],
     };
   },
 
@@ -271,10 +272,13 @@ export default {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible() {
-      return !this.paused && this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
+      return !this.paused && this.isDragAndDropEnabled && this.isDragging;
     },
     hasFiles() {
       return this.filesCount > 0;
+    },
+    hasUploads() {
+      return this.uploads.length > 0;
     },
     selectedCount() {
       return this.selected.length;
@@ -434,7 +438,12 @@ export default {
     async onFileInputChange(event) {
       const { target: { files } } = event;
 
-      await this.uploader.upload([...files]);
+      const uploads = [...files].map((item) => new MediaUpload(item));
+      this.uploads.push(...uploads);
+
+      this.setUploadingMode();
+
+      await this.uploader.upload(uploads.reverse());
       // this.paused = true;
       //
       // const input = this.getUploadInput()
