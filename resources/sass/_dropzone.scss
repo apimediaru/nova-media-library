@@ -2,22 +2,36 @@
   height: 100%;
   width: 100%;
   background: #fff;
-  border: 2px dashed #BCCCDC;
-  border-radius: $border-radius;
-  transition: border-color 100ms;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  visibility: hidden;
   position: absolute;
-  left: 0;
+  visibility: hidden;
   top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+
+  &-inner {
+    position: absolute;
+    border: 2px dashed #BCCCDC;
+    border-radius: $border-radius;
+    transition: border-color 100ms;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: .5rem;
+    top: .5rem;
+    right: .5rem;
+    bottom: .5rem;
+    left: .5rem;
+  }
 
   &-highlighted,
   &:hover {
-    border-color: var(--primary);
+    .media-library-dropzone-inner {
+      border-color: var(--primary);
+    }
   }
 
   &-visible {

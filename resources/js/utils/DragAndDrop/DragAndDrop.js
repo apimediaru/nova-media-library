@@ -43,7 +43,7 @@ class DragAndDrop {
   static Plugins = { Scrollable };
 
   // Dragging flag
-  isDragging = false;
+  dragging = false;
 
   // Source that activated drag&drop
   source = null;
@@ -232,7 +232,7 @@ class DragAndDrop {
     }
 
     // Set dragging flag
-    this.isDragging = true;
+    this.dragging = true;
 
     // Todo: remove
     console.log('started dragging');
@@ -272,7 +272,7 @@ class DragAndDrop {
     }));
 
     // If dragging in progress perform actions
-    if (this.isDragging) {
+    if (this.dragging) {
       // Update ghost position
       this.updateGhostPosition();
     }
@@ -326,7 +326,7 @@ class DragAndDrop {
     // Always stop tracking 'mousemove' event
     document.removeEventListener('mousemove', this.onMouseMove);
 
-    if (!this.isDragging) { return; }
+    if (!this.dragging) { return; }
 
     // Todo: remove
     console.log('ended dragging');
@@ -348,7 +348,7 @@ class DragAndDrop {
     this.cleanup();
 
     // Reset dragging flag
-    this.isDragging = false;
+    this.dragging = false;
   }
 
   // Utilities
@@ -374,6 +374,10 @@ class DragAndDrop {
     this.deltaY = null;
 
     this.lastEvent = null;
+  }
+
+  isDragging = () => {
+    return Boolean(this.dragging);
   }
 }
 

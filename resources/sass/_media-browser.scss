@@ -3,6 +3,10 @@ body.media-library-locked {
 }
 
 .media-library-browser {
+  .media-library-modal-viewport-element-body {
+    padding: 0;
+  }
+
   .media-library-modal-viewport-element {
     min-height: 500px;
     height: 100%;
@@ -22,11 +26,9 @@ body.media-library-locked {
 }
 
 .media-library-browser-uploads {
-  margin-left: 1rem;
-  flex: 0 0 260px;
-  overflow-y: auto;
-
-  @include scrollbars();
+  flex: 0 0 280px;
+  max-width: 280px;
+  border-radius: $border-radius;
 }
 
 .media-library-browser-area {
@@ -40,11 +42,33 @@ body.media-library-locked {
 .media-library-layout {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  grid-gap: .75rem;
-  padding-right: .5rem;
+  grid-gap: .5rem;
+  padding: 0 .75rem .75rem .75rem;
+  height: auto;
 
-  &-hidden {
+  &--hidden {
     display: none;
+  }
+
+  &-add-file {
+    border-radius: $border-radius;
+    border: 1px dashed var(--primary);
+    font-size: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    cursor: pointer;
+    transition: 200ms;
+    transition-property: background-color, border-color, color;
+    font-weight: 300;
+
+    &:hover,
+    &:focus {
+      border-style: solid;
+      background-color: var(--primary);
+      color: var(--white)
+    }
   }
 }
 
@@ -57,12 +81,13 @@ body.media-library-locked {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
   text-align: center;
   padding: 1rem;
 }
 
 .media-library-browser-actions-action-search {
-  margin: 0 1.5rem 0 auto;
+  margin: 0 1.5rem 0 0;
 }
 
 .media-library-browser-actions-action-for-selected {
@@ -79,17 +104,26 @@ body.media-library-locked {
 .media-library-actions {
   display: flex;
   align-items: center;
-  margin-right: 1.5rem;
 
   &-action {
     &:not(:last-child) {
       margin-right: 14px;
     }
   }
+
+  &-panel {
+    &-left {
+      margin-right: 1rem;
+    }
+
+    &-right {
+      margin-left: auto;
+    }
+  }
 }
 
 .media-library-browser-head {
-  margin-bottom: 1.5rem;
+  padding: 1rem;
 }
 
 .media-library-browser-head-title {
@@ -110,7 +144,7 @@ body.media-library-locked {
 
   &-disabled {
     .media-library-action {
-      &:not(.media-library-action-select-all) {
+      &:not(.media-library-action-static) {
         pointer-events: none;
         cursor: default;
         opacity: .5;
@@ -118,11 +152,3 @@ body.media-library-locked {
     }
   }
 }
-
-.media-library-action-select-all-positive {
-  + .media-library-action-select-all-negative {
-    margin-left: .5rem;
-  }
-}
-
-

@@ -187,6 +187,10 @@ export default class Scrollable extends AbstractPlugin {
 
     cancelAnimationFrame(this.scrollAnimationFrame);
 
+    if (!this.dd.isDragging()) {
+      return;
+    }
+
     const {speed, sensitivity} = this.options;
 
     const rect = this.scrollableElement.getBoundingClientRect();

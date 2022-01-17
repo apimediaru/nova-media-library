@@ -345,17 +345,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -405,7 +394,7 @@ var bodyLockedClass = 'media-library-locked';
       // Pause modal events
       paused: false,
       // Uploads
-      uploadsDetails: true
+      uploadDetailsVisible: true
     };
   },
   props: {
@@ -431,7 +420,7 @@ var bodyLockedClass = 'media-library-locked';
     this.uploader.on('upload', this.onFileUpload);
   },
   mounted: function mounted() {
-    this.fakeFiles();
+    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -449,8 +438,8 @@ var bodyLockedClass = 'media-library-locked';
     isDropzoneVisible: function isDropzoneVisible() {
       return !this.paused && this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
     },
-    filesNotEmpty: function filesNotEmpty() {
-      return this.files.length > 0;
+    hasFiles: function hasFiles() {
+      return this.filesCount > 0;
     },
     selectedCount: function selectedCount() {
       return this.selected.length;
@@ -460,6 +449,9 @@ var bodyLockedClass = 'media-library-locked';
     },
     canBeSorted: function canBeSorted() {
       return !this.paused && this.selectedCount && this.selectedCount !== this.filesCount;
+    },
+    canAddFiles: function canAddFiles() {
+      return true;
     }
   },
   methods: {
@@ -517,6 +509,9 @@ var bodyLockedClass = 'media-library-locked';
       }
 
       return resolution;
+    },
+    triggerFileUpload: function triggerFileUpload() {
+      this.getUploadInput().click();
     },
     // Events
     onThumbnailClick: function onThumbnailClick(index, event) {
@@ -1251,14 +1246,108 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _UploadsListItem__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./UploadsListItem */ "./resources/js/components/UploadsListItem.vue");
 //
 //
 //
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  name: "UploadsList"
+  name: "UploadsList",
+  components: {
+    UploadsListItem: _UploadsListItem__WEBPACK_IMPORTED_MODULE_0__["default"]
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js&":
+/*!**********************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js& ***!
+  \**********************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var filesize_lib_filesize_es6__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! filesize/lib/filesize.es6 */ "./node_modules/filesize/lib/filesize.es6.js");
+/* harmony import */ var filesize_lib_filesize_es6__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(filesize_lib_filesize_es6__WEBPACK_IMPORTED_MODULE_0__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "UploadsListItem",
+  props: {
+    name: String,
+    size: Number,
+    queued: Boolean,
+    uploaded: Boolean
+  },
+  computed: {
+    sizeHuman: function sizeHuman() {
+      return filesize_lib_filesize_es6__WEBPACK_IMPORTED_MODULE_0___default()(this.size);
+    }
+  }
 });
 
 /***/ }),
@@ -1418,7 +1507,7 @@ var DragAndDrop = /*#__PURE__*/function () {
 
     _classCallCheck(this, DragAndDrop);
 
-    _defineProperty(this, "isDragging", false);
+    _defineProperty(this, "dragging", false);
 
     _defineProperty(this, "source", null);
 
@@ -1533,7 +1622,7 @@ var DragAndDrop = /*#__PURE__*/function () {
       } // Set dragging flag
 
 
-      _this.isDragging = true; // Todo: remove
+      _this.dragging = true; // Todo: remove
 
       console.log('started dragging'); // Create ghost and locate it
 
@@ -1577,7 +1666,7 @@ var DragAndDrop = /*#__PURE__*/function () {
       })); // If dragging in progress perform actions
 
 
-      if (_this.isDragging) {
+      if (_this.dragging) {
         // Update ghost position
         _this.updateGhostPosition();
       }
@@ -1638,7 +1727,7 @@ var DragAndDrop = /*#__PURE__*/function () {
       // Always stop tracking 'mousemove' event
       document.removeEventListener('mousemove', _this.onMouseMove);
 
-      if (!_this.isDragging) {
+      if (!_this.dragging) {
         return;
       } // Todo: remove
 
@@ -1660,7 +1749,7 @@ var DragAndDrop = /*#__PURE__*/function () {
       _this.cleanup(); // Reset dragging flag
 
 
-      _this.isDragging = false;
+      _this.dragging = false;
     });
 
     _defineProperty(this, "createGhost", function () {
@@ -1688,6 +1777,10 @@ var DragAndDrop = /*#__PURE__*/function () {
       _this.deltaX = null;
       _this.deltaY = null;
       _this.lastEvent = null;
+    });
+
+    _defineProperty(this, "isDragging", function () {
+      return Boolean(_this.dragging);
     });
 
     // Merge options with defaults
@@ -2372,6 +2465,11 @@ var Scrollable = /*#__PURE__*/function (_AbstractPlugin) {
       }
 
       cancelAnimationFrame(this.scrollAnimationFrame);
+
+      if (!this.dd.isDragging()) {
+        return;
+      }
+
       var _this$options = this.options,
           speed = _this$options.speed,
           sensitivity = _this$options.sensitivity;
@@ -3209,7 +3307,7 @@ var MediaUploader = /*#__PURE__*/function () {
 
               case 3:
                 if (!(file = this.queue.pop())) {
-                  _context2.next = 20;
+                  _context2.next = 21;
                   break;
                 }
 
@@ -3218,8 +3316,9 @@ var MediaUploader = /*#__PURE__*/function () {
                 formData.append('object', this.object);
                 formData.append('objectId', this.id);
                 formData.append('attribute', this.attribute);
-                _context2.prev = 9;
-                _context2.next = 12;
+                formData.append('test', '123');
+                _context2.prev = 10;
+                _context2.next = 13;
                 return this.client.put('/nova-vendor/nova-media-library/upload', formData, {
                   headers: {
                     'Content-Type': 'multipart/form-data'
@@ -3230,29 +3329,29 @@ var MediaUploader = /*#__PURE__*/function () {
                   }
                 });
 
-              case 12:
+              case 13:
                 response = _context2.sent;
-                _context2.next = 18;
+                _context2.next = 19;
                 break;
 
-              case 15:
-                _context2.prev = 15;
-                _context2.t0 = _context2["catch"](9);
+              case 16:
+                _context2.prev = 16;
+                _context2.t0 = _context2["catch"](10);
                 console.log(_context2.t0);
 
-              case 18:
+              case 19:
                 _context2.next = 3;
                 break;
 
-              case 20:
+              case 21:
                 this.uploading = false;
 
-              case 21:
+              case 22:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[9, 15]]);
+        }, _callee2, this, [[10, 16]]);
       }));
 
       function startUploading() {
@@ -3343,6 +3442,194 @@ function composedPath(evt) {
 
   return [target].concat(getParents(target)).concat([window]);
 }
+
+/***/ }),
+
+/***/ "./node_modules/filesize/lib/filesize.es6.js":
+/*!***************************************************!*\
+  !*** ./node_modules/filesize/lib/filesize.es6.js ***!
+  \***************************************************/
+/***/ (function(module) {
+
+/**
+ * filesize
+ *
+ * @copyright 2021 Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @license BSD-3-Clause
+ * @version 8.0.6
+ */
+(function (global, factory) {
+	 true ? module.exports = factory() :
+	0;
+})(this, (function () { 'use strict';
+
+	const b = /^(b|B)$/,
+		symbol = {
+			iec: {
+				bits: ["bit", "Kibit", "Mibit", "Gibit", "Tibit", "Pibit", "Eibit", "Zibit", "Yibit"],
+				bytes: ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+			},
+			jedec: {
+				bits: ["bit", "Kbit", "Mbit", "Gbit", "Tbit", "Pbit", "Ebit", "Zbit", "Ybit"],
+				bytes: ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+			}
+		},
+		fullform = {
+			iec: ["", "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi", "yobi"],
+			jedec: ["", "kilo", "mega", "giga", "tera", "peta", "exa", "zetta", "yotta"]
+		},
+		roundingFuncs = {
+			floor: Math.floor,
+			ceil: Math.ceil
+		};
+
+	/**
+	 * filesize
+	 *
+	 * @method filesize
+	 * @param  {Mixed}   arg        String, Int or Float to transform
+	 * @param  {Object}  descriptor [Optional] Flags
+	 * @return {String}             Readable file size String
+	 */
+	function filesize (arg, descriptor = {}) {
+		let result = [],
+			val = 0,
+			e, base, bits, ceil, full, fullforms, locale, localeOptions, neg, num, output, pad, round, u, unix, separator, spacer, standard, symbols, roundingFunc, precision;
+
+		if (isNaN(arg)) {
+			throw new TypeError("Invalid number");
+		}
+
+		bits = descriptor.bits === true;
+		unix = descriptor.unix === true;
+		pad = descriptor.pad === true;
+		base = descriptor.base || 10;
+		round = descriptor.round !== void 0 ? descriptor.round : unix ? 1 : 2;
+		locale = descriptor.locale !== void 0 ? descriptor.locale : "";
+		localeOptions = descriptor.localeOptions || {};
+		separator = descriptor.separator !== void 0 ? descriptor.separator : "";
+		spacer = descriptor.spacer !== void 0 ? descriptor.spacer : unix ? "" : " ";
+		symbols = descriptor.symbols || {};
+		standard = base === 2 ? descriptor.standard || "iec" : "jedec";
+		output = descriptor.output || "string";
+		full = descriptor.fullform === true;
+		fullforms = descriptor.fullforms instanceof Array ? descriptor.fullforms : [];
+		e = descriptor.exponent !== void 0 ? descriptor.exponent : -1;
+		roundingFunc = roundingFuncs[descriptor.roundingMethod] || Math.round;
+		num = Number(arg);
+		neg = num < 0;
+		ceil = base > 2 ? 1000 : 1024;
+		precision = isNaN(descriptor.precision) === false ? parseInt(descriptor.precision, 10) : 0;
+
+		// Flipping a negative number to determine the size
+		if (neg) {
+			num = -num;
+		}
+
+		// Determining the exponent
+		if (e === -1 || isNaN(e)) {
+			e = Math.floor(Math.log(num) / Math.log(ceil));
+
+			if (e < 0) {
+				e = 0;
+			}
+		}
+
+		// Exceeding supported length, time to reduce & multiply
+		if (e > 8) {
+			if (precision > 0) {
+				precision += 8 - e;
+			}
+
+			e = 8;
+		}
+
+		if (output === "exponent") {
+			return e;
+		}
+
+		// Zero is now a special case because bytes divide by 1
+		if (num === 0) {
+			result[0] = 0;
+			u = result[1] = unix ? "" : symbol[standard][bits ? "bits" : "bytes"][e];
+		} else {
+			val = num / (base === 2 ? Math.pow(2, e * 10) : Math.pow(1000, e));
+
+			if (bits) {
+				val = val * 8;
+
+				if (val >= ceil && e < 8) {
+					val = val / ceil;
+					e++;
+				}
+			}
+
+			const p = Math.pow(10, e > 0 ? round : 0);
+			result[0] = roundingFunc(val * p) / p;
+
+			if (result[0] === ceil && e < 8 && descriptor.exponent === void 0) {
+				result[0] = 1;
+				e++;
+			}
+
+			u = result[1] = base === 10 && e === 1 ? bits ? "kbit" : "kB" : symbol[standard][bits ? "bits" : "bytes"][e];
+
+			if (unix) {
+				result[1] = result[1].charAt(0);
+
+				if (b.test(result[1])) {
+					result[0] = Math.floor(result[0]);
+					result[1] = "";
+				}
+			}
+		}
+
+		// Decorating a 'diff'
+		if (neg) {
+			result[0] = -result[0];
+		}
+
+		// Setting optional precision
+		if (precision > 0) {
+			result[0] = result[0].toPrecision(precision);
+		}
+
+		// Applying custom symbol
+		result[1] = symbols[result[1]] || result[1];
+
+		if (locale === true) {
+			result[0] = result[0].toLocaleString();
+		} else if (locale.length > 0) {
+			result[0] = result[0].toLocaleString(locale, localeOptions);
+		} else if (separator.length > 0) {
+			result[0] = result[0].toString().replace(".", separator);
+		}
+
+		if (pad && Number.isInteger(result[0]) === false && round > 0) {
+			const x = separator || ".",
+				tmp = result[0].toString().split(x),
+				s = tmp[1] || "",
+				l = s.length,
+				n = round - l;
+
+			result[0] = `${tmp[0]}${x}${s.padEnd(l + n, "0")}`;
+		}
+
+		if (full) {
+			result[1] = fullforms[e] ? fullforms[e] : fullform[standard][e] + (bits ? "bit" : "byte") + (result[0] === 1 ? "" : "s");
+		}
+
+		// Returning Array, Object, or String (default)
+		return output === "array" ? result : output === "object" ? {value: result[0], symbol: result[1], exponent: e, unit: u} : result.join(spacer);
+	}
+
+	// Partial application for functional programming
+	filesize.partial = opt => arg => filesize(arg, opt);
+
+	return filesize;
+
+}));
+
 
 /***/ }),
 
@@ -30885,6 +31172,45 @@ component.options.__file = "resources/js/components/UploadsList.vue"
 
 /***/ }),
 
+/***/ "./resources/js/components/UploadsListItem.vue":
+/*!*****************************************************!*\
+  !*** ./resources/js/components/UploadsListItem.vue ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true& */ "./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true&");
+/* harmony import */ var _UploadsListItem_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./UploadsListItem.vue?vue&type=script&lang=js& */ "./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js&");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _UploadsListItem_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__.render,
+  _UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "ff75cf30",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/UploadsListItem.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/components/DetailField.vue?vue&type=script&lang=js&":
 /*!**************************************************************************!*\
   !*** ./resources/js/components/DetailField.vue?vue&type=script&lang=js& ***!
@@ -31026,6 +31352,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsList_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./UploadsList.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsList.vue?vue&type=script&lang=js&");
  /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsList_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js&":
+/*!******************************************************************************!*\
+  !*** ./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js& ***!
+  \******************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsListItem_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./UploadsListItem.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5[0].rules[0].use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=script&lang=js&");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_0_rules_0_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsListItem_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -31178,6 +31520,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsList_vue_vue_type_template_id_ef44dd96_scoped_true___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsList_vue_vue_type_template_id_ef44dd96_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./UploadsList.vue?vue&type=template&id=ef44dd96&scoped=true& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsList.vue?vue&type=template&id=ef44dd96&scoped=true&");
+
+
+/***/ }),
+
+/***/ "./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true&":
+/*!************************************************************************************************!*\
+  !*** ./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true& ***!
+  \************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_UploadsListItem_vue_vue_type_template_id_ff75cf30_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true&");
 
 
 /***/ }),
@@ -31383,7 +31742,7 @@ var render = function () {
                 staticClass: "media-library-panel-actions",
                 class: {
                   "media-library-panel-actions-disabled": !_vm.selectedCount,
-                  "media-library-panel-actions-hidden": !_vm.files.length,
+                  "media-library-panel-actions-hidden": !_vm.filesCount,
                 },
               },
               [
@@ -31391,9 +31750,37 @@ var render = function () {
                   "div",
                   {
                     staticClass:
-                      "media-library-panel-actions-actions media-library-actions",
+                      "media-library-actions-panel media-library-actions-panel-left media-library-actions",
                   },
                   [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action media-library-action-static",
+                      },
+                      [
+                        _c("input", {
+                          staticClass: "checkbox cursor-pointer",
+                          attrs: {
+                            type: "checkbox",
+                            disabled: !_vm.filesCount,
+                            title: _vm.__("Select / Reset all"),
+                          },
+                          domProps: {
+                            checked: _vm.filesCount === _vm.selectedCount,
+                          },
+                          on: {
+                            change: function ($event) {
+                              _vm.filesCount !== _vm.selectedCount
+                                ? _vm.selectAll()
+                                : _vm.unselectAll()
+                            },
+                          },
+                        }),
+                      ]
+                    ),
+                    _vm._v(" "),
                     _c(
                       "div",
                       {
@@ -31483,44 +31870,17 @@ var render = function () {
                       "div",
                       {
                         staticClass:
-                          "media-library-actions-action media-library-action media-library-action-select-all",
+                          "media-library-actions-action media-library-browser-actions-action-search media-library-action",
                       },
                       [
-                        _vm.files.length !== _vm.selectedCount
-                          ? _c(
-                              "span",
-                              {
-                                staticClass:
-                                  "media-library-action-select-all-positive text-primary dim no-underline cursor-pointer",
-                                on: { click: _vm.selectAll },
-                              },
-                              [
-                                _vm._v(
-                                  "\n              " +
-                                    _vm._s(_vm.__("Select all")) +
-                                    "\n            "
-                                ),
-                              ]
-                            )
-                          : _vm._e(),
-                        _vm._v(" "),
-                        _vm.selectedCount
-                          ? _c(
-                              "span",
-                              {
-                                staticClass:
-                                  "media-library-action-select-all-negative text-primary dim no-underline cursor-pointer",
-                                on: { click: _vm.unselectAll },
-                              },
-                              [
-                                _vm._v(
-                                  "\n              " +
-                                    _vm._s(_vm.__("Unselect all")) +
-                                    "\n            "
-                                ),
-                              ]
-                            )
-                          : _vm._e(),
+                        _c("input", {
+                          staticClass:
+                            "w-full form-control form-input form-input-bordered",
+                          attrs: {
+                            type: "text",
+                            placeholder: _vm.__("Search..."),
+                          },
+                        }),
                       ]
                     ),
                   ]
@@ -31529,45 +31889,56 @@ var render = function () {
                 _c(
                   "div",
                   {
-                    staticClass: "media-library-browser-actions-action-search",
+                    staticClass:
+                      "media-library-actions-panel media-library-actions-panel-right media-library-actions",
                   },
                   [
-                    _c("input", {
-                      staticClass:
-                        "w-full form-control form-input form-input-bordered",
-                      attrs: { type: "text", placeholder: _vm.__("Search...") },
-                    }),
-                  ]
-                ),
-                _vm._v(" "),
-                _vm.files.length > 0
-                  ? _c(
-                      "div",
-                      {
-                        staticClass:
-                          "media-library-browser-actions-action-for-selected",
-                      },
-                      [
-                        _vm._v(
-                          "\n          " + _vm._s(_vm.__("Selected:")) + " "
-                        ),
-                        _c(
-                          "span",
+                    _vm.files.length > 0
+                      ? _c(
+                          "div",
                           {
                             staticClass:
-                              "media-library-browser-actions-action-for-selected-value",
+                              "media-library-browser-actions-action-for-selected",
                           },
                           [
                             _vm._v(
-                              _vm._s(_vm.selectedCount) +
-                                " / " +
-                                _vm._s(_vm.files.length)
+                              "\n            " +
+                                _vm._s(_vm.__("Selected:")) +
+                                " "
+                            ),
+                            _c(
+                              "span",
+                              {
+                                staticClass:
+                                  "media-library-browser-actions-action-for-selected-value",
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.selectedCount) +
+                                    " / " +
+                                    _vm._s(_vm.files.length)
+                                ),
+                              ]
                             ),
                           ]
-                        ),
-                      ]
-                    )
-                  : _vm._e(),
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-default btn-primary whitespace-no-wrap cursor-pointer media-library-actions-action",
+                        on: {
+                          click: function ($event) {
+                            _vm.uploadDetailsVisible = !_vm.uploadDetailsVisible
+                          },
+                        },
+                      },
+                      [_vm._v(_vm._s(_vm.__("Upload details")))]
+                    ),
+                  ]
+                ),
               ]
             ),
           ]),
@@ -31590,26 +31961,48 @@ var render = function () {
                       ref: "layout",
                       staticClass: "media-library-layout",
                       class: {
-                        "media-library-layout-hidden":
+                        "media-library-layout--hidden":
                           !_vm.isInBrowsingMode || _vm.isDragging,
                       },
                     },
                     [
-                      !_vm.filesNotEmpty
+                      !_vm.hasFiles
                         ? _c(
                             "div",
-                            { staticClass: "media-library-layout-message" },
+                            {
+                              staticClass: "media-library-layout-message",
+                              class: {
+                                "cursor-pointer": _vm.canAddFiles,
+                              },
+                              on: { click: _vm.triggerFileUpload },
+                            },
                             [
                               _vm._v(
                                 "\n            " +
                                   _vm._s(
                                     _vm.__(
-                                      "There are currently no media files in this library"
+                                      "There are currently no media files in this library."
                                     )
                                   ) +
-                                  "\n          "
+                                  "\n            "
                               ),
-                            ]
+                              _vm.canAddFiles
+                                ? [
+                                    _c("br"),
+                                    _vm._v(" "),
+                                    _c("p", { staticClass: "mt-2" }, [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.__(
+                                            "Drag and drop, or click to browse and select your files"
+                                          )
+                                        )
+                                      ),
+                                    ]),
+                                  ]
+                                : _vm._e(),
+                            ],
+                            2
                           )
                         : _vm._l(_vm.files, function (file, index) {
                             return _c("MediaThumbnail", {
@@ -31636,6 +32029,18 @@ var render = function () {
                               },
                             })
                           }),
+                      _vm._v(" "),
+                      this.hasFiles && _vm.canAddFiles && !_vm.isReordering
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "media-library-layout-add-file",
+                              attrs: { title: _vm.__("Add file") },
+                              on: { click: _vm.triggerFileUpload },
+                            },
+                            [_vm._v("+")]
+                          )
+                        : _vm._e(),
                     ],
                     2
                   ),
@@ -31651,54 +32056,60 @@ var render = function () {
                       },
                     },
                     [
-                      _c("p", { staticClass: "media-library-dropzone-icon" }, [
-                        _c(
-                          "svg",
-                          {
-                            staticClass: "fill-current w-4 h-4 mx-auto",
-                            attrs: {
-                              xmlns: "http://www.w3.org/2000/svg",
-                              viewBox: "0 0 20 20",
-                            },
-                          },
-                          [
-                            _c("path", {
-                              attrs: {
-                                d: "M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z",
-                              },
-                            }),
-                          ]
-                        ),
-                      ]),
-                      _vm._v(" "),
                       _c(
-                        "p",
-                        { staticClass: "media-library-dropzone-notice" },
+                        "div",
+                        { staticClass: "media-library-dropzone-inner" },
                         [
-                          _vm._v(
-                            "\n            " +
-                              _vm._s(
-                                _vm.__(
-                                  "Drop your images here, or click to browse"
-                                )
-                              ) +
-                              "\n          "
+                          _c(
+                            "p",
+                            { staticClass: "media-library-dropzone-icon" },
+                            [
+                              _c(
+                                "svg",
+                                {
+                                  staticClass: "fill-current w-4 h-4 mx-auto",
+                                  attrs: {
+                                    xmlns: "http://www.w3.org/2000/svg",
+                                    viewBox: "0 0 20 20",
+                                  },
+                                },
+                                [
+                                  _c("path", {
+                                    attrs: {
+                                      d: "M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z",
+                                    },
+                                  }),
+                                ]
+                              ),
+                            ]
                           ),
+                          _vm._v(" "),
+                          _c(
+                            "p",
+                            { staticClass: "media-library-dropzone-notice" },
+                            [
+                              _vm._v(
+                                "\n              " +
+                                  _vm._s(_vm.__("Drop your images here")) +
+                                  "\n            "
+                              ),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            ref: "upload",
+                            staticClass: "media-library-dropzone-input",
+                            attrs: { type: "file", multiple: "" },
+                            on: { change: _vm.onFileInputChange },
+                          }),
                         ]
                       ),
-                      _vm._v(" "),
-                      _c("input", {
-                        ref: "upload",
-                        staticClass: "media-library-dropzone-input",
-                        attrs: { type: "file", multiple: "" },
-                        on: { change: _vm.onFileInputChange },
-                      }),
                     ]
                   ),
                 ]
               ),
               _vm._v(" "),
-              _vm.uploadsDetails
+              _vm.hasFiles && _vm.uploadDetailsVisible
                 ? _c("UploadsList", {
                     staticClass: "media-library-browser-uploads",
                   })
@@ -31706,57 +32117,6 @@ var render = function () {
             ],
             1
           ),
-        ]
-      ),
-      _vm._v(" "),
-      _c(
-        "div",
-        {
-          staticClass: "w-full flex",
-          attrs: { slot: "buttons" },
-          slot: "buttons",
-        },
-        [
-          _vm.isInBrowsingMode
-            ? _c(
-                "button",
-                {
-                  staticClass: "btn btn-default btn-primary whitespace-no-wrap",
-                  attrs: { type: "button" },
-                  on: { click: _vm.setUploadingMode },
-                },
-                [_vm._v("\n      " + _vm._s(_vm.__("Upload files")) + "\n    ")]
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _vm.isInUploadingMode
-            ? _c(
-                "button",
-                {
-                  staticClass: "btn btn-default btn-primary whitespace-no-wrap",
-                  attrs: { type: "button" },
-                  on: { click: _vm.setBrowsingMode },
-                },
-                [_vm._v("\n      " + _vm._s(_vm.__("Back")) + "\n    ")]
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _c("div", { staticClass: "flex w-full justify-end" }, [
-            _c(
-              "button",
-              {
-                staticClass: "btn btn-default btn-danger",
-                attrs: { type: "button" },
-                on: {
-                  click: function ($event) {
-                    $event.preventDefault()
-                    return _vm.close.apply(null, arguments)
-                  },
-                },
-              },
-              [_vm._v("\n        " + _vm._s(_vm.__("Close")) + "\n      ")]
-            ),
-          ]),
         ]
       ),
     ]
@@ -32053,7 +32413,149 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [_vm._v("\n  Uploads\n")])
+  return _c("div", { staticClass: "media-uploads-browser" }, [
+    _c("div", { staticClass: "media-uploads-status" }, [
+      _vm._v(_vm._s(_vm.__("Processed")) + ": 5 / 12"),
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      { staticClass: "media-uploads" },
+      _vm._l(100, function (i) {
+        return _c("UploadsListItem", {
+          key: i,
+          attrs: {
+            name: "testadsasdasdasdasd adas asdd asdasdasdas asdasdasd asdas",
+            size: 1214124,
+            uploaded: "",
+          },
+        })
+      }),
+      1
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "media-uploads-info" }, [
+      _c(
+        "div",
+        {
+          staticClass:
+            "media-uploads-info-item media-uploads-info-item--queued",
+        },
+        [
+          _c("span", { staticClass: "media-uploads-info-item-name" }, [
+            _vm._v(_vm._s("In queue") + ":"),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "media-uploads-info-item-value" }, [
+            _vm._v("2"),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass:
+            "media-uploads-info-item media-uploads-info-item--succeeded",
+        },
+        [
+          _c("span", { staticClass: "media-uploads-info-item-name" }, [
+            _vm._v(_vm._s("Succeeded") + ":"),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "media-uploads-info-item-value" }, [
+            _vm._v("2"),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass:
+            "media-uploads-info-item media-uploads-info-item--failed",
+        },
+        [
+          _c("span", { staticClass: "media-uploads-info-item-name" }, [
+            _vm._v(_vm._s("Failed") + ":"),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "media-uploads-info-item-value" }, [
+            _vm._v("0"),
+          ]),
+        ]
+      ),
+    ]),
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true&":
+/*!***************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/components/UploadsListItem.vue?vue&type=template&id=ff75cf30&scoped=true& ***!
+  \***************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    {
+      staticClass: "media-upload",
+      class: {
+        "media-upload--uploaded": _vm.uploaded,
+        "media-upload--queued": _vm.queued,
+        "media-upload--failed": !_vm.uploaded && !_vm.queued,
+      },
+      attrs: { title: _vm.name },
+    },
+    [
+      _c("div", { staticClass: "media-upload-info" }, [
+        _c("div", { staticClass: "media-upload-info-name" }, [
+          _vm._v(_vm._s(_vm.name)),
+        ]),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "media-upload-details" }, [
+        _c("div", { staticClass: "media-upload-details-size" }, [
+          _vm._v(_vm._s(_vm.sizeHuman)),
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          {
+            staticClass: "media-upload-details-state",
+            class: {
+              "media-upload-details-state-uploaded": _vm.uploaded,
+              "media-upload-details-state-queued": _vm.queued,
+              "media-upload-details-state-failed": !_vm.uploaded && !_vm.queued,
+            },
+          },
+          [
+            _vm.queued
+              ? [_vm._v(_vm._s(_vm.__("Queued...")))]
+              : _vm.uploaded
+              ? [_vm._v(_vm._s(_vm.__("Uploaded")))]
+              : [_vm._v(_vm._s(_vm.__("Failed")))],
+          ],
+          2
+        ),
+      ]),
+    ]
+  )
 }
 var staticRenderFns = []
 render._withStripped = true

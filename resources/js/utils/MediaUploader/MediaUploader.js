@@ -61,6 +61,7 @@ export default class MediaUploader {
       formData.append('object', this.object);
       formData.append('objectId', this.id);
       formData.append('attribute', this.attribute);
+      formData.append('test', '123');
 
       try {
         const response = await this.client.put('/nova-vendor/nova-media-library/upload', formData, {

@@ -19,10 +19,20 @@
             class="media-library-panel-actions"
             :class="{
               'media-library-panel-actions-disabled': !selectedCount,
-              'media-library-panel-actions-hidden': !files.length,
+              'media-library-panel-actions-hidden': !filesCount,
             }"
         >
-          <div class="media-library-panel-actions-actions media-library-actions">
+          <div class="media-library-actions-panel media-library-actions-panel-left media-library-actions">
+            <div class="media-library-actions-action media-library-action media-library-action-static">
+              <input
+                  type="checkbox"
+                  class="checkbox cursor-pointer"
+                  @change="filesCount !== selectedCount ? selectAll() : unselectAll()"
+                  :checked="filesCount === selectedCount"
+                  :disabled="!filesCount"
+                  :title="__('Select / Reset all')"
+              >
+            </div>
             <div class="media-library-actions-action media-library-action">
               <select
                   class="w-full form-control form-select cursor-pointer"
@@ -42,35 +52,25 @@
                   :disabled="action === 'none'"
               >{{ __('Apply') }}</button>
             </div>
-            <div class="media-library-actions-action media-library-action media-library-action-select-all">
-              <span
-                  class="media-library-action-select-all-positive text-primary dim no-underline cursor-pointer"
-                  @click="selectAll"
-                  v-if="files.length !== selectedCount"
+            <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">
+              <input
+                  type="text"
+                  class="w-full form-control form-input form-input-bordered"
+                  :placeholder="__('Search...')"
               >
-                {{ __('Select all') }}
-              </span>
-              <span
-                  class="media-library-action-select-all-negative text-primary dim no-underline cursor-pointer"
-                  @click="unselectAll"
-                  v-if="selectedCount"
-              >
-                {{ __('Unselect all') }}
-              </span>
             </div>
           </div>
-          <div class="media-library-browser-actions-action-search">
-            <input
-                type="text"
-                class="w-full form-control form-input form-input-bordered"
-                :placeholder="__('Search...')"
+          <div class="media-library-actions-panel media-library-actions-panel-right media-library-actions">
+            <div
+                class="media-library-browser-actions-action-for-selected"
+                v-if="files.length > 0"
             >
-          </div>
-          <div
-              class="media-library-browser-actions-action-for-selected"
-              v-if="files.length > 0"
-          >
-            {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selectedCount }} / {{ files.length }}</span>
+              {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selectedCount }} / {{ files.length }}</span>
+            </div>
+            <button
+                class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer media-library-actions-action"
+                @click="uploadDetailsVisible = !uploadDetailsVisible"
+            >{{ __('Upload details') }}</button>
           </div>
         </div>
       </div>
@@ -84,15 +84,25 @@
           <div
               class="media-library-layout"
               :class="{
-              'media-library-layout-hidden': !isInBrowsingMode || isDragging,
+              'media-library-layout--hidden': !isInBrowsingMode || isDragging,
             }"
               ref="layout"
           >
             <div
-                v-if="!filesNotEmpty"
+                v-if="!hasFiles"
                 class="media-library-layout-message"
+                :class="{
+                  'cursor-pointer': canAddFiles,
+                }"
+                @click="triggerFileUpload"
             >
-              {{ __('There are currently no media files in this library') }}
+              {{ __('There are currently no media files in this library.') }}
+              <template
+                v-if="canAddFiles"
+              >
+                <br>
+                <p class="mt-2">{{ __('Drag and drop, or click to browse and select your files') }}</p>
+              </template>
             </div>
             <MediaThumbnail
               v-else
@@ -109,6 +119,12 @@
               :data-key="index"
               active
             />
+            <div
+                class="media-library-layout-add-file"
+                v-if="this.hasFiles && canAddFiles && !isReordering"
+                :title="__('Add file')"
+                @click="triggerFileUpload"
+            >+</div>
           </div>
 
           <div
@@ -118,58 +134,31 @@
               'media-library-dropzone-highlighted': isDropzoneVisible && isDraggingOverDropzone,
             }"
           >
-            <p class="media-library-dropzone-icon">
-              <svg class="fill-current w-4 h-4 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-              </svg>
-            </p>
-            <p class="media-library-dropzone-notice">
-              {{ __('Drop your images here, or click to browse') }}
-            </p>
-            <input
-              type="file"
-              multiple
-              class="media-library-dropzone-input"
-              ref="upload"
-              @change="onFileInputChange"
-            >
+            <div class="media-library-dropzone-inner">
+              <p class="media-library-dropzone-icon">
+                <svg class="fill-current w-4 h-4 mx-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
+                </svg>
+              </p>
+              <p class="media-library-dropzone-notice">
+                {{ __('Drop your images here') }}
+              </p>
+              <input
+                  type="file"
+                  multiple
+                  class="media-library-dropzone-input"
+                  ref="upload"
+                  @change="onFileInputChange"
+              >
+            </div>
           </div>
         </div>
         <UploadsList
-          v-if="uploadsDetails"
+          v-if="hasFiles && uploadDetailsVisible"
           class="media-library-browser-uploads"
         />
       </div>
 
-    </div>
-
-    <div slot="buttons" class="w-full flex">
-      <button
-          class="btn btn-default btn-primary whitespace-no-wrap"
-          type="button"
-          v-if="isInBrowsingMode"
-          @click="setUploadingMode"
-      >
-        {{ __('Upload files') }}
-      </button>
-      <button
-          class="btn btn-default btn-primary whitespace-no-wrap"
-          type="button"
-          v-if="isInUploadingMode"
-          @click="setBrowsingMode"
-      >
-        {{ __('Back') }}
-      </button>
-
-      <div class="flex w-full justify-end">
-        <button
-            class="btn btn-default btn-danger"
-            type="button"
-            @click.prevent="close"
-        >
-          {{ __('Close') }}
-        </button>
-      </div>
     </div>
   </MediaLibraryModal>
 </template>
@@ -237,7 +226,7 @@ export default {
       paused: false,
 
       // Uploads
-      uploadsDetails: true,
+      uploadDetailsVisible: true,
     };
   },
 
@@ -264,7 +253,7 @@ export default {
   },
 
   mounted() {
-    this.fakeFiles();
+    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -284,8 +273,8 @@ export default {
     isDropzoneVisible() {
       return !this.paused && this.isDragAndDropEnabled && (this.isInUploadingMode || this.isDragging);
     },
-    filesNotEmpty() {
-      return this.files.length > 0;
+    hasFiles() {
+      return this.filesCount > 0;
     },
     selectedCount() {
       return this.selected.length;
@@ -295,6 +284,9 @@ export default {
     },
     canBeSorted() {
       return !this.paused && this.selectedCount && (this.selectedCount !== this.filesCount);
+    },
+    canAddFiles() {
+      return true;
     },
   },
 
@@ -347,6 +339,9 @@ export default {
         this.isBackdropClickPrevented = false;
       }
       return resolution;
+    },
+    triggerFileUpload() {
+      this.getUploadInput().click();
     },
 
     // Events
