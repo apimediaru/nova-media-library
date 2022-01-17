@@ -1,3 +1,5 @@
+export { axios } from './Axios';
+
 export const keyCodes = Object.freeze({
   enter: 13,
   tab: 9,

@@ -3,7 +3,7 @@
     <div
         class="media-uploads-status"
     >
-      <div class="media-uploads-status-processed">{{ __('Processed') }}: {{ processedCount }} / {{ totalCount }}</div>
+      <div class="media-uploads-status-processed">{{ __('Completed') }}: {{ processedCount }} / {{ totalCount }}</div>
       <div
           class="media-uploads-status-clear"
           @click="clear"
@@ -51,13 +51,13 @@ export default {
       return this.uploads.length;
     },
     processedCount() {
-      return this.uploads.filter((upload) => upload.isProcessed()).length;
+      return this.uploads.filter((upload) => upload.isCompleted()).length;
     },
     queuedCount() {
       return this.uploads.filter((upload) => upload.queued()).length;
     },
     succeededCount() {
-      return this.uploads.filter((upload) => upload.uploaded()).length;
+      return this.uploads.filter((upload) => upload.succeeded()).length;
     },
     failedCount() {
       return this.uploads.filter((upload) => upload.failed()).length;

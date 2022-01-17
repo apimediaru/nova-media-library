@@ -10,22 +10,51 @@
   >
     <div class="media-upload-info">
       <div class="media-upload-info-name">{{ name }}</div>
-
+      <div
+          class="media-upload-info-progress"
+          v-if="media.processed()"
+      >
+        <div
+            class="media-upload-info-progress-bar media-upload-progress"
+            :title="progressPercentage"
+        >
+          <div
+              class="media-upload-progress-foreground"
+              :style="{
+                width: progressPercentage
+              }"
+          />
+        </div>
+        <div
+            class="media-upload-info-progress-abort"
+            @click="media.interrupt()"
+        >{{ __('Abort') }}</div>
+      </div>
     </div>
     <div class="media-upload-details">
       <div class="media-upload-details-size">{{ size }}</div>
       <div
           class="media-upload-details-state"
           :class="{
-            'media-upload-details-state-uploaded': media.uploaded(),
+            'media-upload-details-state-uploaded': media.succeeded(),
             'media-upload-details-state-queued': media.queued(),
             'media-upload-details-state-failed': media.failed(),
+            'media-upload-details-state-aborted': media.aborted(),
+            'media-upload-details-state-processed': media.processed(),
           }"
       >
         <template v-if="media.queued() ">{{ __('Queued...') }}</template>
-        <template v-else-if="media.uploaded()">{{ __('Uploaded') }}</template>
+        <template v-else-if="media.succeeded()">{{ __('Uploaded') }}</template>
+        <template v-else-if="media.processed()">{{ __('Processing...') }}</template>
+        <template v-else-if="media.aborted()">{{ __('Aborted') }}</template>
         <template v-else>{{ __('Failed') }}</template>
       </div>
+    </div>
+    <div
+        class="media-upload-information"
+        v-if="media.failed()"
+    >
+      <span>{{ response.status }}: {{ response.statusText }}</span>
     </div>
   </div>
 </template>
@@ -38,7 +67,7 @@ export default {
 
   props: {
     name: String,
-    size: Number,
+    size: [Number, String],
     queued: Boolean,
     uploaded: Boolean,
     media: {
@@ -47,9 +76,12 @@ export default {
     },
   },
 
-  watch: {
-    'media.response'(val) {
-      console.log(val);
+  computed: {
+    progressPercentage() {
+      return `${this.media.getProgress()}%`;
+    },
+    response() {
+      return this.media.getResponse();
     },
   },
 }

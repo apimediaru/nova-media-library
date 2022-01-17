@@ -89,7 +89,7 @@
               ref="layout"
           >
             <div
-                v-if="!hasFiles && !hasUploads"
+                v-if="!hasFiles"
                 class="media-library-layout-message"
                 :class="{
                   'cursor-pointer': canAddFiles,
@@ -105,7 +105,7 @@
               </template>
             </div>
             <MediaThumbnail
-              v-else
+              v-if="hasFiles"
               v-for="(file, index) in files"
               :key="index"
               :index="index"
@@ -226,7 +226,7 @@ export default {
       paused: false,
 
       // Uploads
-      uploadDetailsVisible: true,
+      uploadDetailsVisible: false,
       uploads: [],
     };
   },
@@ -254,7 +254,7 @@ export default {
   },
 
   mounted() {
-    // this.fakeFiles();
+    this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -436,36 +436,20 @@ export default {
       return this.$refs.upload;
     },
     async onFileInputChange(event) {
-      const { target: { files } } = event;
+      const { target } = event;
+      const { files } = target;
 
       const uploads = [...files].map((item) => new MediaUpload(item));
       this.uploads.push(...uploads);
 
       this.setUploadingMode();
+      this.uploadDetailsVisible = true;
+
+      // Reset input field value to provide an opportunity
+      // to upload the same pull of files again
+      target.value = null;
 
       await this.uploader.upload(uploads.reverse());
-      // this.paused = true;
-      //
-      // const input = this.getUploadInput()
-      // const { files } = input;
-      //
-      // Array.prototype.forEach.call(files, (file) => {
-      //   this.files.push(file);
-      // });
-      //
-      // await uploadMedia({
-      //   files,
-      //   resource: this.resource,
-      //   field: this.field,
-      // });
-      //
-      // // Reset file input so if you upload the same image sequentially
-      // input.value = null;
-      //
-      // // Todo: shitty
-      // // this.paused = false;
-      //
-      // this.setBrowsingMode();
     },
     onFileUpload(event) {
       console.log(event);
@@ -537,6 +521,7 @@ export default {
       this.sortable = new DragAndDrop({
         container: this.$refs.layout,
         createGhost: this.createGhost,
+        whiteList: ['.media-library-thumbnail'],
         on: {
           [DragAndDropEvents.beforeStart]: this.onSortableBeforeStart,
           [DragAndDropEvents.drag.beforeStart]: this.onSortableBeforeDragStart,

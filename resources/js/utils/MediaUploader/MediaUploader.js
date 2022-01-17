@@ -1,10 +1,14 @@
+import Axios from 'axios';
+import { axios } from '../index';
 import Emitter from "../Emitter";
 
 export default class MediaUploader {
   constructor({ object, id, attribute }) {
     this.emitter = new Emitter();
 
-    this.client = Nova.request();
+    this.client = axios;
+
+    this.cancelToken = Axios.CancelToken;
 
     this.object = object;
     this.id = id;
@@ -57,33 +61,47 @@ export default class MediaUploader {
     this.uploading = true;
 
     let mediaUpload;
+
+    const requestConfig = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        mediaUpload.setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+      },
+    };
+
     while (mediaUpload = this.queue.pop()) {
+      mediaUpload.process();
+
       const formData = new FormData();
+      const source = this.cancelToken.source();
 
       formData.append('file', mediaUpload.getFile());
       formData.append('object', this.object);
       formData.append('objectId', this.id);
       formData.append('attribute', this.attribute);
 
-      try {
-        const response = await this.client.post('/nova-vendor/nova-media-library/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round( (progressEvent.loaded * 100) / progressEvent.total );
-            // console.log(percentCompleted);
-          },
-        });
+      mediaUpload.attachInterrupter(source);
 
-        mediaUpload.setResponse(response);
+      let response;
+      try {
+        response = await this.client.post('/nova-vendor/nova-media-library/upload', formData, {
+          ...requestConfig,
+          cancelToken: source.token,
+        });
         mediaUpload.succeed();
       } catch (e) {
-        mediaUpload.setResponse(e.response);
+        response = e.response;
+
+        if (Axios.isCancel(e)) {
+          mediaUpload.abort();
+          return;
+        }
+
         mediaUpload.failure();
       }
-
-      mediaUpload.setProcessed(true);
+      mediaUpload.setResponse(response);
     }
 
 

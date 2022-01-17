@@ -14,6 +14,7 @@ export const defaultOptions = {
       startScrollMargins: { x: 0, y: 0 },
     },
   },
+  whiteList: [],
   throttle: 25,
   createGhost: null,
   ghostContainer: document.body,
@@ -195,6 +196,15 @@ class DragAndDrop {
     // Get source and save it
     const source = getClosestDirectChild(this.options.container, event.target);
     if (!source) { return; }
+
+    // Check selectors from white list
+    const { whiteList } = this.options;
+    if (whiteList.length) {
+      if (!whiteList.some((selector) => source.matches(selector))) {
+        return;
+      }
+    }
+
     this.source = source;
 
     // Check that further processing is allowed
