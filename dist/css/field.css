@@ -243,6 +243,7 @@ body.media-library-locked {
   transition: 200ms;
   transition-property: background-color, border-color, color;
   font-weight: 300;
+  min-height: 100px;
 }
 .media-library-layout-add-file:hover, .media-library-layout-add-file:focus {
   border-style: solid;
