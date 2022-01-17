@@ -1134,6 +1134,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "UploadsList",
@@ -1171,6 +1177,11 @@ __webpack_require__.r(__webpack_exports__);
       "default": function _default() {
         return [];
       }
+    }
+  },
+  methods: {
+    clear: function clear() {
+      this.$emit('clear');
     }
   }
 });
@@ -32147,12 +32158,20 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "media-uploads-browser" }, [
     _c("div", { staticClass: "media-uploads-status" }, [
-      _vm._v(
-        _vm._s(_vm.__("Processed")) +
-          ": " +
-          _vm._s(_vm.processedCount) +
-          " / " +
-          _vm._s(_vm.totalCount)
+      _c("div", { staticClass: "media-uploads-status-processed" }, [
+        _vm._v(
+          _vm._s(_vm.__("Processed")) +
+            ": " +
+            _vm._s(_vm.processedCount) +
+            " / " +
+            _vm._s(_vm.totalCount)
+        ),
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "media-uploads-status-clear", on: { click: _vm.clear } },
+        [_vm._v(_vm._s(_vm.__("Clear")))]
       ),
     ]),
     _vm._v(" "),

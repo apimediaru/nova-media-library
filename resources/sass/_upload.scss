@@ -1,13 +1,30 @@
 .media-uploads-browser {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--30);
 }
 
 .media-uploads-status {
   padding: .5rem;
   background-color: var(--30);
   font-size: .875rem;
+  display: flex;
+  align-items: center;
+
+  &-processed {
+    margin-right: 1rem;
+  }
+
+  &-clear {
+    color: $color-dark-2;
+    margin-left: auto;
+    cursor: pointer;
+    font-size: .75rem;
+
+    &:hover,
+    &:focus {
+      color: var(--primary);
+    }
+  }
 }
 
 .media-uploads-info {

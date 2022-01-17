@@ -8,6 +8,8 @@ class MediaUploadRequest extends MediaRequest
     {
         return [
             'file' => ['required'],
+            'object' => ['required'],
+            'objectId' => ['required'],
         ];
     }
 }

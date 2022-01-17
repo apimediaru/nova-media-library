@@ -2,7 +2,13 @@
   <div class="media-uploads-browser">
     <div
         class="media-uploads-status"
-    >{{ __('Processed') }}: {{ processedCount }} / {{ totalCount }}</div>
+    >
+      <div class="media-uploads-status-processed">{{ __('Processed') }}: {{ processedCount }} / {{ totalCount }}</div>
+      <div
+          class="media-uploads-status-clear"
+          @click="clear"
+      >{{ __('Clear') }}</div>
+    </div>
     <div class="media-uploads">
       <UploadsListItem
           v-for="(upload, i) in uploads"
@@ -64,6 +70,12 @@ export default {
       default: () => ([]),
     },
   },
+
+  methods: {
+    clear() {
+      this.$emit('clear');
+    },
+  }
 }
 </script>
 
