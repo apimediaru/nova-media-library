@@ -76,14 +76,19 @@ $modal-controls-height: 60px;
       width: 100%;
       max-height: 100%;
       cursor: default;
-      border-radius: $border-radius;
       box-shadow: 0 15px 30px 0 rgba(0,0,0, .11),0 5px 15px 0 rgba(0,0,0, .08);
+      border-radius: $border-radius;
+
+      // Todo: temporary solution
+      overflow: initial;
 
       &-body {
         padding: 1rem;
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+        min-height: 0;
+        border-radius: $border-radius;
         overflow: hidden;
       }
 
@@ -93,6 +98,30 @@ $modal-controls-height: 60px;
         padding: .75rem 1rem;
         border-radius: 0 0 $border-radius $border-radius;
         background-color: var(--#{30});
+      }
+
+      &-close {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 50%;
+        background: var(--white);
+        color: var(--black);
+        transform: translate(50%, -50%);
+        box-shadow: 0 4px 20px rgb(0 0 0 / 25%);
+        cursor: pointer;
+        text-align: center;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        > svg {
+          height: 1rem;
+          width: 1rem;
+        }
       }
     }
   }

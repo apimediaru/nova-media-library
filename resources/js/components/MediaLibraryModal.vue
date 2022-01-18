@@ -2,20 +2,18 @@
   <div
       class="media-library-modal"
   >
-    <div
-        class="media-library-modal-backdrop"
-        @click="backdropClose"
-    />
+    <div class="media-library-modal-backdrop" />
     <div class="media-library-modal-viewport">
       <div
-          class="media-library-modal-viewport-element"
-          :style="style"
-          :class="[
-              elementClass,
-              {
-                'media-library-modal-viewport-element--has-controls': !!$slots.buttons,
-              },
-          ]"
+        class="media-library-modal-viewport-element"
+        :style="style"
+        :class="[
+          elementClass,
+          {
+            'media-library-modal-viewport-element--has-controls': !!$slots.buttons,
+          },
+        ]"
+        v-on-clickaway="backdropClose"
       >
         <div class="media-library-modal-viewport-element-body">
           <slot name="container" />
@@ -26,12 +24,19 @@
         >
           <slot name="buttons" />
         </div>
+        <div
+          class="media-library-modal-viewport-element-close"
+          @click="backdropClose"
+        >
+          <IconCross />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import IconCross from "./Icons/IconCross";
 import { mixin as clickaway } from 'vue-clickaway';
 import { composedPath } from '../utils';
 
@@ -39,6 +44,10 @@ export default {
   name: "MediaLibraryModal",
 
   mixins: [clickaway],
+
+  components: {
+    IconCross,
+  },
 
   props: {
     classWhitelist: [Array, String],
