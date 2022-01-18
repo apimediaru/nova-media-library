@@ -2331,6 +2331,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -2343,10 +2347,9 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToAr
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
+//
+//
+//
 //
 //
 //
@@ -2577,24 +2580,30 @@ var bodyLockedClass = 'media-library-locked';
       type: Number,
       "default": null,
       required: true
+    },
+    loadedFiles: {
+      type: Array,
+      "default": function _default() {
+        return [];
+      }
     }
   },
   created: function created() {
-    this.uploader = new _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__.MediaUploader({
-      object: this.field.object,
-      attribute: this.field.attribute,
-      id: this.resourceId
-    });
-    this.uploader.on('upload', this.onFileUpload);
+    // Merge provided via props media files on component creation
+    this.files = _toConsumableArray(this.field.value || []);
+    console.log(this.files); // Create and attach media uploader to instance
+
+    this.registerUploader();
   },
   mounted: function mounted() {
-    this.fakeFiles();
+    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
   beforeDestroy: function beforeDestroy() {
     this.removeDragAndDropEventListeners();
     this.destroySortable();
+    this.destroyUploader();
   },
   computed: {
     isInBrowsingMode: function isInBrowsingMode() {
@@ -2778,6 +2787,17 @@ var bodyLockedClass = 'media-library-locked';
       this.selectedIndex = null;
     },
     // File input
+    registerUploader: function registerUploader() {
+      this.uploader = new _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__.MediaUploader({
+        object: this.field.object,
+        id: this.resourceId,
+        collection: this.field.collection
+      }).on('file:uploaded', this.onFileUpload);
+    },
+    destroyUploader: function destroyUploader() {
+      this.uploader.off('file:uploaded', this.onFileUpload);
+      this.uploader = null;
+    },
     getUploadInput: function getUploadInput() {
       return this.$refs.upload;
     },
@@ -2819,6 +2839,13 @@ var bodyLockedClass = 'media-library-locked';
     },
     onFileUpload: function onFileUpload(event) {
       console.log(event);
+    },
+    onUploadsClear: function onUploadsClear() {
+      if (this.uploader.isUploading()) {
+        return;
+      }
+
+      this.uploads = [];
     },
     // Drag and drop
     disableDragAndDrop: function disableDragAndDrop() {
@@ -3220,6 +3247,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MediaThumbnail",
   props: {
@@ -3234,10 +3266,8 @@ __webpack_require__.r(__webpack_exports__);
     dragged: Boolean,
     processContextMenu: Boolean,
     intersected: Boolean,
-    extension: {
-      type: [Boolean, String],
-      "default": false
-    }
+    mineType: String,
+    image: String
   },
   computed: {
     hasIndex: function hasIndex() {
@@ -3253,6 +3283,19 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       return listeners;
+    },
+    extension: function extension() {
+      switch (this.mineType) {
+        case 'image/png':
+          {
+            return 'png';
+          }
+
+        default:
+          {
+            return null;
+          }
+      }
     }
   },
   methods: {
@@ -5721,7 +5764,7 @@ var MediaUploader = /*#__PURE__*/function () {
   function MediaUploader(_ref) {
     var object = _ref.object,
         id = _ref.id,
-        attribute = _ref.attribute;
+        collection = _ref.collection;
 
     _classCallCheck(this, MediaUploader);
 
@@ -5730,7 +5773,7 @@ var MediaUploader = /*#__PURE__*/function () {
     this.cancelToken = (axios__WEBPACK_IMPORTED_MODULE_1___default().CancelToken);
     this.object = object;
     this.id = id;
-    this.attribute = attribute;
+    this.collection = collection;
     this.queue = [];
     this.uploading = false;
   }
@@ -5818,7 +5861,7 @@ var MediaUploader = /*#__PURE__*/function () {
     key: "startUploading",
     value: function () {
       var _startUploading = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
-        var mediaUpload, requestConfig, formData, source, response;
+        var mediaUpload, requestConfig, response, formData, source;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -5843,19 +5886,19 @@ var MediaUploader = /*#__PURE__*/function () {
 
               case 4:
                 if (!(mediaUpload = this.queue.pop())) {
-                  _context2.next = 31;
+                  _context2.next = 32;
                   break;
                 }
 
                 mediaUpload.process();
+                response = void 0;
                 formData = new FormData();
                 source = this.cancelToken.source();
                 formData.append('file', mediaUpload.getFile());
                 formData.append('object', this.object);
                 formData.append('objectId', this.id);
-                formData.append('attribute', this.attribute);
+                formData.append('collection', this.collection);
                 mediaUpload.attachInterrupter(source);
-                response = void 0;
                 _context2.prev = 14;
                 _context2.next = 17;
                 return this.client.post('/nova-vendor/nova-media-library/upload', formData, _objectSpread(_objectSpread({}, requestConfig), {}, {
@@ -5865,39 +5908,40 @@ var MediaUploader = /*#__PURE__*/function () {
               case 17:
                 response = _context2.sent;
                 mediaUpload.succeed();
-                _context2.next = 28;
+                this.emit('file:uploaded', mediaUpload);
+                _context2.next = 29;
                 break;
 
-              case 21:
-                _context2.prev = 21;
+              case 22:
+                _context2.prev = 22;
                 _context2.t0 = _context2["catch"](14);
                 response = _context2.t0.response;
 
                 if (!axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context2.t0)) {
-                  _context2.next = 27;
+                  _context2.next = 28;
                   break;
                 }
 
                 mediaUpload.abort();
                 return _context2.abrupt("return");
 
-              case 27:
+              case 28:
                 mediaUpload.failure();
 
-              case 28:
+              case 29:
                 mediaUpload.setResponse(response);
                 _context2.next = 4;
                 break;
 
-              case 31:
+              case 32:
                 this.uploading = false;
 
-              case 32:
+              case 33:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[14, 21]]);
+        }, _callee2, this, [[14, 22]]);
       }));
 
       function startUploading() {
@@ -34738,12 +34782,14 @@ var render = function () {
                               ref: "thumbnail",
                               refInFor: true,
                               attrs: {
-                                index: index,
-                                name: file.name,
+                                index: file.order_column,
+                                name: file.file_name,
+                                image: file.__conversions__.preview,
                                 dragged:
                                   _vm.isReordering &&
                                   _vm.selected.includes(index),
                                 selected: _vm.isItemSelected(index),
+                                "mine-type": file.mime_type,
                                 highlighted: index === _vm.selectedIndex,
                                 intersected:
                                   index === _vm.reorderIntersectionId,
@@ -34842,6 +34888,7 @@ var render = function () {
                 ? _c("UploadsList", {
                     staticClass: "media-library-browser-uploads",
                     attrs: { uploads: this.uploads },
+                    on: { clear: _vm.onUploadsClear },
                   })
                 : _vm._e(),
             ],
@@ -34962,18 +35009,23 @@ var render = function () {
       {
         staticClass: "media-library-thumbnail",
         class: {
-          "media-library-thumbnail-selected": _vm.selected,
-          "media-library-thumbnail-disabled": !_vm.active,
-          "media-library-thumbnail-highlighted": _vm.highlighted,
-          "media-library-thumbnail-dragged": _vm.dragged,
-          "media-library-thumbnail-intersected": _vm.intersected,
+          "media-library-thumbnail--selected": _vm.selected,
+          "media-library-thumbnail--disabled": !_vm.active,
+          "media-library-thumbnail--highlighted": _vm.highlighted,
+          "media-library-thumbnail--dragged": _vm.dragged,
+          "media-library-thumbnail--intersected": _vm.intersected,
         },
-        attrs: { title: _vm.name, "data-extension": _vm.extension || false },
+        attrs: { title: _vm.name, "data-extension": _vm.extension },
       },
       _vm.listeners
     ),
     [
-      _vm._m(0),
+      _c("div", { staticClass: "media-library-thumbnail-head" }, [
+        _c("img", {
+          staticClass: "media-library-thumbnail-head-image",
+          attrs: { src: _vm.image, alt: _vm.name, draggable: "false" },
+        }),
+      ]),
       _vm._v(" "),
       _c("div", { staticClass: "media-library-thumbnail-name" }, [
         _vm.hasIndex
@@ -34989,23 +35041,7 @@ var render = function () {
     ]
   )
 }
-var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "media-library-thumbnail-head" }, [
-      _c("img", {
-        staticClass: "media-library-thumbnail-head-image",
-        attrs: {
-          src: "https://picsum.photos/200/300",
-          alt: "alt",
-          draggable: "false",
-        },
-      }),
-    ])
-  },
-]
+var staticRenderFns = []
 render._withStripped = true
 
 

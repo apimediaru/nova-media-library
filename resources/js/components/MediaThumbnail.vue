@@ -2,18 +2,23 @@
   <div
       class="media-library-thumbnail"
       :class="{
-        'media-library-thumbnail-selected': selected,
-        'media-library-thumbnail-disabled': !active,
-        'media-library-thumbnail-highlighted': highlighted,
-        'media-library-thumbnail-dragged': dragged,
-        'media-library-thumbnail-intersected': intersected,
+        'media-library-thumbnail--selected': selected,
+        'media-library-thumbnail--disabled': !active,
+        'media-library-thumbnail--highlighted': highlighted,
+        'media-library-thumbnail--dragged': dragged,
+        'media-library-thumbnail--intersected': intersected,
       }"
       :title="name"
       v-on="listeners"
-      :data-extension="extension || false"
+      :data-extension="extension"
   >
     <div class="media-library-thumbnail-head">
-      <img src="https://picsum.photos/200/300" alt="alt" class="media-library-thumbnail-head-image" draggable="false">
+      <img
+          :src="image"
+          :alt="name"
+          class="media-library-thumbnail-head-image"
+          draggable="false"
+      >
     </div>
     <div class="media-library-thumbnail-name">
       <span
@@ -41,10 +46,8 @@ export default {
     dragged: Boolean,
     processContextMenu: Boolean,
     intersected: Boolean,
-    extension: {
-      type: [Boolean, String],
-      default: false,
-    },
+    mineType: String,
+    image: String,
   },
 
   computed: {
@@ -59,6 +62,16 @@ export default {
         listeners.contextmenu = this.onContextMenu;
       }
       return listeners;
+    },
+    extension() {
+      switch (this.mineType) {
+        case 'image/png': {
+          return 'png';
+        }
+        default: {
+          return null;
+        }
+      }
     },
   },
 

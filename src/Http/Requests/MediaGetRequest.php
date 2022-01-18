@@ -2,12 +2,11 @@
 
 namespace APIMedia\NovaMediaLibrary\Http\Requests;
 
-class MediaUploadRequest extends MediaRequest
+class MediaGetRequest extends MediaRequest
 {
     public function rules(): array
     {
         return array_merge(parent::rules(), [
-            'file' => ['required'],
             'collection' => ['required'],
         ]);
     }

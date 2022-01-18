@@ -3,7 +3,7 @@ import { axios } from '../index';
 import Emitter from "../Emitter";
 
 export default class MediaUploader {
-  constructor({ object, id, attribute }) {
+  constructor({ object, id, collection }) {
     this.emitter = new Emitter();
 
     this.client = axios;
@@ -12,7 +12,7 @@ export default class MediaUploader {
 
     this.object = object;
     this.id = id;
-    this.attribute = attribute;
+    this.collection = collection;
 
     this.queue = [];
 
@@ -74,33 +74,33 @@ export default class MediaUploader {
     while (mediaUpload = this.queue.pop()) {
       mediaUpload.process();
 
+      let response;
       const formData = new FormData();
       const source = this.cancelToken.source();
 
       formData.append('file', mediaUpload.getFile());
       formData.append('object', this.object);
       formData.append('objectId', this.id);
-      formData.append('attribute', this.attribute);
+      formData.append('collection', this.collection);
 
       mediaUpload.attachInterrupter(source);
 
-      let response;
       try {
         response = await this.client.post('/nova-vendor/nova-media-library/upload', formData, {
           ...requestConfig,
           cancelToken: source.token,
         });
         mediaUpload.succeed();
+        this.emit('file:uploaded', mediaUpload);
       } catch (e) {
         response = e.response;
-
         if (Axios.isCancel(e)) {
           mediaUpload.abort();
           return;
         }
-
         mediaUpload.failure();
       }
+
       mediaUpload.setResponse(response);
     }
 

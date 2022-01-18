@@ -108,11 +108,13 @@
               v-if="hasFiles"
               v-for="(file, index) in files"
               :key="index"
-              :index="index"
-              :name="file.name"
+              :index="file.order_column"
+              :name="file.file_name"
+              :image="file.__conversions__.preview"
               @click="onThumbnailClick(index, $event)"
               :dragged="isReordering && selected.includes(index)"
               :selected="isItemSelected(index)"
+              :mine-type="file.mime_type"
               ref="thumbnail"
               :highlighted="index === selectedIndex"
               :intersected="index === reorderIntersectionId"
@@ -157,6 +159,7 @@
           v-if="(hasFiles || hasUploads) && uploadDetailsVisible"
           class="media-library-browser-uploads"
           :uploads="this.uploads"
+          @clear="onUploadsClear"
         />
       </div>
 
@@ -241,27 +244,34 @@ export default {
       type: Number,
       default: null,
       required: true,
-    }
+    },
+    loadedFiles: {
+      type: Array,
+      default: () => ([]),
+    },
   },
 
   created() {
-    this.uploader = new MediaUploader({
-      object: this.field.object,
-      attribute: this.field.attribute,
-      id: this.resourceId,
-    });
-    this.uploader.on('upload', this.onFileUpload);
+    // Merge provided via props media files on component creation
+    this.files = [...this.field.value || []];
+
+    console.log(this.files);
+
+    // Create and attach media uploader to instance
+    this.registerUploader();
   },
 
   mounted() {
-    this.fakeFiles();
+    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
+
   },
 
   beforeDestroy() {
     this.removeDragAndDropEventListeners();
     this.destroySortable();
+    this.destroyUploader();
   },
 
   computed: {
@@ -432,6 +442,17 @@ export default {
     },
 
     // File input
+    registerUploader() {
+      this.uploader = new MediaUploader({
+        object: this.field.object,
+        id: this.resourceId,
+        collection: this.field.collection,
+      }).on('file:uploaded', this.onFileUpload);
+    },
+    destroyUploader() {
+      this.uploader.off('file:uploaded', this.onFileUpload);
+      this.uploader = null;
+    },
     getUploadInput() {
       return this.$refs.upload;
     },
@@ -453,6 +474,13 @@ export default {
     },
     onFileUpload(event) {
       console.log(event);
+    },
+    onUploadsClear() {
+      if (this.uploader.isUploading()) {
+        return;
+      }
+
+      this.uploads = [];
     },
 
     // Drag and drop

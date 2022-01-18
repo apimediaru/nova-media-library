@@ -252,14 +252,18 @@ body.media-library-locked {
   grid-gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   height: auto;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 .media-library-layout--hidden {
   display: none;
 }
 .media-library-layout-add-file {
   border-radius: 0.5rem;
-  border: 1px dashed var(--primary);
-  font-size: 4rem;
+  border: 2px dashed #D9D9D9;
+  font-size: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,9 +275,8 @@ body.media-library-locked {
   min-height: 100px;
 }
 .media-library-layout-add-file:hover, .media-library-layout-add-file:focus {
-  border-style: solid;
-  background-color: var(--primary);
-  color: var(--white);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .media-library-layout-message {
@@ -345,86 +348,6 @@ body.media-library-locked {
   opacity: 0.5;
 }
 
-.media-library-thumbnail {
-  cursor: pointer;
-  padding: 0.25rem;
-  border: 1px solid transparent;
-  border-radius: 0.5rem;
-  line-height: 1;
-}
-.media-library-thumbnail:hover {
-  background-color: #E5F3FF;
-  border-color: #E5F3FF;
-}
-.media-library-thumbnail-highlighted {
-  border-style: dashed;
-}
-.media-library-thumbnail-highlighted, .media-library-thumbnail-highlighted:hover, .media-library-thumbnail-selected, .media-library-thumbnail-selected:hover {
-  border-color: #99D1FF;
-}
-.media-library-thumbnail-selected, .media-library-thumbnail-selected:hover {
-  background-color: #CDE8FF;
-  border-style: solid;
-}
-.media-library-thumbnail-disabled, .media-library-thumbnail-dragged {
-  opacity: 0.5;
-}
-.media-library-thumbnail-dragged, .media-library-thumbnail-dragged:hover {
-  border-style: solid;
-}
-.media-library-thumbnail-drop {
-  border-color: green;
-  border-style: dashed;
-  background: greenyellow;
-}
-.media-library-thumbnail-intersected, .media-library-thumbnail-intersected:hover {
-  background-color: #E5F3FF;
-  border-color: #99D1FF;
-  border-style: dashed;
-}
-.media-library-thumbnail[data-extension=png] .media-library-thumbnail-head-image {
-  background-image: url("/vendor/nova-media-library/img/transparency-pattern.png");
-}
-
-.media-library-thumbnail-head {
-  padding-top: 75%;
-  position: relative;
-  display: block;
-  width: 100%;
-  margin-bottom: 0.25rem;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background-color: #EEEEEE;
-}
-
-.media-library-thumbnail-head-image {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
-  display: block;
-}
-
-.media-library-thumbnail-name {
-  font-size: 0.75rem;
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  word-wrap: normal;
-}
-
-.media-library-thumbnail-name-index {
-  padding-right: 4px;
-}
-.media-library-thumbnail-name-index::after {
-  content: ".";
-}
-
 .media-library-ghost-counter {
   min-width: 2.5rem;
   height: 1.5rem;
@@ -444,6 +367,80 @@ body.media-library-locked {
   top: 50%;
   transform: translate(-50%, -50%);
   border: 1px solid #ffffff;
+}
+
+.media-library-thumbnail {
+  cursor: pointer;
+  padding: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  line-height: 1;
+}
+.media-library-thumbnail:hover {
+  background-color: #E5F3FF;
+  border-color: #E5F3FF;
+}
+.media-library-thumbnail--highlighted {
+  border-style: dashed;
+}
+.media-library-thumbnail--highlighted, .media-library-thumbnail--highlighted:hover, .media-library-thumbnail--selected, .media-library-thumbnail--selected:hover {
+  border-color: #99D1FF;
+}
+.media-library-thumbnail--selected, .media-library-thumbnail--selected:hover {
+  background-color: #CDE8FF;
+  border-style: solid;
+}
+.media-library-thumbnail--disabled, .media-library-thumbnail--dragged {
+  opacity: 0.5;
+}
+.media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover {
+  border-style: solid;
+}
+.media-library-thumbnail--drop {
+  border-color: green;
+  border-style: dashed;
+  background: greenyellow;
+}
+.media-library-thumbnail--intersected, .media-library-thumbnail--intersected:hover {
+  background-color: #E5F3FF;
+  border-color: #99D1FF;
+  border-style: dashed;
+}
+.media-library-thumbnail-head {
+  padding-top: 75%;
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: 0.25rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #EEEEEE;
+  background-image: url("/vendor/nova-media-library/img/transparency-pattern.png");
+}
+.media-library-thumbnail-head-image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+.media-library-thumbnail-name {
+  font-size: 0.75rem;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+.media-library-thumbnail-name-index {
+  padding-right: 4px;
+}
+.media-library-thumbnail-name-index::after {
+  content: ".";
 }
 
 .media-uploads-browser {

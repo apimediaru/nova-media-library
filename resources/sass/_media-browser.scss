@@ -45,6 +45,7 @@ body.media-library-locked {
   grid-gap: .5rem;
   padding: .5rem .75rem;
   height: auto;
+  user-select: none;
 
   &--hidden {
     display: none;
@@ -52,8 +53,8 @@ body.media-library-locked {
 
   &-add-file {
     border-radius: $border-radius;
-    border: 1px dashed var(--primary);
-    font-size: 4rem;
+    border: 2px dashed $color-border;
+    font-size: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,9 +67,8 @@ body.media-library-locked {
 
     &:hover,
     &:focus {
-      border-style: solid;
-      background-color: var(--primary);
-      color: var(--white)
+      border-color: var(--primary);
+      color: var(--primary);
     }
   }
 }
@@ -154,4 +154,25 @@ body.media-library-locked {
       }
     }
   }
+}
+
+.media-library-ghost-counter {
+  min-width: 2.5rem;
+  height: 1.5rem;
+  line-height: 20px;
+  font-size: 1rem;
+  display: inline-flex;
+  padding: 0 4px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 2px;
+  background-color: var(--primary);
+  color: var(--white);
+  z-index: 99999;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #ffffff;
 }
