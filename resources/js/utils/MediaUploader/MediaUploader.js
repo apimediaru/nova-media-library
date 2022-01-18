@@ -1,6 +1,7 @@
 import Axios from 'axios';
 import { axios } from '../index';
 import Emitter from "../Emitter";
+import { MediaUploadEvent } from "./Events";
 
 export default class MediaUploader {
   constructor({ object, id, collection }) {
@@ -37,7 +38,7 @@ export default class MediaUploader {
   async upload(...payload) {
     let files = [];
     payload.forEach((entry) => {
-      if (entry instanceof FileList || entry instanceof Array) {
+      if (entry instanceof FileList || Array.isArray(entry)) {
         files.push(...entry);
       } else {
         files.push(entry);
@@ -47,6 +48,24 @@ export default class MediaUploader {
     this.queue.splice(0, 0, ...files);
 
     await this.startUploading();
+  }
+
+  async remove(payload) {
+    let ids = [];
+    if (Array.isArray(payload)) {
+      ids.push(...payload);
+    } else {
+      ids.push(payload);
+    }
+
+    const formData = new FormData();
+    formData.append('ids', JSON.stringify(ids));
+    formData.append('method', 'remove');
+    formData.append('object', this.object);
+    formData.append('objectId', this.id);
+    formData.append('collection', this.collection);
+    const response = await this.client.post('/nova-vendor/nova-media-library/multiple', formData);
+    console.log(response);
   }
 
   isUploading() {
@@ -63,9 +82,6 @@ export default class MediaUploader {
     let mediaUpload;
 
     const requestConfig = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
       onUploadProgress: (progressEvent) => {
         mediaUpload.setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
       },
@@ -91,7 +107,9 @@ export default class MediaUploader {
           cancelToken: source.token,
         });
         mediaUpload.succeed();
-        this.emit('file:uploaded', mediaUpload);
+        this.emit(new MediaUploadEvent({
+          response,
+        }));
       } catch (e) {
         response = e.response;
         if (Axios.isCancel(e)) {
@@ -103,7 +121,6 @@ export default class MediaUploader {
 
       mediaUpload.setResponse(response);
     }
-
 
     this.uploading = false;
   }

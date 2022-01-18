@@ -28,7 +28,6 @@ trait HandlesConversionsTrait
     public function getConversionUrls(\Spatie\MediaLibrary\MediaCollections\Models\Media $media): array
     {
         return [
-            'original' => $media->getFullUrl(),
             'indexView' => $media->getFullUrl($this->meta['conversionOnIndexView'] ?? ''),
             'detailView' => $media->getFullUrl($this->meta['conversionOnDetailView'] ?? ''),
             'form' => $media->getFullUrl($this->meta['conversionOnForm'] ?? ''),

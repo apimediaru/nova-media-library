@@ -2,9 +2,15 @@
 
 namespace APIMedia\NovaMediaLibrary\Http\Controllers;
 
+use APIMedia\NovaMediaLibrary\Http\Requests\MediaMultipleRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaUploadRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaGetRequest;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use PHPUnit\Exception;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeDeleted;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 
 class MediaController extends Controller
@@ -16,17 +22,7 @@ class MediaController extends Controller
      */
     public function index(MediaGetRequest $request): \Illuminate\Http\JsonResponse
     {
-        $class = $request->get('object');
-        $id = $request->get('objectId');
-        $collection = $request->get('collection');
-
-        $object = $class::findOrFail($id);
-
-        $media = $object->getMedia($collection);
-
-        return response()->json([
-            'files' => $media->toArray(),
-        ]);
+        //
     }
 
     /**
@@ -41,11 +37,19 @@ class MediaController extends Controller
         $collection = $request->get('collection');
 
         // Vapor uploads may be implemented in future
-        $object = $class::findOrFail($id);
+        try {
+            $object = $class::findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            return $this->failure($exception->getMessage(), 404);
+        }
 
-        $media = $object->addMediaFromRequest('file')->toMediaCollection($collection);
+        try {
+            $media = $object->addMediaFromRequest('file')->toMediaCollection($collection);
+        } catch (FileIsTooBig $exception) {
+            return $this->failure($exception->getMessage(), 400);
+        }
 
-        return response()->json([
+        return $this->succeed('OK', [
             'file' => $media->toArray(),
         ]);
     }
@@ -84,5 +88,33 @@ class MediaController extends Controller
      */
     public function deactivate(Request $request) {
 
+    }
+
+    public function multiple(MediaMultipleRequest $request) {
+        $method = $request->get('method');
+        $ids = $this->extractIds($request);
+
+        $class = $request->get('object');
+        $id = $request->get('objectId');
+
+        // Vapor uploads may be implemented in future
+        try {
+            $object = $class::findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            return $this->failure($exception->getMessage(), 404);
+        }
+
+        $errors = [];
+        foreach ($ids as $id) {
+            try {
+                $object->deleteMedia($id);
+            } catch (MediaCannotBeDeleted $exception) {
+                $errors[$id] = $exception->getMessage();
+            }
+        }
+
+        return $this->succeed('', [
+            'errors' => $errors,
+        ]);
     }
 }

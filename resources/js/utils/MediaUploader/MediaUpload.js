@@ -210,7 +210,6 @@ export default class MediaUpload {
    * @param {AxiosResponse} response
    */
   setResponse(response) {
-    console.log(response);
     this.response = response;
   }
 

@@ -50,6 +50,7 @@
               <button
                   class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer"
                   :disabled="action === 'none'"
+                  @click="onBulkAction"
               >{{ __('Apply') }}</button>
             </div>
             <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">
@@ -77,24 +78,24 @@
 
       <div class="media-library-browser-grid">
         <div
-            class="media-library-browser-area"
-            @click="onBrowserAreaClick"
-            ref="area"
+          class="media-library-browser-area"
+          @click="onBrowserAreaClick"
+          ref="area"
         >
           <div
-              class="media-library-layout"
-              :class="{
+            class="media-library-layout"
+            :class="{
               'media-library-layout--hidden': isDragging,
             }"
-              ref="layout"
+            ref="layout"
           >
             <div
-                v-if="!hasFiles"
-                class="media-library-layout-message"
-                :class="{
-                  'cursor-pointer': canAddFiles,
-                }"
-                @click="triggerFileUpload"
+              v-if="!hasFiles"
+              class="media-library-layout-message"
+              :class="{
+                'cursor-pointer': canAddFiles,
+              }"
+              @click="triggerFileUpload"
             >
               {{ __('There are currently no media files in this library.') }}
               <template
@@ -104,37 +105,38 @@
                 <p class="mt-2">{{ __('Drag and drop, or click to browse and select your files') }}</p>
               </template>
             </div>
+<!--            <div-->
+<!--                class="media-library-layout-add-file"-->
+<!--                v-if="this.hasFiles && canAddFiles && !isReordering"-->
+<!--                :title="__('Add file')"-->
+<!--                @click="triggerFileUpload"-->
+<!--            >+</div>-->
             <MediaThumbnail
               v-if="hasFiles"
               v-for="(file, index) in files"
               :key="index"
               :index="file.order_column"
               :name="file.file_name"
-              :image="file.__conversions__.preview"
-              @click="onThumbnailClick(index, $event)"
-              :dragged="isReordering && selected.includes(index)"
-              :selected="isItemSelected(index)"
+              :image="file.original_url"
+              @click="onThumbnailClick(file, $event)"
+              @contextmenu="onThumbnailContextmenu(file, $event)"
+              :dragged="isReordering && selected.includes(file.id)"
+              :selected="isItemSelected(file.id)"
               :mine-type="file.mime_type"
               ref="thumbnail"
-              :highlighted="index === selectedIndex"
-              :intersected="index === reorderIntersectionId"
-              :data-key="index"
+              :highlighted="file.id === selectedIndex"
+              :intersected="file.id === reorderIntersectionId"
+              :data-key="file.id"
               active
             />
-            <div
-                class="media-library-layout-add-file"
-                v-if="this.hasFiles && canAddFiles && !isReordering"
-                :title="__('Add file')"
-                @click="triggerFileUpload"
-            >+</div>
           </div>
 
           <div
-              class="media-library-dropzone"
-              :class="{
-              'media-library-dropzone-visible': isDropzoneVisible,
-              'media-library-dropzone-highlighted': isDropzoneVisible && isDraggingOverDropzone,
-            }"
+            class="media-library-dropzone"
+            :class="{
+            'media-library-dropzone-visible': isDropzoneVisible,
+            'media-library-dropzone-highlighted': isDropzoneVisible && isDraggingOverDropzone,
+          }"
           >
             <div class="media-library-dropzone-inner">
               <p class="media-library-dropzone-icon">
@@ -158,7 +160,7 @@
         <UploadsList
           v-if="(hasFiles || hasUploads) && uploadDetailsVisible"
           class="media-library-browser-uploads"
-          :uploads="this.uploads"
+          :uploads="uploads"
           @clear="onUploadsClear"
         />
       </div>
@@ -255,14 +257,11 @@ export default {
     // Merge provided via props media files on component creation
     this.files = [...this.field.value || []];
 
-    console.log(this.files);
-
     // Create and attach media uploader to instance
     this.registerUploader();
   },
 
   mounted() {
-    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
 
@@ -305,15 +304,6 @@ export default {
   },
 
   methods: {
-    // Todo: Dev
-    fakeFiles() {
-      for (let i = 0; i < 100; i += 1) {
-        this.files.push({
-          name: i,
-        });
-      }
-    },
-
     // Actions
     close() {
       this.$emit('close');
@@ -357,20 +347,39 @@ export default {
     triggerFileUpload() {
       this.getUploadInput().click();
     },
+    onBulkAction() {
+      const { action } = this;
+
+      switch (action) {
+        case 'delete': {
+          this.uploader.remove(this.selected);
+          return;
+        }
+        default: {
+          return;
+        }
+      }
+    },
+
 
     // Events
-    onThumbnailClick(index, event) {
+    onThumbnailClick(file, event) {
       const { shiftKey, ctrlKey } = event;
+      const id = file.id;
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, index, true);
+        this.selectRange(this.selectedIndex, id, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, index);
+        this.selectRange(this.selectedIndex, id);
       } else if (ctrlKey) {
-        this.setSelectedIndex(index);
-        this.toggleSelection(index);
+        this.setSelectedIndex(id);
+        this.toggleSelection(id);
       } else {
-        this.beginSelection(index);
+        this.beginSelection(id);
       }
+    },
+    onThumbnailContextmenu(file, event) {
+      console.log('contextmenu');
+      event.preventDefault();
     },
     onDocumentKeyDown(event) {
       const { keyCode } = event;
@@ -433,8 +442,7 @@ export default {
       }
     },
     selectAll() {
-      // TODO: index => id
-      this.selected = this.files.map((file, index) => index);
+      this.selected = this.files.map((file) => file.id);
     },
     unselectAll() {
       this.selected = [];
@@ -447,10 +455,10 @@ export default {
         object: this.field.object,
         id: this.resourceId,
         collection: this.field.collection,
-      }).on('file:uploaded', this.onFileUpload);
+      }).on('file:upload', this.onFileUpload);
     },
     destroyUploader() {
-      this.uploader.off('file:uploaded', this.onFileUpload);
+      this.uploader.off('file:upload', this.onFileUpload);
       this.uploader = null;
     },
     getUploadInput() {
@@ -472,8 +480,14 @@ export default {
 
       await this.uploader.upload(uploads.reverse());
     },
+    addFile(file) {
+      this.files.push(file);
+    },
     onFileUpload(event) {
-      console.log(event);
+      const { file } = event;
+      if (file) {
+        this.addFile(file);
+      }
     },
     onUploadsClear() {
       if (this.uploader.isUploading()) {
@@ -559,7 +573,7 @@ export default {
           [DragAndDropEvents.drag.drop]: this.onSortableDrop,
         },
         scrollable: {
-          scrollableElements: [this.$refs.area],
+          scrollableElements: [this.$refs.layout],
           strict: true,
         },
       });
@@ -585,6 +599,7 @@ export default {
 
       thumbs.forEach((thumb, index) => {
         const clone = thumb.cloneNode(true);
+        clone.classList.add('media-library-thumbnail--ghost');
         if (!wrapperSizeSet) {
           const rect = thumb.getBoundingClientRect();
           applyStyles(ghost, {
@@ -672,6 +687,7 @@ export default {
 
   watch: {
     selected(value) {
+      console.log(value);
       if (!value.length) {
         this.selectedIndex = null;
       }

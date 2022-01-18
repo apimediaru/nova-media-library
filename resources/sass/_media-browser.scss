@@ -34,9 +34,6 @@ body.media-library-locked {
 .media-library-browser-area {
   position: relative;
   flex: 1 0 auto;
-  overflow-y: auto;
-
-  @include scrollbars();
 }
 
 .media-library-layout {
@@ -46,9 +43,12 @@ body.media-library-locked {
   padding: .5rem .75rem;
   height: auto;
   user-select: none;
+  overflow-y: auto;
+  max-height: 100%;
+  @include scrollbars();
 
   &--hidden {
-    display: none;
+    visibility: hidden;
   }
 
   &-add-file {

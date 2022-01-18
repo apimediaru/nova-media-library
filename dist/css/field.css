@@ -6,7 +6,7 @@
   height: 6px;
 }
 .media-library-scrollbars::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
 
@@ -91,7 +91,7 @@
           backface-visibility: hidden;
   height: 100%;
   outline: none;
-  padding: 3.125rem 0.5rem;
+  padding: 3.125rem 1.5rem;
   position: absolute;
   text-align: center;
   transition-property: transform, opacity;
@@ -118,7 +118,7 @@
   height: 6px;
 }
 .media-library-modal-viewport::-webkit-scrollbar-thumb, .media-library-modal-viewport-element::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
 .media-library-modal-viewport-element {
@@ -195,7 +195,7 @@
   height: 6px;
 }
 .library-modal-layout-scrollable::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
 
@@ -232,18 +232,6 @@ body.media-library-locked {
 .media-library-browser-area {
   position: relative;
   flex: 1 0 auto;
-  overflow-y: auto;
-}
-.media-library-browser-area::-webkit-scrollbar-track {
-  background-color: #fff;
-}
-.media-library-browser-area::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.media-library-browser-area::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
 }
 
 .media-library-layout {
@@ -256,9 +244,22 @@ body.media-library-locked {
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+  overflow-y: auto;
+  max-height: 100%;
+}
+.media-library-layout::-webkit-scrollbar-track {
+  background-color: #fff;
+}
+.media-library-layout::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.media-library-layout::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
 }
 .media-library-layout--hidden {
-  display: none;
+  visibility: hidden;
 }
 .media-library-layout-add-file {
   border-radius: 0.5rem;
@@ -375,6 +376,7 @@ body.media-library-locked {
   border: 1px solid transparent;
   border-radius: 0.5rem;
   line-height: 1;
+  background-color: var(--white);
 }
 .media-library-thumbnail:hover {
   background-color: #E5F3FF;
@@ -386,15 +388,16 @@ body.media-library-locked {
 .media-library-thumbnail--highlighted, .media-library-thumbnail--highlighted:hover, .media-library-thumbnail--selected, .media-library-thumbnail--selected:hover {
   border-color: #99D1FF;
 }
-.media-library-thumbnail--selected, .media-library-thumbnail--selected:hover {
+.media-library-thumbnail--selected, .media-library-thumbnail--selected:hover, .media-library-thumbnail--ghost, .media-library-thumbnail--ghost:hover {
   background-color: #CDE8FF;
   border-style: solid;
 }
 .media-library-thumbnail--disabled, .media-library-thumbnail--dragged {
   opacity: 0.5;
 }
-.media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover {
+.media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover, .media-library-thumbnail--ghost, .media-library-thumbnail--ghost:hover {
   border-style: solid;
+  border-color: #99D1FF;
 }
 .media-library-thumbnail--drop {
   border-color: green;
@@ -406,16 +409,16 @@ body.media-library-locked {
   border-color: #99D1FF;
   border-style: dashed;
 }
+.media-library-thumbnail[data-extension=png] .media-library-thumbnail-head {
+  background-image: url("/vendor/nova-media-library/img/transparent.png");
+}
 .media-library-thumbnail-head {
   padding-top: 75%;
   position: relative;
   display: block;
   width: 100%;
-  margin-bottom: 0.25rem;
-  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
   overflow: hidden;
-  background-color: #EEEEEE;
-  background-image: url("/vendor/nova-media-library/img/transparency-pattern.png");
 }
 .media-library-thumbnail-head-image {
   position: absolute;
@@ -424,8 +427,8 @@ body.media-library-locked {
   transform: translate(-50%, -50%);
   width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: calc(100% - 0.5rem);
+  max-height: calc(100% - 0.5rem);
 }
 .media-library-thumbnail-name {
   font-size: 0.75rem;
@@ -508,7 +511,7 @@ body.media-library-locked {
   height: 6px;
 }
 .media-uploads::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
 .media-uploads > .media-upload:not(:last-child) {
@@ -554,7 +557,7 @@ body.media-library-locked {
   color: var(--primary);
 }
 .media-upload-details {
-  margin-top: 0.125rem;
+  margin-top: 0.25rem;
   display: flex;
   align-items: center;
 }

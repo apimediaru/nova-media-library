@@ -2516,6 +2516,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
 
 
 
@@ -2590,13 +2592,11 @@ var bodyLockedClass = 'media-library-locked';
   },
   created: function created() {
     // Merge provided via props media files on component creation
-    this.files = _toConsumableArray(this.field.value || []);
-    console.log(this.files); // Create and attach media uploader to instance
+    this.files = _toConsumableArray(this.field.value || []); // Create and attach media uploader to instance
 
     this.registerUploader();
   },
   mounted: function mounted() {
-    // this.fakeFiles();
     this.addDragAndDropEventListeners();
     this.registerSortable();
   },
@@ -2635,14 +2635,6 @@ var bodyLockedClass = 'media-library-locked';
     }
   },
   methods: {
-    // Todo: Dev
-    fakeFiles: function fakeFiles() {
-      for (var i = 0; i < 100; i += 1) {
-        this.files.push({
-          name: i
-        });
-      }
-    },
     // Actions
     close: function close() {
       this.$emit('close');
@@ -2693,21 +2685,42 @@ var bodyLockedClass = 'media-library-locked';
     triggerFileUpload: function triggerFileUpload() {
       this.getUploadInput().click();
     },
+    onBulkAction: function onBulkAction() {
+      var action = this.action;
+
+      switch (action) {
+        case 'delete':
+          {
+            this.uploader.remove(this.selected);
+            return;
+          }
+
+        default:
+          {
+            return;
+          }
+      }
+    },
     // Events
-    onThumbnailClick: function onThumbnailClick(index, event) {
+    onThumbnailClick: function onThumbnailClick(file, event) {
       var shiftKey = event.shiftKey,
           ctrlKey = event.ctrlKey;
+      var id = file.id;
 
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, index, true);
+        this.selectRange(this.selectedIndex, id, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, index);
+        this.selectRange(this.selectedIndex, id);
       } else if (ctrlKey) {
-        this.setSelectedIndex(index);
-        this.toggleSelection(index);
+        this.setSelectedIndex(id);
+        this.toggleSelection(id);
       } else {
-        this.beginSelection(index);
+        this.beginSelection(id);
       }
+    },
+    onThumbnailContextmenu: function onThumbnailContextmenu(file, event) {
+      console.log('contextmenu');
+      event.preventDefault();
     },
     onDocumentKeyDown: function onDocumentKeyDown(event) {
       var keyCode = event.keyCode; // Check for "A" key
@@ -2777,9 +2790,8 @@ var bodyLockedClass = 'media-library-locked';
       }
     },
     selectAll: function selectAll() {
-      // TODO: index => id
-      this.selected = this.files.map(function (file, index) {
-        return index;
+      this.selected = this.files.map(function (file) {
+        return file.id;
       });
     },
     unselectAll: function unselectAll() {
@@ -2792,10 +2804,10 @@ var bodyLockedClass = 'media-library-locked';
         object: this.field.object,
         id: this.resourceId,
         collection: this.field.collection
-      }).on('file:uploaded', this.onFileUpload);
+      }).on('file:upload', this.onFileUpload);
     },
     destroyUploader: function destroyUploader() {
-      this.uploader.off('file:uploaded', this.onFileUpload);
+      this.uploader.off('file:upload', this.onFileUpload);
       this.uploader = null;
     },
     getUploadInput: function getUploadInput() {
@@ -2837,8 +2849,15 @@ var bodyLockedClass = 'media-library-locked';
         }, _callee);
       }))();
     },
+    addFile: function addFile(file) {
+      this.files.push(file);
+    },
     onFileUpload: function onFileUpload(event) {
-      console.log(event);
+      var file = event.file;
+
+      if (file) {
+        this.addFile(file);
+      }
     },
     onUploadsClear: function onUploadsClear() {
       if (this.uploader.isUploading()) {
@@ -2919,7 +2938,7 @@ var bodyLockedClass = 'media-library-locked';
         whiteList: ['.media-library-thumbnail'],
         on: (_on = {}, _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.beforeStart, this.onSortableBeforeStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.beforeStart, this.onSortableBeforeDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.start, this.onSortableDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.over, this.onSortableDragOver), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.out, this.onSortableDragOut), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.drop, this.onSortableDrop), _on),
         scrollable: {
-          scrollableElements: [this.$refs.area],
+          scrollableElements: [this.$refs.layout],
           strict: true
         }
       });
@@ -2948,6 +2967,7 @@ var bodyLockedClass = 'media-library-locked';
       });
       thumbs.forEach(function (thumb, index) {
         var clone = thumb.cloneNode(true);
+        clone.classList.add('media-library-thumbnail--ghost');
 
         if (!wrapperSizeSet) {
           var rect = thumb.getBoundingClientRect();
@@ -3031,6 +3051,8 @@ var bodyLockedClass = 'media-library-locked';
   },
   watch: {
     selected: function selected(value) {
+      console.log(value);
+
       if (!value.length) {
         this.selectedIndex = null;
       }
@@ -3277,8 +3299,9 @@ __webpack_require__.r(__webpack_exports__);
       var listeners = {
         click: this.onThumbnailClick
       };
+      var providedListeners = this.$listeners;
 
-      if (this.processContextMenu) {
+      if (providedListeners.contextmenu) {
         listeners.contextmenu = this.onContextMenu;
       }
 
@@ -3551,6 +3574,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var instance = axios__WEBPACK_IMPORTED_MODULE_0___default().create();
 instance.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+instance.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 instance.defaults.headers.common['X-CSRF-TOKEN'] = document.head.querySelector('meta[name="csrf-token"]').content;
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (instance);
 
@@ -4074,7 +4098,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DragMoveEvent": () => (/* binding */ DragMoveEvent),
 /* harmony export */   "DragDropEvent": () => (/* binding */ DragDropEvent)
 /* harmony export */ });
-/* harmony import */ var _Utils_AbstactEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils/AbstactEvent */ "./resources/js/utils/DragAndDrop/Utils/AbstactEvent.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -4165,7 +4189,7 @@ var DragEvent = /*#__PURE__*/function (_AbstractEvent) {
   }]);
 
   return DragEvent;
-}(_Utils_AbstactEvent__WEBPACK_IMPORTED_MODULE_0__["default"]);
+}(_shared__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent);
 
 _defineProperty(DragEvent, "type", 'drag');
 
@@ -4809,138 +4833,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/utils/DragAndDrop/Utils/AbstactEvent.js":
-/*!**************************************************************!*\
-  !*** ./resources/js/utils/DragAndDrop/Utils/AbstactEvent.js ***!
-  \**************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ AbstractEvent)
-/* harmony export */ });
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-// Reference: https://github.com/Shopify/draggable/blob/master/src/shared/AbstractEvent/AbstractEvent.js
-var _canceled = Symbol('canceled');
-/**
- * All events fired by draggable inherit this class. You can call `cancel()` to
- * cancel a specific event, or you can check if an event has been canceled by
- * calling `canceled()`.
- * @abstract
- * @class AbstractEvent
- * @module AbstractEvent
- */
-
-
-var AbstractEvent = /*#__PURE__*/function () {
-  /**
-   * Event type
-   * @static
-   * @abstract
-   * @property type
-   * @type {String}
-   */
-
-  /**
-   * Event cancelable
-   * @static
-   * @abstract
-   * @property cancelable
-   * @type {Boolean}
-   */
-
-  /**
-   * AbstractEvent constructor.
-   * @constructs AbstractEvent
-   * @param {object} data - Event data
-   */
-  function AbstractEvent(data) {
-    _classCallCheck(this, AbstractEvent);
-
-    this[_canceled] = false;
-    this.data = data;
-  }
-  /**
-   * Read-only type
-   * @abstract
-   * @return {String}
-   */
-
-
-  _createClass(AbstractEvent, [{
-    key: "type",
-    get: function get() {
-      return this.constructor.type;
-    }
-    /**
-     * Read-only cancelable
-     * @abstract
-     * @return {Boolean}
-     */
-
-  }, {
-    key: "cancelable",
-    get: function get() {
-      return this.constructor.cancelable;
-    }
-    /**
-     * Cancels the event instance
-     * @abstract
-     */
-
-  }, {
-    key: "cancel",
-    value: function cancel() {
-      this[_canceled] = true;
-    }
-    /**
-     * Check if event has been canceled
-     * @abstract
-     * @return {Boolean}
-     */
-
-  }, {
-    key: "canceled",
-    value: function canceled() {
-      return Boolean(this[_canceled]);
-    }
-    /**
-     * Returns new event instance with existing event data.
-     * This method allows for overriding of event data.
-     * @param {Object} data
-     * @return {AbstractEvent}
-     */
-
-  }, {
-    key: "clone",
-    value: function clone(data) {
-      return new this.constructor(_objectSpread(_objectSpread({}, this.data), data));
-    }
-  }]);
-
-  return AbstractEvent;
-}();
-
-_defineProperty(AbstractEvent, "type", 'event');
-
-_defineProperty(AbstractEvent, "cancelable", false);
-
-
-
-/***/ }),
-
 /***/ "./resources/js/utils/DragAndDrop/Utils/AbstractPlugin.js":
 /*!****************************************************************!*\
   !*** ./resources/js/utils/DragAndDrop/Utils/AbstractPlugin.js ***!
@@ -5346,6 +5238,130 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/utils/MediaUploader/Events.js":
+/*!****************************************************!*\
+  !*** ./resources/js/utils/MediaUploader/Events.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "MediaEvent": () => (/* binding */ MediaEvent),
+/* harmony export */   "MediaUploadEvent": () => (/* binding */ MediaUploadEvent)
+/* harmony export */ });
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+var MediaEvent = /*#__PURE__*/function (_AbstractEvent) {
+  _inherits(MediaEvent, _AbstractEvent);
+
+  var _super = _createSuper(MediaEvent);
+
+  function MediaEvent() {
+    _classCallCheck(this, MediaEvent);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(MediaEvent, [{
+    key: "file",
+    get:
+    /**
+     * Uploaded file
+     *
+     * @returns {Object|null}
+     */
+    function get() {
+      var responseData = this.responseData;
+
+      if (responseData && responseData.data.file) {
+        return responseData.data.file;
+      }
+
+      return null;
+    }
+    /**
+     * Request response
+     *
+     * @returns {Object|null}
+     */
+
+  }, {
+    key: "response",
+    get: function get() {
+      return this.data.response;
+    }
+    /**
+     * Response data
+     *
+     * @returns {Object}
+     */
+
+  }, {
+    key: "responseData",
+    get: function get() {
+      return this.response.data;
+    }
+    /**
+     * Response message
+     *
+     * @returns {string|null}
+     */
+
+  }, {
+    key: "responseMessage",
+    get: function get() {
+      return this.response.message || null;
+    }
+  }]);
+
+  return MediaEvent;
+}(_shared__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent);
+
+_defineProperty(MediaEvent, "type", 'file');
+
+var MediaUploadEvent = /*#__PURE__*/function (_MediaEvent) {
+  _inherits(MediaUploadEvent, _MediaEvent);
+
+  var _super2 = _createSuper(MediaUploadEvent);
+
+  function MediaUploadEvent() {
+    _classCallCheck(this, MediaUploadEvent);
+
+    return _super2.apply(this, arguments);
+  }
+
+  return _createClass(MediaUploadEvent);
+}(MediaEvent);
+
+_defineProperty(MediaUploadEvent, "type", 'file:upload');
+
+/***/ }),
+
 /***/ "./resources/js/utils/MediaUploader/MediaUpload.js":
 /*!*********************************************************!*\
   !*** ./resources/js/utils/MediaUploader/MediaUpload.js ***!
@@ -5618,7 +5634,6 @@ var MediaUpload = /*#__PURE__*/function () {
   }, {
     key: "setResponse",
     value: function setResponse(response) {
-      console.log(response);
       this.response = response;
     }
     /**
@@ -5726,6 +5741,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../index */ "./resources/js/utils/index.js");
 /* harmony import */ var _Emitter__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../Emitter */ "./resources/js/utils/Emitter/index.js");
+/* harmony import */ var _Events__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Events */ "./resources/js/utils/MediaUploader/Events.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
@@ -5755,6 +5771,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
 
 
 
@@ -5826,7 +5843,7 @@ var MediaUploader = /*#__PURE__*/function () {
                 }
 
                 payload.forEach(function (entry) {
-                  if (entry instanceof FileList || entry instanceof Array) {
+                  if (entry instanceof FileList || Array.isArray(entry)) {
                     files.push.apply(files, _toConsumableArray(entry));
                   } else {
                     files.push(entry);
@@ -5853,6 +5870,50 @@ var MediaUploader = /*#__PURE__*/function () {
       return upload;
     }()
   }, {
+    key: "remove",
+    value: function () {
+      var _remove = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2(payload) {
+        var ids, formData, response;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                ids = [];
+
+                if (Array.isArray(payload)) {
+                  ids.push.apply(ids, _toConsumableArray(payload));
+                } else {
+                  ids.push(payload);
+                }
+
+                formData = new FormData();
+                formData.append('ids', JSON.stringify(ids));
+                formData.append('method', 'remove');
+                formData.append('object', this.object);
+                formData.append('objectId', this.id);
+                formData.append('collection', this.collection);
+                _context2.next = 10;
+                return this.client.post('/nova-vendor/nova-media-library/multiple', formData);
+
+              case 10:
+                response = _context2.sent;
+                console.log(response);
+
+              case 12:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function remove(_x) {
+        return _remove.apply(this, arguments);
+      }
+
+      return remove;
+    }()
+  }, {
     key: "isUploading",
     value: function isUploading() {
       return Boolean(this.uploading);
@@ -5860,25 +5921,22 @@ var MediaUploader = /*#__PURE__*/function () {
   }, {
     key: "startUploading",
     value: function () {
-      var _startUploading = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+      var _startUploading = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
         var mediaUpload, requestConfig, response, formData, source;
-        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 if (!this.isUploading()) {
-                  _context2.next = 2;
+                  _context3.next = 2;
                   break;
                 }
 
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 2:
                 this.uploading = true;
                 requestConfig = {
-                  headers: {
-                    'Content-Type': 'multipart/form-data'
-                  },
                   onUploadProgress: function onUploadProgress(progressEvent) {
                     mediaUpload.setProgress(Math.round(progressEvent.loaded * 100 / progressEvent.total));
                   }
@@ -5886,7 +5944,7 @@ var MediaUploader = /*#__PURE__*/function () {
 
               case 4:
                 if (!(mediaUpload = this.queue.pop())) {
-                  _context2.next = 32;
+                  _context3.next = 32;
                   break;
                 }
 
@@ -5899,38 +5957,40 @@ var MediaUploader = /*#__PURE__*/function () {
                 formData.append('objectId', this.id);
                 formData.append('collection', this.collection);
                 mediaUpload.attachInterrupter(source);
-                _context2.prev = 14;
-                _context2.next = 17;
+                _context3.prev = 14;
+                _context3.next = 17;
                 return this.client.post('/nova-vendor/nova-media-library/upload', formData, _objectSpread(_objectSpread({}, requestConfig), {}, {
                   cancelToken: source.token
                 }));
 
               case 17:
-                response = _context2.sent;
+                response = _context3.sent;
                 mediaUpload.succeed();
-                this.emit('file:uploaded', mediaUpload);
-                _context2.next = 29;
+                this.emit(new _Events__WEBPACK_IMPORTED_MODULE_4__.MediaUploadEvent({
+                  response: response
+                }));
+                _context3.next = 29;
                 break;
 
               case 22:
-                _context2.prev = 22;
-                _context2.t0 = _context2["catch"](14);
-                response = _context2.t0.response;
+                _context3.prev = 22;
+                _context3.t0 = _context3["catch"](14);
+                response = _context3.t0.response;
 
-                if (!axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context2.t0)) {
-                  _context2.next = 28;
+                if (!axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context3.t0)) {
+                  _context3.next = 28;
                   break;
                 }
 
                 mediaUpload.abort();
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 28:
                 mediaUpload.failure();
 
               case 29:
                 mediaUpload.setResponse(response);
-                _context2.next = 4;
+                _context3.next = 4;
                 break;
 
               case 32:
@@ -5938,10 +5998,10 @@ var MediaUploader = /*#__PURE__*/function () {
 
               case 33:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2, this, [[14, 22]]);
+        }, _callee3, this, [[14, 22]]);
       }));
 
       function startUploading() {
@@ -6046,6 +6106,170 @@ var uid = function () {
     return Number(index);
   };
 }();
+
+/***/ }),
+
+/***/ "./resources/js/utils/shared/AbstractEvent/AbstactEvent.js":
+/*!*****************************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractEvent/AbstactEvent.js ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ AbstractEvent)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+// Reference: https://github.com/Shopify/draggable/blob/master/src/shared/AbstractEvent/AbstractEvent.js
+var _canceled = Symbol('canceled');
+/**
+ * All events fired by draggable inherit this class. You can call `cancel()` to
+ * cancel a specific event, or you can check if an event has been canceled by
+ * calling `canceled()`.
+ * @abstract
+ * @class AbstractEvent
+ * @module AbstractEvent
+ */
+
+
+var AbstractEvent = /*#__PURE__*/function () {
+  /**
+   * Event type
+   * @static
+   * @abstract
+   * @property type
+   * @type {String}
+   */
+
+  /**
+   * Event cancelable
+   * @static
+   * @abstract
+   * @property cancelable
+   * @type {Boolean}
+   */
+
+  /**
+   * AbstractEvent constructor.
+   * @constructs AbstractEvent
+   * @param {object} data - Event data
+   */
+  function AbstractEvent(data) {
+    _classCallCheck(this, AbstractEvent);
+
+    this[_canceled] = false;
+    this.data = data;
+  }
+  /**
+   * Read-only type
+   * @abstract
+   * @return {String}
+   */
+
+
+  _createClass(AbstractEvent, [{
+    key: "type",
+    get: function get() {
+      return this.constructor.type;
+    }
+    /**
+     * Read-only cancelable
+     * @abstract
+     * @return {Boolean}
+     */
+
+  }, {
+    key: "cancelable",
+    get: function get() {
+      return this.constructor.cancelable;
+    }
+    /**
+     * Cancels the event instance
+     * @abstract
+     */
+
+  }, {
+    key: "cancel",
+    value: function cancel() {
+      this[_canceled] = true;
+    }
+    /**
+     * Check if event has been canceled
+     * @abstract
+     * @return {Boolean}
+     */
+
+  }, {
+    key: "canceled",
+    value: function canceled() {
+      return Boolean(this[_canceled]);
+    }
+    /**
+     * Returns new event instance with existing event data.
+     * This method allows for overriding of event data.
+     * @param {Object} data
+     * @return {AbstractEvent}
+     */
+
+  }, {
+    key: "clone",
+    value: function clone(data) {
+      return new this.constructor(_objectSpread(_objectSpread({}, this.data), data));
+    }
+  }]);
+
+  return AbstractEvent;
+}();
+
+_defineProperty(AbstractEvent, "type", 'event');
+
+_defineProperty(AbstractEvent, "cancelable", false);
+
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/shared/AbstractEvent/index.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractEvent/index.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstactEvent */ "./resources/js/utils/shared/AbstractEvent/AbstactEvent.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/shared/index.js":
+/*!********************************************!*\
+  !*** ./resources/js/utils/shared/index.js ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent)
+/* harmony export */ });
+/* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/utils/shared/AbstractEvent/index.js");
+
 
 /***/ }),
 
@@ -34630,6 +34854,7 @@ var render = function () {
                             staticClass:
                               "btn btn-default btn-primary whitespace-no-wrap cursor-pointer",
                             attrs: { disabled: _vm.action === "none" },
+                            on: { click: _vm.onBulkAction },
                           },
                           [_vm._v(_vm._s(_vm.__("Apply")))]
                         ),
@@ -34672,7 +34897,7 @@ var render = function () {
                           },
                           [
                             _vm._v(
-                              "\n            " +
+                              "\n              " +
                                 _vm._s(_vm.__("Selected:")) +
                                 " "
                             ),
@@ -34747,13 +34972,13 @@ var render = function () {
                             },
                             [
                               _vm._v(
-                                "\n            " +
+                                "\n              " +
                                   _vm._s(
                                     _vm.__(
                                       "There are currently no media files in this library."
                                     )
                                   ) +
-                                  "\n            "
+                                  "\n              "
                               ),
                               _vm.canAddFiles
                                 ? [
@@ -34784,38 +35009,32 @@ var render = function () {
                               attrs: {
                                 index: file.order_column,
                                 name: file.file_name,
-                                image: file.__conversions__.preview,
+                                image: file.original_url,
                                 dragged:
                                   _vm.isReordering &&
-                                  _vm.selected.includes(index),
-                                selected: _vm.isItemSelected(index),
+                                  _vm.selected.includes(file.id),
+                                selected: _vm.isItemSelected(file.id),
                                 "mine-type": file.mime_type,
-                                highlighted: index === _vm.selectedIndex,
+                                highlighted: file.id === _vm.selectedIndex,
                                 intersected:
-                                  index === _vm.reorderIntersectionId,
-                                "data-key": index,
+                                  file.id === _vm.reorderIntersectionId,
+                                "data-key": file.id,
                                 active: "",
                               },
                               on: {
                                 click: function ($event) {
-                                  return _vm.onThumbnailClick(index, $event)
+                                  return _vm.onThumbnailClick(file, $event)
+                                },
+                                contextmenu: function ($event) {
+                                  return _vm.onThumbnailContextmenu(
+                                    file,
+                                    $event
+                                  )
                                 },
                               },
                             })
                           : _vm._e()
                       }),
-                      _vm._v(" "),
-                      this.hasFiles && _vm.canAddFiles && !_vm.isReordering
-                        ? _c(
-                            "div",
-                            {
-                              staticClass: "media-library-layout-add-file",
-                              attrs: { title: _vm.__("Add file") },
-                              on: { click: _vm.triggerFileUpload },
-                            },
-                            [_vm._v("+")]
-                          )
-                        : _vm._e(),
                     ],
                     2
                   ),
@@ -34864,9 +35083,9 @@ var render = function () {
                             { staticClass: "media-library-dropzone-notice" },
                             [
                               _vm._v(
-                                "\n              " +
+                                "\n                " +
                                   _vm._s(_vm.__("Drop your images here")) +
-                                  "\n            "
+                                  "\n              "
                               ),
                             ]
                           ),
@@ -34887,7 +35106,7 @@ var render = function () {
               (_vm.hasFiles || _vm.hasUploads) && _vm.uploadDetailsVisible
                 ? _c("UploadsList", {
                     staticClass: "media-library-browser-uploads",
-                    attrs: { uploads: this.uploads },
+                    attrs: { uploads: _vm.uploads },
                     on: { clear: _vm.onUploadsClear },
                   })
                 : _vm._e(),

@@ -58,7 +58,8 @@ export default {
       const listeners = {
         click: this.onThumbnailClick,
       };
-      if (this.processContextMenu) {
+      const providedListeners = this.$listeners;
+      if (providedListeners.contextmenu) {
         listeners.contextmenu = this.onContextMenu;
       }
       return listeners;

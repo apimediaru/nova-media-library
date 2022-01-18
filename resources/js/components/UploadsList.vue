@@ -75,7 +75,7 @@ export default {
     clear() {
       this.$emit('clear');
     },
-  }
+  },
 }
 </script>
 

@@ -1,4 +1,4 @@
-import AbstractEvent from "./Utils/AbstactEvent";
+import { AbstractEvent } from "../shared";
 
 export const DragAndDropEvents = Object.freeze({
   beforeStart: 'beforeStart',
