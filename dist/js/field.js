@@ -3611,11 +3611,47 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+
 
 var instance = axios__WEBPACK_IMPORTED_MODULE_0___default().create();
 instance.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 instance.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 instance.defaults.headers.common['X-CSRF-TOKEN'] = document.head.querySelector('meta[name="csrf-token"]').content;
+instance.interceptors.response.use(function (response) {
+  var errors = response.data.errors; // Show error messages
+
+  if (errors) {
+    var iterable;
+
+    if (Array.isArray(errors)) {
+      iterable = errors;
+    } else if (_typeof(errors) === 'object') {
+      iterable = Object.values(errors);
+    } else {
+      iterable = [errors];
+    }
+
+    iterable.forEach(function (error) {
+      Nova.$emit('error', error);
+    });
+  }
+
+  return response;
+}, function (error) {
+  var status = error.response.status; // Show the user a 500 error
+
+  if (status >= 500) {
+    Nova.$emit('error', error.response.data.message);
+  } // Handle Token Timeouts
+
+
+  if (status === 419) {
+    Nova.$emit('token-expired');
+  }
+
+  return Promise.reject(error);
+});
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (instance);
 
 /***/ }),
@@ -36230,7 +36266,7 @@ var render = function () {
         ),
       ]),
       _vm._v(" "),
-      _vm.media.failed()
+      _vm.media.failed() && _vm.media.response
         ? _c("div", { staticClass: "media-upload-information" }, [
             _c("span", [
               _vm._v(

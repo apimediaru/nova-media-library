@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
 use Illuminate\Support\Facades\Route;
+use APIMedia\NovaMediaLibrary\Http\Services\MediaLibraryService;
+
 
 class FieldServiceProvider extends ServiceProvider
 {

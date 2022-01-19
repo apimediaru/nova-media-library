@@ -2,11 +2,25 @@
 
 namespace APIMedia\NovaMediaLibrary\Http\Controllers;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use APIMedia\NovaMediaLibrary\Http\Services\MediaLibraryService;
+
 
 class Controller extends BaseController
 {
+    /**
+     * @var mixed
+     */
+    protected $service;
+
+    public function __construct(MediaLibraryService $libraryService)
+    {
+        $this->service = $libraryService;
+    }
+
     /**
      * Returns JSON response
      *

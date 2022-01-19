@@ -52,7 +52,7 @@
     </div>
     <div
         class="media-upload-information"
-        v-if="media.failed()"
+        v-if="media.failed() && media.response"
     >
       <span>{{ response.status }}: {{ response.statusText }}</span>
     </div>

@@ -2,6 +2,7 @@
 
 namespace APIMedia\NovaMediaLibrary\Fields;
 
+use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
 use Laravel\Nova\Fields\Field;
 
 
@@ -29,20 +30,6 @@ class MediaField extends Field
      * @var int
      */
     protected $limit = 0;
-
-    /**
-     * Callback for serializing media on response
-     *
-     * @var callable|null
-     */
-    protected $serializeMediaCallback;
-
-    public function serializeMediaUsing(callable $serializeMediaUsing): self
-    {
-        $this->serializeMediaCallback = $serializeMediaUsing;
-
-        return $this;
-    }
 
     public function getClass(): string
     {
@@ -138,19 +125,7 @@ class MediaField extends Field
             $collection = call_user_func($this->computedCallback, $resource);
         }
 
-        $this->value = $resource->getMedia($collection)
-            ->map(function (\Spatie\MediaLibrary\MediaCollections\Models\Media $media) {
-                return array_merge($this->serializeMedia($media), ['__conversions__' => $this->getConversionUrls($media)]);
-            })->values();
-    }
-
-    public function serializeMedia(\Spatie\MediaLibrary\MediaCollections\Models\Media $media): array
-    {
-        if ($this->serializeMediaCallback) {
-            return call_user_func($this->serializeMediaCallback, $media);
-        }
-
-        return $media->toArray();
+        $this->value = MediaResource::collection($this->resource->getMedia($collection));
     }
 
     /**

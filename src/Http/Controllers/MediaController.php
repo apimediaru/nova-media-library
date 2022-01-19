@@ -32,26 +32,7 @@ class MediaController extends Controller
      */
     public function upload(MediaUploadRequest $request): \Illuminate\Http\JsonResponse
     {
-        $class = $request->get('object');
-        $id = $request->get('objectId');
-        $collection = $request->get('collection');
-
-        // Vapor uploads may be implemented in future
-        try {
-            $object = $class::findOrFail($id);
-        } catch (ModelNotFoundException $exception) {
-            return $this->failure($exception->getMessage(), 404);
-        }
-
-        try {
-            $media = $object->addMediaFromRequest('file')->toMediaCollection($collection);
-        } catch (FileIsTooBig $exception) {
-            return $this->failure($exception->getMessage(), 400);
-        }
-
-        return $this->succeed('OK', [
-            'file' => $media->toArray(),
-        ]);
+        return $this->service->upload($request);
     }
 
     /**
@@ -92,35 +73,6 @@ class MediaController extends Controller
 
     public function multiple(MediaMultipleRequest $request): \Illuminate\Http\JsonResponse
     {
-        $method = $request->get('method');
-        $ids = $request->get('ids');
-        $collection = $request->get('collection');
-
-        $class = $request->get('object');
-        $objectId = $request->get('objectId');
-
-        // Vapor uploads may be implemented in future
-        try {
-            $object = $class::findOrFail($objectId);
-        } catch (ModelNotFoundException $exception) {
-            return $this->failure($exception->getMessage(), 404);
-        }
-
-        $errors = [];
-        foreach ($ids as $id) {
-            try {
-                $object->deleteMedia($id);
-            } catch (MediaCannotBeDeleted $exception) {
-                $errors[$id] = $exception->getMessage();
-            }
-        }
-
-        unset($object->media);
-        $media = $object->getMedia($collection);
-
-        return $this->succeed('', [
-            'errors' => $errors,
-            'files' => $media->toArray(),
-        ]);
+        return $this->service->handle($request);
     }
 }
