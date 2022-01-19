@@ -211,6 +211,18 @@ body.media-library-locked {
   height: 100%;
 }
 
+.media-browser-loader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 100;
+  background-color: rgba(244, 247, 250, 0.5);
+}
+
 .media-library-browser-container {
   display: flex;
   flex-direction: column;

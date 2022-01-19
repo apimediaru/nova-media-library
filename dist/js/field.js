@@ -2519,6 +2519,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
 
 
 
@@ -2568,7 +2573,9 @@ var bodyLockedClass = 'media-library-locked';
       paused: false,
       // Uploads
       uploadDetailsVisible: false,
-      uploads: []
+      uploads: [],
+      // Loading
+      isLoading: false
     };
   },
   props: {
@@ -2629,10 +2636,13 @@ var bodyLockedClass = 'media-library-locked';
       return this.files.length;
     },
     canBeSorted: function canBeSorted() {
-      return !this.paused && this.selectedCount && this.selectedCount !== this.filesCount;
+      return !this.paused && this.filesCount && this.selectedCount !== this.filesCount;
     },
     canAddFiles: function canAddFiles() {
       return true;
+    },
+    isInteractive: function isInteractive() {
+      return !this.isLoading || !this.hasFiles;
     }
   },
   methods: {
@@ -2702,9 +2712,11 @@ var bodyLockedClass = 'media-library-locked';
             switch (_context.prev = _context.next) {
               case 0:
                 // Get processing method key
-                action = _this.action; // Launch common request for multiple bulk actions
+                action = _this.action; // Set loading state
 
-                _context.next = 3;
+                _this.isLoading = true; // Launch common request for multiple bulk actions
+
+                _context.next = 4;
                 return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__.MultipleMediaRequest({
                   object: _this.field.object,
                   objectId: _this.resourceId,
@@ -2713,7 +2725,7 @@ var bodyLockedClass = 'media-library-locked';
                   method: action
                 }).run();
 
-              case 3:
+              case 4:
                 request = _context.sent;
 
                 // Ensure that response provides files
@@ -2723,9 +2735,12 @@ var bodyLockedClass = 'media-library-locked';
                   if (action === 'delete') {
                     _this.unselectAll();
                   }
-                }
+                } // Reset loading state
 
-              case 5:
+
+                _this.isLoading = false;
+
+              case 7:
               case "end":
                 return _context.stop();
             }
@@ -2832,7 +2847,9 @@ var bodyLockedClass = 'media-library-locked';
     extractSelectedIDs: function extractSelectedIDs() {
       var _this2 = this;
 
-      return this.selected.map(function (i) {
+      return this.selected.sort(function (a, b) {
+        return a.order_column - b.order_column;
+      }).map(function (i) {
         return _this2.files[i].id;
       });
     },
@@ -3086,7 +3103,8 @@ var bodyLockedClass = 'media-library-locked';
         this.preventNextBackdropClick();
       }
 
-      this.isReordering = false; // Todo: remove
+      this.isReordering = false;
+      var ids = this.extractSelectedIDs(); // Todo: remove
 
       console.log('drop:', event.target);
     }
@@ -6078,7 +6096,8 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "MediaRequest": () => (/* binding */ MediaRequest),
-/* harmony export */   "MultipleMediaRequest": () => (/* binding */ MultipleMediaRequest)
+/* harmony export */   "MultipleMediaRequest": () => (/* binding */ MultipleMediaRequest),
+/* harmony export */   "SortMediaRequest": () => (/* binding */ SortMediaRequest)
 /* harmony export */ });
 /* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -6139,6 +6158,19 @@ var MultipleMediaRequest = /*#__PURE__*/function (_MediaRequest) {
   }]);
 
   return MultipleMediaRequest;
+}(MediaRequest);
+var SortMediaRequest = /*#__PURE__*/function (_MediaRequest2) {
+  _inherits(SortMediaRequest, _MediaRequest2);
+
+  var _super3 = _createSuper(SortMediaRequest);
+
+  function SortMediaRequest() {
+    _classCallCheck(this, SortMediaRequest);
+
+    return _super3.apply(this, arguments);
+  }
+
+  return _createClass(SortMediaRequest);
 }(MediaRequest);
 
 /***/ }),
@@ -35546,7 +35578,8 @@ var render = function () {
               {
                 staticClass: "media-library-panel-actions",
                 class: {
-                  "media-library-panel-actions-disabled": !_vm.selectedCount,
+                  "media-library-panel-actions-disabled":
+                    !_vm.selectedCount || _vm.isLoading,
                   "media-library-panel-actions-hidden":
                     !_vm.filesCount && !_vm.hasUploads,
                 },
@@ -35563,7 +35596,10 @@ var render = function () {
                       "div",
                       {
                         staticClass:
-                          "media-library-actions-action media-library-action media-library-action-static",
+                          "media-library-actions-action media-library-action",
+                        class: {
+                          "media-library-action-static": !_vm.isLoading,
+                        },
                       },
                       [
                         _c("input", {
@@ -35578,6 +35614,7 @@ var render = function () {
                           },
                           on: {
                             change: function ($event) {
+                              _vm.isInteractive &&
                               _vm.filesCount !== _vm.selectedCount
                                 ? _vm.selectAll()
                                 : _vm.unselectAll()
@@ -35607,7 +35644,10 @@ var render = function () {
                             ],
                             staticClass:
                               "w-full form-control form-select cursor-pointer",
-                            attrs: { disabled: !_vm.selectedCount },
+                            attrs: {
+                              disabled:
+                                !_vm.selectedCount || !_vm.isInteractive,
+                            },
                             on: {
                               change: function ($event) {
                                 var $$selectedVal = Array.prototype.filter
@@ -35709,7 +35749,7 @@ var render = function () {
                           },
                           [
                             _vm._v(
-                              "\n              " +
+                              "\n            " +
                                 _vm._s(_vm.__("Selected:")) +
                                 " "
                             ),
@@ -35762,6 +35802,15 @@ var render = function () {
                   on: { click: _vm.onBrowserAreaClick },
                 },
                 [
+                  _vm.isLoading
+                    ? _c(
+                        "div",
+                        { staticClass: "media-browser-loader" },
+                        [_c("loader", { staticClass: "text-60" })],
+                        1
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
                   _c(
                     "div",
                     {
@@ -35784,13 +35833,13 @@ var render = function () {
                             },
                             [
                               _vm._v(
-                                "\n              " +
+                                "\n            " +
                                   _vm._s(
                                     _vm.__(
                                       "There are currently no media files in this library."
                                     )
                                   ) +
-                                  "\n              "
+                                  "\n            "
                               ),
                               _vm.canAddFiles
                                 ? [
@@ -35819,7 +35868,7 @@ var render = function () {
                               ref: "thumbnail",
                               refInFor: true,
                               attrs: {
-                                index: file.order_column,
+                                index: index,
                                 name: file.file_name,
                                 image: file.original_url,
                                 dragged:
@@ -35895,9 +35944,9 @@ var render = function () {
                             { staticClass: "media-library-dropzone-notice" },
                             [
                               _vm._v(
-                                "\n                " +
+                                "\n              " +
                                   _vm._s(_vm.__("Drop your images here")) +
-                                  "\n              "
+                                  "\n            "
                               ),
                             ]
                           ),

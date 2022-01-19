@@ -13,3 +13,7 @@ export class MultipleMediaRequest extends MediaRequest {
     return apiRoutes.multiple;
   }
 }
+
+export class SortMediaRequest extends MediaRequest {
+
+}

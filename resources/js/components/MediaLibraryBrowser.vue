@@ -18,25 +18,30 @@
         <div
             class="media-library-panel-actions"
             :class="{
-              'media-library-panel-actions-disabled': !selectedCount,
+              'media-library-panel-actions-disabled': !selectedCount || isLoading,
               'media-library-panel-actions-hidden': !filesCount && !hasUploads,
             }"
         >
           <div class="media-library-actions-panel media-library-actions-panel-left media-library-actions">
-            <div class="media-library-actions-action media-library-action media-library-action-static">
+            <div
+              class="media-library-actions-action media-library-action"
+              :class="{
+                'media-library-action-static': !isLoading,
+              }"
+            >
               <input
-                  type="checkbox"
-                  class="checkbox cursor-pointer"
-                  @change="filesCount !== selectedCount ? selectAll() : unselectAll()"
-                  :checked="filesCount === selectedCount"
-                  :disabled="!filesCount"
-                  :title="__('Select / Reset all')"
+                type="checkbox"
+                class="checkbox cursor-pointer"
+                @change="isInteractive && filesCount !== selectedCount ? selectAll() : unselectAll()"
+                :checked="filesCount === selectedCount"
+                :disabled="!filesCount"
+                :title="__('Select / Reset all')"
               >
             </div>
             <div class="media-library-actions-action media-library-action">
               <select
                   class="w-full form-control form-select cursor-pointer"
-                  :disabled="!selectedCount"
+                  :disabled="!selectedCount || !isInteractive"
                   v-model="action"
               >
                 <option value="none" selected>{{ __('Select an action') }}</option>
@@ -83,6 +88,12 @@
           ref="area"
         >
           <div
+              class="media-browser-loader"
+              v-if="isLoading"
+          >
+            <loader class="text-60" />
+          </div>
+          <div
             class="media-library-layout"
             :class="{
               'media-library-layout--hidden': isDragging,
@@ -105,17 +116,11 @@
                 <p class="mt-2">{{ __('Drag and drop, or click to browse and select your files') }}</p>
               </template>
             </div>
-<!--            <div-->
-<!--                class="media-library-layout-add-file"-->
-<!--                v-if="this.hasFiles && canAddFiles && !isReordering"-->
-<!--                :title="__('Add file')"-->
-<!--                @click="triggerFileUpload"-->
-<!--            >+</div>-->
             <MediaThumbnail
               v-if="hasFiles"
               v-for="(file, index) in files"
               :key="index"
-              :index="file.order_column"
+              :index="index"
               :name="file.file_name"
               :image="file.original_url"
               @click="onThumbnailClick(index, $event)"
@@ -233,6 +238,9 @@ export default {
       // Uploads
       uploadDetailsVisible: false,
       uploads: [],
+
+      // Loading
+      isLoading: false,
     };
   },
 
@@ -296,10 +304,13 @@ export default {
       return this.files.length;
     },
     canBeSorted() {
-      return !this.paused && this.selectedCount && (this.selectedCount !== this.filesCount);
+      return !this.paused && (this.filesCount && (this.selectedCount !== this.filesCount));
     },
     canAddFiles() {
       return true;
+    },
+    isInteractive() {
+      return !this.isLoading || !this.hasFiles;
     },
   },
 
@@ -357,6 +368,9 @@ export default {
       // Get processing method key
       const { action } = this;
 
+      // Set loading state
+      this.isLoading = true;
+
       // Launch common request for multiple bulk actions
       const request = await new MultipleMediaRequest({
         object: this.field.object,
@@ -375,6 +389,9 @@ export default {
           this.unselectAll();
         }
       }
+
+      // Reset loading state
+      this.isLoading = false;
     },
 
 
@@ -464,7 +481,9 @@ export default {
       this.selectedIndex = null;
     },
     extractSelectedIDs() {
-      return this.selected.map((i) => this.files[i].id);
+      return this.selected
+          .sort((a, b) => a.order_column - b.order_column)
+          .map((i) => this.files[i].id);
     },
 
     // File input
@@ -699,6 +718,8 @@ export default {
       }
 
       this.isReordering = false;
+
+      const ids = this.extractSelectedIDs();
       // Todo: remove
       console.log('drop:', event.target);
     },
