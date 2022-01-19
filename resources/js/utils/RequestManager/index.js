@@ -1,1 +1,1 @@
-export { MultipleMediaRequest } from "./Requests";
+export { MultipleMediaRequest, SortMediaRequest } from "./Requests";

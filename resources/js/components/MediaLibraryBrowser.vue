@@ -180,7 +180,8 @@ import MediaThumbnail from "./MediaThumbnail";
 import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
-import { MultipleMediaRequest } from "../utils/RequestManager";
+import { MultipleMediaRequest, SortMediaRequest } from "../utils/RequestManager";
+import { moveArray } from "../shared";
 
 const { throttle, debounce } = window._;
 
@@ -376,7 +377,7 @@ export default {
         object: this.field.object,
         objectId: this.resourceId,
         collection: this.field.collection,
-        ids: this.extractSelectedIDs(),
+        sources: this.extractSelectedIDs(),
         method: action,
       }).run();
 
@@ -481,9 +482,10 @@ export default {
       this.selectedIndex = null;
     },
     extractSelectedIDs() {
-      return this.selected
-          .sort((a, b) => a.order_column - b.order_column)
-          .map((i) => this.files[i].id);
+      const { files, selected } = this;
+      return selected
+          .sort((a, b) => files[a].order_column - files[b].order_column)
+          .map((i) => files[i].id);
     },
 
     // File input
@@ -708,26 +710,53 @@ export default {
     onSortableDragOut() {
       this.resetIntersection();
     },
-    onSortableDrop(event) {
+    async onSortableDrop(event) {
       this.resetPointerEventsOutsideFrame();
+      this.isReordering = false;
 
-      // Prevent modal closing if dropped tarted is backdrop
+      // Prevent modal closing if dropped tarted is viewport outside main frame
       const { target } = event.originalEvent;
-      if (target && target.classList.contains('media-library-modal-backdrop')) {
+      if (target && target.classList.contains('media-library-modal-viewport')) {
         this.preventNextBackdropClick();
       }
 
-      this.isReordering = false;
+      if (!target) {
+        return;
+      }
 
-      const ids = this.extractSelectedIDs();
+      const targetIndex = this.extractId(target);
+      const targetId = this.files[targetIndex].id;
+      const sources = this.extractSelectedIDs();
+
+
+      if (targetId === undefined || !Array.isArray(sources) || !sources.length) {
+        return;
+      }
+
+      const copy = [...this.files];
+      this.selected.sort((a, b) => this.files[a].order_column - this.files[b].order_column).forEach((i, index) => moveArray(copy, i, targetIndex + index));
+      this.files = copy;
+      // this.files = copy;
+
+
       // Todo: remove
-      console.log('drop:', event.target);
+      // console.log('drop:', event.target);
+      //
+      // this.isLoading = true;
+      // const request = await new SortMediaRequest({
+      //   target: targetId,
+      //   sources,
+      //   object: this.field.object,
+      //   objectId: this.resourceId,
+      //   collection: this.field.collection,
+      // }).run();
+      // this.isLoading = false;
     },
   },
 
   watch: {
     selected(value) {
-      console.log(value);
+      // console.log(value);
       if (!value.length) {
         this.selectedIndex = null;
       }

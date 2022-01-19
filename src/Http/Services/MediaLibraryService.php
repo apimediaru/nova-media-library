@@ -2,6 +2,7 @@
 
 namespace APIMedia\NovaMediaLibrary\Http\Services;
 
+use App\Nova\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,7 +51,7 @@ class MediaLibraryService
         unset($object->media);
         $media = $object->getMedia($collection);
 
-        return $this->succeed('', [
+        return $this->success('', [
             'files' => MediaResource::collection($media),
         ], $errors);
     }
@@ -74,13 +75,41 @@ class MediaLibraryService
             return $this->failure($exception->getMessage(), [], [], 400);
         }
 
-        return $this->succeed('OK', [
+        return $this->success('OK', [
             'file' => new MediaResource($media),
         ]);
     }
 
     public function delete($object, $id) {
         return $object->deleteMedia($id);
+    }
+
+    public function sort(Request $request, $object = null): JsonResponse
+    {
+        // if (!$object) {
+        //     $class = $request->get('object');
+        //     try {
+        //         $object = $class::findOrFail($request->get('objectId'));
+        //     } catch (ModelNotFoundException $exception) {
+        //         return $this->failure($exception->getMessage(), [], [], 404);
+        //     }
+        // }
+
+
+        $collection = $request->get('collection');
+        $class = $request->get('object');
+        $target = $request->get('target');
+        $sources = $request->get('ids');
+
+
+        foreach ($sources as $id) {
+            $source = Media::where(['collection' => $collection]);
+        }
+
+
+        Media::where(['collection' => $collection]);
+
+        return $this->success('test');
     }
 
     /**
@@ -114,7 +143,7 @@ class MediaLibraryService
      *
      * @return JsonResponse
      */
-    protected function succeed(string $message = '', array $data = [], array $errors = [], int $statusCode = 200): JsonResponse
+    protected function success(string $message = '', array $data = [], array $errors = [], int $statusCode = 200): JsonResponse
     {
         return $this->jsonResponse(true, $message, $data, $errors, $statusCode);
     }

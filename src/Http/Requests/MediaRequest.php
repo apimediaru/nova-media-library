@@ -11,6 +11,7 @@ class MediaRequest extends FormRequest
         return [
             'object' => ['required'],
             'objectId' => ['required'],
+            'collection' => ['required'],
         ];
     }
 }

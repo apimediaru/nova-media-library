@@ -3,6 +3,7 @@
 namespace APIMedia\NovaMediaLibrary\Http\Controllers;
 
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaMultipleRequest;
+use APIMedia\NovaMediaLibrary\Http\Requests\MediaSortRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaUploadRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaGetRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -46,11 +47,11 @@ class MediaController extends Controller
 
     /**
      * Change media order
-     * @param Request $request
-     * @return void
+     * @param MediaSortRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function sort(Request $request) {
-
+    public function sort(MediaSortRequest $request) {
+        return $this->service->sort($request);
     }
 
     /**

@@ -2328,6 +2328,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop/index.js");
 /* harmony import */ var _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/MediaUploader */ "./resources/js/utils/MediaUploader/index.js");
 /* harmony import */ var _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../utils/RequestManager */ "./resources/js/utils/RequestManager/index.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../shared */ "./resources/js/shared/index.js");
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
@@ -2530,6 +2531,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 
 
+
 var _window$_ = window._,
     throttle = _window$_.throttle,
     debounce = _window$_.debounce;
@@ -2721,7 +2723,7 @@ var bodyLockedClass = 'media-library-locked';
                   object: _this.field.object,
                   objectId: _this.resourceId,
                   collection: _this.field.collection,
-                  ids: _this.extractSelectedIDs(),
+                  sources: _this.extractSelectedIDs(),
                   method: action
                 }).run();
 
@@ -2845,12 +2847,12 @@ var bodyLockedClass = 'media-library-locked';
       this.selectedIndex = null;
     },
     extractSelectedIDs: function extractSelectedIDs() {
-      var _this2 = this;
-
-      return this.selected.sort(function (a, b) {
-        return a.order_column - b.order_column;
+      var files = this.files,
+          selected = this.selected;
+      return selected.sort(function (a, b) {
+        return files[a].order_column - files[b].order_column;
       }).map(function (i) {
-        return _this2.files[i].id;
+        return files[i].id;
       });
     },
     // File input
@@ -2869,10 +2871,10 @@ var bodyLockedClass = 'media-library-locked';
       return this.$refs.upload;
     },
     onFileInputChange: function onFileInputChange(event) {
-      var _this3 = this;
+      var _this2 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
-        var _this3$uploads;
+        var _this2$uploads;
 
         var target, files, uploads;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
@@ -2885,16 +2887,16 @@ var bodyLockedClass = 'media-library-locked';
                   return new _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__.MediaUpload(item);
                 });
 
-                (_this3$uploads = _this3.uploads).push.apply(_this3$uploads, _toConsumableArray(uploads));
+                (_this2$uploads = _this2.uploads).push.apply(_this2$uploads, _toConsumableArray(uploads));
 
-                _this3.setUploadingMode();
+                _this2.setUploadingMode();
 
-                _this3.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
+                _this2.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
                 // to upload the same pull of files again
 
                 target.value = null;
                 _context2.next = 9;
-                return _this3.uploader.upload(uploads.reverse());
+                return _this2.uploader.upload(uploads.reverse());
 
               case 9:
               case "end":
@@ -3004,7 +3006,7 @@ var bodyLockedClass = 'media-library-locked';
       this.sortable.destroy();
     },
     createGhost: function createGhost(element, fn, _ref) {
-      var _this4 = this;
+      var _this3 = this;
 
       var applyStyles = _ref.applyStyles,
           applyImportantGhostStyles = _ref.applyImportantGhostStyles;
@@ -3018,7 +3020,7 @@ var bodyLockedClass = 'media-library-locked';
       applyImportantGhostStyles(ghost);
       var wrapperSizeSet = false;
       var thumbs = this.$refs.thumbnail.filter(function (thumb) {
-        return _this4.selected.includes(_this4.extractId(thumb.$el));
+        return _this3.selected.includes(_this3.extractId(thumb.$el));
       }).slice(0, 5).map(function (node) {
         return node.$el;
       });
@@ -3095,24 +3097,78 @@ var bodyLockedClass = 'media-library-locked';
       this.resetIntersection();
     },
     onSortableDrop: function onSortableDrop(event) {
-      this.resetPointerEventsOutsideFrame(); // Prevent modal closing if dropped tarted is backdrop
+      var _this4 = this;
 
-      var target = event.originalEvent.target;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
+        var target, targetIndex, targetId, sources, copy;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _this4.resetPointerEventsOutsideFrame();
 
-      if (target && target.classList.contains('media-library-modal-backdrop')) {
-        this.preventNextBackdropClick();
-      }
+                _this4.isReordering = false; // Prevent modal closing if dropped tarted is viewport outside main frame
 
-      this.isReordering = false;
-      var ids = this.extractSelectedIDs(); // Todo: remove
+                target = event.originalEvent.target;
 
-      console.log('drop:', event.target);
+                if (target && target.classList.contains('media-library-modal-viewport')) {
+                  _this4.preventNextBackdropClick();
+                }
+
+                if (target) {
+                  _context3.next = 6;
+                  break;
+                }
+
+                return _context3.abrupt("return");
+
+              case 6:
+                targetIndex = _this4.extractId(target);
+                targetId = _this4.files[targetIndex].id;
+                sources = _this4.extractSelectedIDs();
+
+                if (!(targetId === undefined || !Array.isArray(sources) || !sources.length)) {
+                  _context3.next = 11;
+                  break;
+                }
+
+                return _context3.abrupt("return");
+
+              case 11:
+                copy = _toConsumableArray(_this4.files);
+
+                _this4.selected.sort(function (a, b) {
+                  return _this4.files[a].order_column - _this4.files[b].order_column;
+                }).forEach(function (i, index) {
+                  return (0,_shared__WEBPACK_IMPORTED_MODULE_7__.moveArray)(copy, i, targetIndex + index);
+                });
+
+                _this4.files = copy; // this.files = copy;
+                // Todo: remove
+                // console.log('drop:', event.target);
+                //
+                // this.isLoading = true;
+                // const request = await new SortMediaRequest({
+                //   target: targetId,
+                //   sources,
+                //   object: this.field.object,
+                //   objectId: this.resourceId,
+                //   collection: this.field.collection,
+                // }).run();
+                // this.isLoading = false;
+
+              case 14:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3);
+      }))();
     }
   },
   watch: {
     selected: function selected(value) {
-      console.log(value);
-
+      // console.log(value);
       if (!value.length) {
         this.selectedIndex = null;
       }
@@ -3615,6 +3671,798 @@ Nova.booting(function (Vue, router, store) {
   Vue.component('detail-nova-media-library', _components_DetailField__WEBPACK_IMPORTED_MODULE_1__["default"]);
   Vue.component('form-nova-media-library', _components_FormField__WEBPACK_IMPORTED_MODULE_2__["default"]);
 });
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractEvent/AbstactEvent.js":
+/*!***********************************************************!*\
+  !*** ./resources/js/shared/AbstractEvent/AbstactEvent.js ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ AbstractEvent)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+// Reference: https://github.com/Shopify/draggable/blob/master/src/shared/AbstractEvent/AbstractEvent.js
+var _canceled = Symbol('canceled');
+/**
+ * All events fired by draggable inherit this class. You can call `cancel()` to
+ * cancel a specific event, or you can check if an event has been canceled by
+ * calling `canceled()`.
+ * @abstract
+ * @class AbstractEvent
+ * @module AbstractEvent
+ */
+
+
+var AbstractEvent = /*#__PURE__*/function () {
+  /**
+   * Event type
+   * @static
+   * @abstract
+   * @property type
+   * @type {String}
+   */
+
+  /**
+   * Event cancelable
+   * @static
+   * @abstract
+   * @property cancelable
+   * @type {Boolean}
+   */
+
+  /**
+   * AbstractEvent constructor.
+   * @constructs AbstractEvent
+   * @param {object} data - Event data
+   */
+  function AbstractEvent(data) {
+    _classCallCheck(this, AbstractEvent);
+
+    this[_canceled] = false;
+    this.data = data;
+  }
+  /**
+   * Read-only type
+   * @abstract
+   * @return {String}
+   */
+
+
+  _createClass(AbstractEvent, [{
+    key: "type",
+    get: function get() {
+      return this.constructor.type;
+    }
+    /**
+     * Read-only cancelable
+     * @abstract
+     * @return {Boolean}
+     */
+
+  }, {
+    key: "cancelable",
+    get: function get() {
+      return this.constructor.cancelable;
+    }
+    /**
+     * Cancels the event instance
+     * @abstract
+     */
+
+  }, {
+    key: "cancel",
+    value: function cancel() {
+      this[_canceled] = true;
+    }
+    /**
+     * Check if event has been canceled
+     * @abstract
+     * @return {Boolean}
+     */
+
+  }, {
+    key: "canceled",
+    value: function canceled() {
+      return Boolean(this[_canceled]);
+    }
+    /**
+     * Returns new event instance with existing event data.
+     * This method allows for overriding of event data.
+     * @param {Object} data
+     * @return {AbstractEvent}
+     */
+
+  }, {
+    key: "clone",
+    value: function clone(data) {
+      return new this.constructor(_objectSpread(_objectSpread({}, this.data), data));
+    }
+  }]);
+
+  return AbstractEvent;
+}();
+
+_defineProperty(AbstractEvent, "type", 'event');
+
+_defineProperty(AbstractEvent, "cancelable", false);
+
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractEvent/index.js":
+/*!****************************************************!*\
+  !*** ./resources/js/shared/AbstractEvent/index.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstactEvent */ "./resources/js/shared/AbstractEvent/AbstactEvent.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractPlugin/AbstractPlugin.js":
+/*!**************************************************************!*\
+  !*** ./resources/js/shared/AbstractPlugin/AbstractPlugin.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ AbstractPlugin)
+/* harmony export */ });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+/**
+ * All library plugins inherit from this class.
+ * @abstract
+ * @class AbstractPlugin
+ * @module AbstractPlugin
+ */
+var AbstractPlugin = /*#__PURE__*/function () {
+  /**
+   * AbstractPlugin constructor.
+   * @constructs AbstractPlugin
+   * @param {DragAndDrop} dd - DragAndDrop instance
+   */
+  function AbstractPlugin(dd) {
+    _classCallCheck(this, AbstractPlugin);
+
+    /**
+     * DragAndDrop instance
+     * @property dd
+     * @type {DragAndDrop}
+     */
+    this.dd = dd;
+  }
+  /**
+   * Override to add listeners
+   * @abstract
+   */
+
+
+  _createClass(AbstractPlugin, [{
+    key: "attach",
+    value: function attach() {
+      throw new Error('Not Implemented');
+    }
+    /**
+     * Override to remove listeners
+     * @abstract
+     */
+
+  }, {
+    key: "detach",
+    value: function detach() {
+      throw new Error('Not Implemented');
+    }
+  }]);
+
+  return AbstractPlugin;
+}();
+
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractPlugin/index.js":
+/*!*****************************************************!*\
+  !*** ./resources/js/shared/AbstractPlugin/index.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/shared/AbstractPlugin/AbstractPlugin.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractRequest/AbstractRequest.js":
+/*!****************************************************************!*\
+  !*** ./resources/js/shared/AbstractRequest/AbstractRequest.js ***!
+  \****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "requestStates": () => (/* binding */ requestStates),
+/* harmony export */   "default": () => (/* binding */ AbstractRequest)
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! object-to-formdata */ "./node_modules/object-to-formdata/src/index.js");
+/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(object_to_formdata__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+
+var aborted = Symbol('aborted');
+var requestStates = {
+  queued: 'queued',
+  processed: 'processed',
+  failed: 'failed',
+  succeeded: 'succeeded',
+  aborted: 'aborted'
+};
+
+var AbstractRequest = /*#__PURE__*/function () {
+  /**
+   * Instance state dictionary
+   *
+   * @static
+   * @property {string} queued
+   * @property {string} processed
+   * @property {string} failed
+   * @property {string} succeeded
+   * @property {string} aborted
+   * @type {Object}
+   */
+
+  /**
+   * Event cancelable
+   *
+   * @static
+   * @abstract
+   * @property abortable
+   * @type {Boolean}
+   */
+
+  /**
+   * Request method
+   *
+   * @type {string}
+   */
+  function AbstractRequest() {
+    var sendData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var requestConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, AbstractRequest);
+
+    /**
+     * Aborted flag
+     *
+     * @type {boolean}
+     */
+    this[aborted] = false;
+    /**
+     * Unique per request identifier
+     *
+     * @type {number}
+     */
+
+    this.uid = (0,_utils__WEBPACK_IMPORTED_MODULE_3__.uid)();
+    /**
+     * Current completion state
+     *
+     * @type {boolean}
+     */
+
+    this.completed = false;
+    /**
+     * Axios interrupter
+     *
+     * @type {CancelTokenSource}
+     */
+
+    this.interrupter = axios__WEBPACK_IMPORTED_MODULE_1__.CancelToken.source();
+    /**
+     * Axios request's response
+     *
+     * @type {null|AxiosResponse}
+     */
+
+    this.response = null;
+    /**
+     * Request progress
+     *
+     * @type {number}
+     */
+
+    this.progress = 0;
+    /**
+     * Request payload data
+     *
+     * @type {any}
+     */
+
+    this.sendData = sendData;
+    /**
+     * Additional parameters that would be passed to request instance
+     *
+     * @type {Object}
+     */
+
+    this.requestConfig = requestConfig;
+    /**
+     * Http-based client
+     *
+     * @type {AxiosStatic}
+     */
+
+    this.client = _utils__WEBPACK_IMPORTED_MODULE_3__.axios;
+    this.queue();
+  }
+  /**
+   * Read-only abortable
+   *
+   * @return {Boolean}
+   */
+
+
+  _createClass(AbstractRequest, [{
+    key: "abortable",
+    get: function get() {
+      return this.constructor.abortable;
+    }
+    /**
+     * Abort http request or prevent its further processing
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "abort",
+    value: function abort() {
+      if (this.abortable && this.processed()) {
+        this.interrupter.cancel();
+        this.state = requestStates.aborted;
+        this.complete();
+      }
+
+      return this;
+    }
+    /**
+     * Returns true if media instance is in aborted state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "aborted",
+    value: function aborted() {
+      return this.state === requestStates.aborted;
+    }
+    /**
+     * Get cancel token
+     *
+     * @return {CancelToken}
+     */
+
+  }, {
+    key: "token",
+    get: function get() {
+      return this.interrupter.token;
+    }
+    /**
+     * Set state flag to queued
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "queue",
+    value: function queue() {
+      this.state = requestStates.queued;
+      return this;
+    }
+    /**
+     * Returns true if media instance is in queued state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "queued",
+    value: function queued() {
+      return this.state === requestStates.queued;
+    }
+    /**
+     * Set state flag to processed
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "process",
+    value: function process() {
+      this.state = requestStates.processed;
+      return this;
+    }
+    /**
+     * Returns true if media instance is in processed state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "processed",
+    value: function processed() {
+      return this.state === requestStates.processed;
+    }
+    /**
+     * Set state flag to succeeded
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "succeed",
+    value: function succeed() {
+      this.state = requestStates.succeeded;
+      this.complete();
+      return this;
+    }
+    /**
+     * Returns true if this instance is in succeeded state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "succeeded",
+    value: function succeeded() {
+      return this.state === requestStates.succeeded;
+    }
+    /**
+     * Set state flag to failed
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "failure",
+    value: function failure() {
+      this.state = requestStates.failed;
+      this.complete();
+      return this;
+    }
+    /**
+     * Returns true if media instance is in failed state
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "failed",
+    value: function failed() {
+      return this.state === requestStates.failed;
+    }
+    /**
+     * Returns true if request processing is finished
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "isCompleted",
+    value: function isCompleted() {
+      return Boolean(this.completed);
+    }
+    /**
+     * Set instance complete flag
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "complete",
+    value: function complete() {
+      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+      this.completed = state;
+      return this;
+    }
+    /**
+     * Get request progress (0-100)
+     *
+     * @returns {number}
+     */
+
+  }, {
+    key: "getProgress",
+    value: function getProgress() {
+      return Number(this.progress);
+    }
+    /**
+     * Set current session progress
+     * @param value
+     *
+     * @return {AbstractRequest}
+     */
+
+  }, {
+    key: "setProgress",
+    value: function setProgress(value) {
+      this.progress = Number(value);
+      return this;
+    }
+    /**
+     * Reset session current progress
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "resetProgress",
+    value: function resetProgress() {
+      this.progress = 0;
+      return this;
+    }
+    /**
+     * Get request url
+     *
+     * @abstract
+     * @return {string}
+     */
+
+  }, {
+    key: "getRequestUrl",
+    value: function getRequestUrl() {
+      return '';
+    }
+  }, {
+    key: "getRequestConfig",
+    value: function getRequestConfig() {
+      var _this = this;
+
+      return _objectSpread({
+        onUploadProgress: function onUploadProgress(progressEvent) {
+          _this.setProgress(Math.round(progressEvent.loaded * 100 / progressEvent.total));
+        }
+      }, this.requestConfig);
+    }
+  }, {
+    key: "serializeFormData",
+    value: function serializeFormData() {
+      return (0,object_to_formdata__WEBPACK_IMPORTED_MODULE_2__.serialize)(this.sendData);
+    }
+  }, {
+    key: "responseData",
+    get: function get() {
+      return this.response.data;
+    }
+  }, {
+    key: "run",
+    value: function run() {
+      var _this2 = this;
+
+      return new Promise( /*#__PURE__*/function () {
+        var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(resolve) {
+          var response;
+          return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _this2.process();
+
+                  _context.prev = 1;
+                  _context.next = 4;
+                  return _this2.client[_this2.constructor.method](_this2.getRequestUrl(), _this2.serializeFormData(), _this2.getRequestConfig());
+
+                case 4:
+                  response = _context.sent;
+
+                  _this2.succeed();
+
+                  _context.next = 12;
+                  break;
+
+                case 8:
+                  _context.prev = 8;
+                  _context.t0 = _context["catch"](1);
+                  response = _context.t0.response;
+
+                  if (_this2.abortable && axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context.t0)) {
+                    _this2.abort();
+                  } else {
+                    _this2.failure();
+                  }
+
+                case 12:
+                  _this2.response = response;
+                  resolve(_this2);
+
+                case 14:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, null, [[1, 8]]);
+        }));
+
+        return function (_x) {
+          return _ref.apply(this, arguments);
+        };
+      }());
+    }
+  }]);
+
+  return AbstractRequest;
+}();
+
+_defineProperty(AbstractRequest, "states", requestStates);
+
+_defineProperty(AbstractRequest, "abortable", false);
+
+_defineProperty(AbstractRequest, "method", 'post');
+
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/AbstractRequest/index.js":
+/*!******************************************************!*\
+  !*** ./resources/js/shared/AbstractRequest/index.js ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/shared/AbstractRequest/AbstractRequest.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/index.js":
+/*!**************************************!*\
+  !*** ./resources/js/shared/index.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent),
+/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest),
+/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__.AbstractPlugin),
+/* harmony export */   "moveArray": () => (/* reexport safe */ _utils__WEBPACK_IMPORTED_MODULE_3__.moveArray)
+/* harmony export */ });
+/* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/shared/AbstractEvent/index.js");
+/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/shared/AbstractRequest/index.js");
+/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/shared/AbstractPlugin/index.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./resources/js/shared/utils/index.js");
+
+
+
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/utils/index.js":
+/*!********************************************!*\
+  !*** ./resources/js/shared/utils/index.js ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "moveArray": () => (/* reexport safe */ _moveArray__WEBPACK_IMPORTED_MODULE_0__.moveArray)
+/* harmony export */ });
+/* harmony import */ var _moveArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./moveArray */ "./resources/js/shared/utils/moveArray/index.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/utils/moveArray/index.js":
+/*!******************************************************!*\
+  !*** ./resources/js/shared/utils/moveArray/index.js ***!
+  \******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "moveArray": () => (/* reexport safe */ _moveArray__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _moveArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./moveArray */ "./resources/js/shared/utils/moveArray/moveArray.js");
+
+
+/***/ }),
+
+/***/ "./resources/js/shared/utils/moveArray/moveArray.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/shared/utils/moveArray/moveArray.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ array_move)
+/* harmony export */ });
+function array_move(arr, old_index, new_index) {
+  while (old_index < 0) {
+    old_index += arr.length;
+  }
+
+  while (new_index < 0) {
+    new_index += arr.length;
+  }
+
+  if (new_index >= arr.length) {
+    var k = new_index - arr.length + 1;
+
+    while (k--) {
+      arr.push(undefined);
+    }
+  }
+
+  arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+}
 
 /***/ }),
 
@@ -4199,7 +5047,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DragMoveEvent": () => (/* binding */ DragMoveEvent),
 /* harmony export */   "DragDropEvent": () => (/* binding */ DragDropEvent)
 /* harmony export */ });
-/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../shared */ "./resources/js/shared/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -4534,7 +5382,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "defaultOptions": () => (/* binding */ defaultOptions),
 /* harmony export */   "default": () => (/* binding */ Scrollable)
 /* harmony export */ });
-/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../shared */ "./resources/js/utils/shared/index.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../shared */ "./resources/js/shared/index.js");
 /* harmony import */ var _Events__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Events */ "./resources/js/utils/DragAndDrop/Events.js");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/DragAndDrop/utils/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -5282,7 +6130,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "MediaEvent": () => (/* binding */ MediaEvent),
 /* harmony export */   "MediaUploadEvent": () => (/* binding */ MediaUploadEvent)
 /* harmony export */ });
-/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../shared */ "./resources/js/shared/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -6099,7 +6947,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "MultipleMediaRequest": () => (/* binding */ MultipleMediaRequest),
 /* harmony export */   "SortMediaRequest": () => (/* binding */ SortMediaRequest)
 /* harmony export */ });
-/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../shared */ "./resources/js/shared/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -6124,7 +6972,8 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 var apiRoutes = {
-  multiple: '/nova-vendor/nova-media-library/multiple'
+  multiple: '/nova-vendor/nova-media-library/multiple',
+  sort: '/nova-vendor/nova-media-library/sort'
 };
 var MediaRequest = /*#__PURE__*/function (_AbstractRequest) {
   _inherits(MediaRequest, _AbstractRequest);
@@ -6170,7 +7019,14 @@ var SortMediaRequest = /*#__PURE__*/function (_MediaRequest2) {
     return _super3.apply(this, arguments);
   }
 
-  return _createClass(SortMediaRequest);
+  _createClass(SortMediaRequest, [{
+    key: "getRequestUrl",
+    value: function getRequestUrl() {
+      return apiRoutes.sort;
+    }
+  }]);
+
+  return SortMediaRequest;
 }(MediaRequest);
 
 /***/ }),
@@ -6184,7 +7040,8 @@ var SortMediaRequest = /*#__PURE__*/function (_MediaRequest2) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "MultipleMediaRequest": () => (/* reexport safe */ _Requests__WEBPACK_IMPORTED_MODULE_0__.MultipleMediaRequest)
+/* harmony export */   "MultipleMediaRequest": () => (/* reexport safe */ _Requests__WEBPACK_IMPORTED_MODULE_0__.MultipleMediaRequest),
+/* harmony export */   "SortMediaRequest": () => (/* reexport safe */ _Requests__WEBPACK_IMPORTED_MODULE_0__.SortMediaRequest)
 /* harmony export */ });
 /* harmony import */ var _Requests__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Requests */ "./resources/js/utils/RequestManager/Requests.js");
 
@@ -6259,730 +7116,6 @@ var uid = function () {
     return Number(index);
   };
 }();
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractEvent/AbstactEvent.js":
-/*!*****************************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractEvent/AbstactEvent.js ***!
-  \*****************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ AbstractEvent)
-/* harmony export */ });
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-// Reference: https://github.com/Shopify/draggable/blob/master/src/shared/AbstractEvent/AbstractEvent.js
-var _canceled = Symbol('canceled');
-/**
- * All events fired by draggable inherit this class. You can call `cancel()` to
- * cancel a specific event, or you can check if an event has been canceled by
- * calling `canceled()`.
- * @abstract
- * @class AbstractEvent
- * @module AbstractEvent
- */
-
-
-var AbstractEvent = /*#__PURE__*/function () {
-  /**
-   * Event type
-   * @static
-   * @abstract
-   * @property type
-   * @type {String}
-   */
-
-  /**
-   * Event cancelable
-   * @static
-   * @abstract
-   * @property cancelable
-   * @type {Boolean}
-   */
-
-  /**
-   * AbstractEvent constructor.
-   * @constructs AbstractEvent
-   * @param {object} data - Event data
-   */
-  function AbstractEvent(data) {
-    _classCallCheck(this, AbstractEvent);
-
-    this[_canceled] = false;
-    this.data = data;
-  }
-  /**
-   * Read-only type
-   * @abstract
-   * @return {String}
-   */
-
-
-  _createClass(AbstractEvent, [{
-    key: "type",
-    get: function get() {
-      return this.constructor.type;
-    }
-    /**
-     * Read-only cancelable
-     * @abstract
-     * @return {Boolean}
-     */
-
-  }, {
-    key: "cancelable",
-    get: function get() {
-      return this.constructor.cancelable;
-    }
-    /**
-     * Cancels the event instance
-     * @abstract
-     */
-
-  }, {
-    key: "cancel",
-    value: function cancel() {
-      this[_canceled] = true;
-    }
-    /**
-     * Check if event has been canceled
-     * @abstract
-     * @return {Boolean}
-     */
-
-  }, {
-    key: "canceled",
-    value: function canceled() {
-      return Boolean(this[_canceled]);
-    }
-    /**
-     * Returns new event instance with existing event data.
-     * This method allows for overriding of event data.
-     * @param {Object} data
-     * @return {AbstractEvent}
-     */
-
-  }, {
-    key: "clone",
-    value: function clone(data) {
-      return new this.constructor(_objectSpread(_objectSpread({}, this.data), data));
-    }
-  }]);
-
-  return AbstractEvent;
-}();
-
-_defineProperty(AbstractEvent, "type", 'event');
-
-_defineProperty(AbstractEvent, "cancelable", false);
-
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractEvent/index.js":
-/*!**********************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractEvent/index.js ***!
-  \**********************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__["default"])
-/* harmony export */ });
-/* harmony import */ var _AbstactEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstactEvent */ "./resources/js/utils/shared/AbstractEvent/AbstactEvent.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js":
-/*!********************************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js ***!
-  \********************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ AbstractPlugin)
-/* harmony export */ });
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-/**
- * All library plugins inherit from this class.
- * @abstract
- * @class AbstractPlugin
- * @module AbstractPlugin
- */
-var AbstractPlugin = /*#__PURE__*/function () {
-  /**
-   * AbstractPlugin constructor.
-   * @constructs AbstractPlugin
-   * @param {DragAndDrop} dd - DragAndDrop instance
-   */
-  function AbstractPlugin(dd) {
-    _classCallCheck(this, AbstractPlugin);
-
-    /**
-     * DragAndDrop instance
-     * @property dd
-     * @type {DragAndDrop}
-     */
-    this.dd = dd;
-  }
-  /**
-   * Override to add listeners
-   * @abstract
-   */
-
-
-  _createClass(AbstractPlugin, [{
-    key: "attach",
-    value: function attach() {
-      throw new Error('Not Implemented');
-    }
-    /**
-     * Override to remove listeners
-     * @abstract
-     */
-
-  }, {
-    key: "detach",
-    value: function detach() {
-      throw new Error('Not Implemented');
-    }
-  }]);
-
-  return AbstractPlugin;
-}();
-
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractPlugin/index.js":
-/*!***********************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractPlugin/index.js ***!
-  \***********************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])
-/* harmony export */ });
-/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractRequest/AbstractRequest.js":
-/*!**********************************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractRequest/AbstractRequest.js ***!
-  \**********************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "requestStates": () => (/* binding */ requestStates),
-/* harmony export */   "default": () => (/* binding */ AbstractRequest)
-/* harmony export */ });
-/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
-/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! object-to-formdata */ "./node_modules/object-to-formdata/src/index.js");
-/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(object_to_formdata__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../index */ "./resources/js/utils/index.js");
-
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-
-
-
-
-var aborted = Symbol('aborted');
-var requestStates = {
-  queued: 'queued',
-  processed: 'processed',
-  failed: 'failed',
-  succeeded: 'succeeded',
-  aborted: 'aborted'
-};
-
-var AbstractRequest = /*#__PURE__*/function () {
-  /**
-   * Instance state dictionary
-   *
-   * @static
-   * @property {string} queued
-   * @property {string} processed
-   * @property {string} failed
-   * @property {string} succeeded
-   * @property {string} aborted
-   * @type {Object}
-   */
-
-  /**
-   * Event cancelable
-   *
-   * @static
-   * @abstract
-   * @property abortable
-   * @type {Boolean}
-   */
-
-  /**
-   * Request method
-   *
-   * @type {string}
-   */
-  function AbstractRequest() {
-    var sendData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var requestConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-    _classCallCheck(this, AbstractRequest);
-
-    /**
-     * Aborted flag
-     *
-     * @type {boolean}
-     */
-    this[aborted] = false;
-    /**
-     * Unique per request identifier
-     *
-     * @type {number}
-     */
-
-    this.uid = (0,_index__WEBPACK_IMPORTED_MODULE_3__.uid)();
-    /**
-     * Current completion state
-     *
-     * @type {boolean}
-     */
-
-    this.completed = false;
-    /**
-     * Axios interrupter
-     *
-     * @type {CancelTokenSource}
-     */
-
-    this.interrupter = axios__WEBPACK_IMPORTED_MODULE_1__.CancelToken.source();
-    /**
-     * Axios request's response
-     *
-     * @type {null|AxiosResponse}
-     */
-
-    this.response = null;
-    /**
-     * Request progress
-     *
-     * @type {number}
-     */
-
-    this.progress = 0;
-    /**
-     * Request payload data
-     *
-     * @type {any}
-     */
-
-    this.sendData = sendData;
-    /**
-     * Additional parameters that would be passed to request instance
-     *
-     * @type {Object}
-     */
-
-    this.requestConfig = requestConfig;
-    /**
-     * Http-based client
-     *
-     * @type {AxiosStatic}
-     */
-
-    this.client = _index__WEBPACK_IMPORTED_MODULE_3__.axios;
-    this.queue();
-  }
-  /**
-   * Read-only abortable
-   *
-   * @return {Boolean}
-   */
-
-
-  _createClass(AbstractRequest, [{
-    key: "abortable",
-    get: function get() {
-      return this.constructor.abortable;
-    }
-    /**
-     * Abort http request or prevent its further processing
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "abort",
-    value: function abort() {
-      if (this.abortable && this.processed()) {
-        this.interrupter.cancel();
-        this.state = requestStates.aborted;
-        this.complete();
-      }
-
-      return this;
-    }
-    /**
-     * Returns true if media instance is in aborted state
-     *
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "aborted",
-    value: function aborted() {
-      return this.state === requestStates.aborted;
-    }
-    /**
-     * Get cancel token
-     *
-     * @return {CancelToken}
-     */
-
-  }, {
-    key: "token",
-    get: function get() {
-      return this.interrupter.token;
-    }
-    /**
-     * Set state flag to queued
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "queue",
-    value: function queue() {
-      this.state = requestStates.queued;
-      return this;
-    }
-    /**
-     * Returns true if media instance is in queued state
-     *
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "queued",
-    value: function queued() {
-      return this.state === requestStates.queued;
-    }
-    /**
-     * Set state flag to processed
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "process",
-    value: function process() {
-      this.state = requestStates.processed;
-      return this;
-    }
-    /**
-     * Returns true if media instance is in processed state
-     *
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "processed",
-    value: function processed() {
-      return this.state === requestStates.processed;
-    }
-    /**
-     * Set state flag to succeeded
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "succeed",
-    value: function succeed() {
-      this.state = requestStates.succeeded;
-      this.complete();
-      return this;
-    }
-    /**
-     * Returns true if this instance is in succeeded state
-     *
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "succeeded",
-    value: function succeeded() {
-      return this.state === requestStates.succeeded;
-    }
-    /**
-     * Set state flag to failed
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "failure",
-    value: function failure() {
-      this.state = requestStates.failed;
-      this.complete();
-      return this;
-    }
-    /**
-     * Returns true if media instance is in failed state
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "failed",
-    value: function failed() {
-      return this.state === requestStates.failed;
-    }
-    /**
-     * Returns true if request processing is finished
-     *
-     * @returns {Boolean}
-     */
-
-  }, {
-    key: "isCompleted",
-    value: function isCompleted() {
-      return Boolean(this.completed);
-    }
-    /**
-     * Set instance complete flag
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "complete",
-    value: function complete() {
-      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-      this.completed = state;
-      return this;
-    }
-    /**
-     * Get request progress (0-100)
-     *
-     * @returns {number}
-     */
-
-  }, {
-    key: "getProgress",
-    value: function getProgress() {
-      return Number(this.progress);
-    }
-    /**
-     * Set current session progress
-     * @param value
-     *
-     * @return {AbstractRequest}
-     */
-
-  }, {
-    key: "setProgress",
-    value: function setProgress(value) {
-      this.progress = Number(value);
-      return this;
-    }
-    /**
-     * Reset session current progress
-     *
-     * @returns {AbstractRequest}
-     */
-
-  }, {
-    key: "resetProgress",
-    value: function resetProgress() {
-      this.progress = 0;
-      return this;
-    }
-    /**
-     * Get request url
-     *
-     * @abstract
-     * @return {string}
-     */
-
-  }, {
-    key: "getRequestUrl",
-    value: function getRequestUrl() {
-      return '';
-    }
-  }, {
-    key: "getRequestConfig",
-    value: function getRequestConfig() {
-      var _this = this;
-
-      return _objectSpread({
-        onUploadProgress: function onUploadProgress(progressEvent) {
-          _this.setProgress(Math.round(progressEvent.loaded * 100 / progressEvent.total));
-        }
-      }, this.requestConfig);
-    }
-  }, {
-    key: "serializeFormData",
-    value: function serializeFormData() {
-      return (0,object_to_formdata__WEBPACK_IMPORTED_MODULE_2__.serialize)(this.sendData);
-    }
-  }, {
-    key: "responseData",
-    get: function get() {
-      return this.response.data;
-    }
-  }, {
-    key: "run",
-    value: function run() {
-      var _this2 = this;
-
-      return new Promise( /*#__PURE__*/function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(resolve) {
-          var response;
-          return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  _this2.process();
-
-                  _context.prev = 1;
-                  _context.next = 4;
-                  return _this2.client[_this2.constructor.method](_this2.getRequestUrl(), _this2.serializeFormData(), _this2.getRequestConfig());
-
-                case 4:
-                  response = _context.sent;
-
-                  _this2.succeed();
-
-                  _context.next = 12;
-                  break;
-
-                case 8:
-                  _context.prev = 8;
-                  _context.t0 = _context["catch"](1);
-                  response = _context.t0.response;
-
-                  if (_this2.abortable && axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context.t0)) {
-                    _this2.abort();
-                  } else {
-                    _this2.failure();
-                  }
-
-                case 12:
-                  _this2.response = response;
-                  resolve(_this2);
-
-                case 14:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, null, [[1, 8]]);
-        }));
-
-        return function (_x) {
-          return _ref.apply(this, arguments);
-        };
-      }());
-    }
-  }]);
-
-  return AbstractRequest;
-}();
-
-_defineProperty(AbstractRequest, "states", requestStates);
-
-_defineProperty(AbstractRequest, "abortable", false);
-
-_defineProperty(AbstractRequest, "method", 'post');
-
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/AbstractRequest/index.js":
-/*!************************************************************!*\
-  !*** ./resources/js/utils/shared/AbstractRequest/index.js ***!
-  \************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__["default"])
-/* harmony export */ });
-/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/utils/shared/AbstractRequest/AbstractRequest.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/shared/index.js":
-/*!********************************************!*\
-  !*** ./resources/js/utils/shared/index.js ***!
-  \********************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent),
-/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest),
-/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__.AbstractPlugin)
-/* harmony export */ });
-/* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/utils/shared/AbstractEvent/index.js");
-/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/utils/shared/AbstractRequest/index.js");
-/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/utils/shared/AbstractPlugin/index.js");
-
-
-
 
 /***/ }),
 

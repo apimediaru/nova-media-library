@@ -1,4 +1,4 @@
-import { AbstractEvent } from "../shared";
+import { AbstractEvent } from "../../shared";
 
 export class MediaEvent extends AbstractEvent {
   static type = 'file';

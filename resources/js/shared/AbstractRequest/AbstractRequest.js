@@ -1,7 +1,7 @@
 import Axios, { AxiosResponse, CancelTokenSource, CancelToken, AxiosStatic } from 'axios';
 import { serialize } from "object-to-formdata";
-import { uid } from "../../index";
-import { axios } from "../../index";
+import { uid } from "../../utils";
+import { axios } from "../../utils";
 
 const aborted = Symbol('aborted');
 

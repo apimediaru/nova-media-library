@@ -8,7 +8,6 @@ class MediaUploadRequest extends MediaRequest
     {
         return array_merge(parent::rules(), [
             'file' => ['required'],
-            'collection' => ['required'],
         ]);
     }
 }
