@@ -126,7 +126,7 @@
               ref="thumbnail"
               :highlighted="index === selectedIndex"
               :intersected="index === reorderIntersectionId"
-              :data-key="file.id"
+              :data-key="index"
               active
             />
           </div>

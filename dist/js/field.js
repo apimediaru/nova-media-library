@@ -35768,7 +35768,7 @@ var render = function () {
                                 highlighted: index === _vm.selectedIndex,
                                 intersected:
                                   index === _vm.reorderIntersectionId,
-                                "data-key": file.id,
+                                "data-key": index,
                                 active: "",
                               },
                               on: {
