@@ -24,6 +24,7 @@
     "dependencies": {
         "bourbon": "^7.0.0",
         "filesize": "^8.0.6",
+        "object-to-formdata": "^4.4.1",
         "vue-clickaway": "^2.2.2"
     }
 }

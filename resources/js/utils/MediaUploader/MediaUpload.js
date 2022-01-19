@@ -15,6 +15,15 @@ export const states = {
 
 export default class MediaUpload {
   /**
+   * Event type
+   * @static
+   * @abstract
+   * @property type
+   * @type {String}
+   */
+  static type = 'request';
+
+  /**
    * Instance state dictionary
    * @static
    * @property {string} queued
@@ -69,6 +78,15 @@ export default class MediaUpload {
 
     this.resetProgress();
     this.queue();
+  }
+
+  /**
+   * Read-only type
+   * @abstract
+   * @return {String}
+   */
+  get type() {
+    return this.constructor.type;
   }
 
   /**
@@ -245,6 +263,7 @@ export default class MediaUpload {
    * Reset session current progress
    * @returns {MediaUpload}
    */
+
   resetProgress() {
     this.progress = 0;
     return this;

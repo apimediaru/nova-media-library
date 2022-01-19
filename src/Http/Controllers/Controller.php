@@ -61,16 +61,4 @@ class Controller extends BaseController
 
         return $this->jsonResponse(false, $message, $data ?? [], $statusCode);
     }
-
-    /**
-     * Extract ids from request
-     *
-     * @param $request
-     *
-     * @return int[]|null
-     */
-    public function extractIds($request): ?array
-    {
-        return json_decode($request->get('ids'), true) ?? null;
-    }
 }

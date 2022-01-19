@@ -8,6 +8,7 @@ class MediaMultipleRequest extends MediaRequest
     {
         return array_merge(parent::rules(), [
             'method' => ['required'],
+            'collection' => ['required'],
             'ids' => ['required'],
         ]);
     }

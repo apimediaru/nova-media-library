@@ -4,7 +4,7 @@ import Emitter from "../Emitter";
 import { MediaUploadEvent } from "./Events";
 
 export default class MediaUploader {
-  constructor({ object, id, collection }) {
+  constructor({ object, objectId, collection }) {
     this.emitter = new Emitter();
 
     this.client = axios;
@@ -12,7 +12,7 @@ export default class MediaUploader {
     this.cancelToken = Axios.CancelToken;
 
     this.object = object;
-    this.id = id;
+    this.objectId = objectId;
     this.collection = collection;
 
     this.queue = [];
@@ -62,7 +62,7 @@ export default class MediaUploader {
     formData.append('ids', JSON.stringify(ids));
     formData.append('method', 'remove');
     formData.append('object', this.object);
-    formData.append('objectId', this.id);
+    formData.append('objectId', this.objectId);
     formData.append('collection', this.collection);
     const response = await this.client.post('/nova-vendor/nova-media-library/multiple', formData);
     console.log(response);
@@ -96,7 +96,7 @@ export default class MediaUploader {
 
       formData.append('file', mediaUpload.getFile());
       formData.append('object', this.object);
-      formData.append('objectId', this.id);
+      formData.append('objectId', this.objectId);
       formData.append('collection', this.collection);
 
       mediaUpload.attachInterrupter(source);
@@ -111,12 +111,13 @@ export default class MediaUploader {
           response,
         }));
       } catch (e) {
+
         response = e.response;
         if (Axios.isCancel(e)) {
           mediaUpload.abort();
-          return;
+        } else {
+          mediaUpload.failure();
         }
-        mediaUpload.failure();
       }
 
       mediaUpload.setResponse(response);

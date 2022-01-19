@@ -2327,6 +2327,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _UploadsList__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./UploadsList */ "./resources/js/components/UploadsList.vue");
 /* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop/index.js");
 /* harmony import */ var _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/MediaUploader */ "./resources/js/utils/MediaUploader/index.js");
+/* harmony import */ var _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../utils/RequestManager */ "./resources/js/utils/RequestManager/index.js");
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
@@ -2685,37 +2686,67 @@ var bodyLockedClass = 'media-library-locked';
     triggerFileUpload: function triggerFileUpload() {
       this.getUploadInput().click();
     },
-    onBulkAction: function onBulkAction() {
-      var action = this.action;
 
-      switch (action) {
-        case 'delete':
-          {
-            this.uploader.remove(this.selected);
-            return;
-          }
+    /**
+     * Makes request with bulk actions
+     *
+     * @return {Promise<void>}
+     */
+    performBulkAction: function performBulkAction() {
+      var _this = this;
 
-        default:
-          {
-            return;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var action, request;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                // Get processing method key
+                action = _this.action; // Launch common request for multiple bulk actions
+
+                _context.next = 3;
+                return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__.MultipleMediaRequest({
+                  object: _this.field.object,
+                  objectId: _this.resourceId,
+                  collection: _this.field.collection,
+                  ids: _this.extractSelectedIDs(),
+                  method: action
+                }).run();
+
+              case 3:
+                request = _context.sent;
+
+                // Ensure that response provides files
+                if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
+                  _this.files = request.responseData.data.files; // Reset selection if selected method means change of files count
+
+                  if (action === 'delete') {
+                    _this.unselectAll();
+                  }
+                }
+
+              case 5:
+              case "end":
+                return _context.stop();
+            }
           }
-      }
+        }, _callee);
+      }))();
     },
     // Events
-    onThumbnailClick: function onThumbnailClick(file, event) {
+    onThumbnailClick: function onThumbnailClick(index, event) {
       var shiftKey = event.shiftKey,
           ctrlKey = event.ctrlKey;
-      var id = file.id;
 
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, id, true);
+        this.selectRange(this.selectedIndex, index, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, id);
+        this.selectRange(this.selectedIndex, index);
       } else if (ctrlKey) {
-        this.setSelectedIndex(id);
-        this.toggleSelection(id);
+        this.setSelectedIndex(index);
+        this.toggleSelection(index);
       } else {
-        this.beginSelection(id);
+        this.beginSelection(index);
       }
     },
     onThumbnailContextmenu: function onThumbnailContextmenu(file, event) {
@@ -2790,19 +2821,26 @@ var bodyLockedClass = 'media-library-locked';
       }
     },
     selectAll: function selectAll() {
-      this.selected = this.files.map(function (file) {
-        return file.id;
+      this.selected = this.files.map(function (file, index) {
+        return index;
       });
     },
     unselectAll: function unselectAll() {
       this.selected = [];
       this.selectedIndex = null;
     },
+    extractSelectedIDs: function extractSelectedIDs() {
+      var _this2 = this;
+
+      return this.selected.map(function (i) {
+        return _this2.files[i].id;
+      });
+    },
     // File input
     registerUploader: function registerUploader() {
       this.uploader = new _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__.MediaUploader({
         object: this.field.object,
-        id: this.resourceId,
+        objectId: this.resourceId,
         collection: this.field.collection
       }).on('file:upload', this.onFileUpload);
     },
@@ -2814,15 +2852,15 @@ var bodyLockedClass = 'media-library-locked';
       return this.$refs.upload;
     },
     onFileInputChange: function onFileInputChange(event) {
-      var _this = this;
+      var _this3 = this;
 
-      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var _this$uploads;
+      return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+        var _this3$uploads;
 
         var target, files, uploads;
-        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 target = event.target;
                 files = target.files;
@@ -2830,27 +2868,29 @@ var bodyLockedClass = 'media-library-locked';
                   return new _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__.MediaUpload(item);
                 });
 
-                (_this$uploads = _this.uploads).push.apply(_this$uploads, _toConsumableArray(uploads));
+                (_this3$uploads = _this3.uploads).push.apply(_this3$uploads, _toConsumableArray(uploads));
 
-                _this.setUploadingMode();
+                _this3.setUploadingMode();
 
-                _this.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
+                _this3.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
                 // to upload the same pull of files again
 
                 target.value = null;
-                _context.next = 9;
-                return _this.uploader.upload(uploads.reverse());
+                _context2.next = 9;
+                return _this3.uploader.upload(uploads.reverse());
 
               case 9:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee);
+        }, _callee2);
       }))();
     },
-    addFile: function addFile(file) {
-      this.files.push(file);
+    addFile: function addFile() {
+      var _this$files;
+
+      (_this$files = this.files).push.apply(_this$files, arguments);
     },
     onFileUpload: function onFileUpload(event) {
       var file = event.file;
@@ -2947,7 +2987,7 @@ var bodyLockedClass = 'media-library-locked';
       this.sortable.destroy();
     },
     createGhost: function createGhost(element, fn, _ref) {
-      var _this2 = this;
+      var _this4 = this;
 
       var applyStyles = _ref.applyStyles,
           applyImportantGhostStyles = _ref.applyImportantGhostStyles;
@@ -2961,7 +3001,7 @@ var bodyLockedClass = 'media-library-locked';
       applyImportantGhostStyles(ghost);
       var wrapperSizeSet = false;
       var thumbs = this.$refs.thumbnail.filter(function (thumb) {
-        return _this2.selected.includes(thumb.index);
+        return _this4.selected.includes(thumb.index);
       }).slice(0, 5).map(function (node) {
         return node.$el;
       });
@@ -5404,6 +5444,14 @@ var states = {
 
 var MediaUpload = /*#__PURE__*/function () {
   /**
+   * Event type
+   * @static
+   * @abstract
+   * @property type
+   * @type {String}
+   */
+
+  /**
    * Instance state dictionary
    * @static
    * @property {string} queued
@@ -5460,12 +5508,23 @@ var MediaUpload = /*#__PURE__*/function () {
     this.queue();
   }
   /**
-   * Set state flag to queued
-   * @returns {MediaUpload}
+   * Read-only type
+   * @abstract
+   * @return {String}
    */
 
 
   _createClass(MediaUpload, [{
+    key: "type",
+    get: function get() {
+      return this.constructor.type;
+    }
+    /**
+     * Set state flag to queued
+     * @returns {MediaUpload}
+     */
+
+  }, {
     key: "queue",
     value: function queue() {
       this.state = states.queued;
@@ -5718,6 +5777,8 @@ var MediaUpload = /*#__PURE__*/function () {
   return MediaUpload;
 }();
 
+_defineProperty(MediaUpload, "type", 'request');
+
 _defineProperty(MediaUpload, "states", states);
 
 
@@ -5780,7 +5841,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var MediaUploader = /*#__PURE__*/function () {
   function MediaUploader(_ref) {
     var object = _ref.object,
-        id = _ref.id,
+        objectId = _ref.objectId,
         collection = _ref.collection;
 
     _classCallCheck(this, MediaUploader);
@@ -5789,7 +5850,7 @@ var MediaUploader = /*#__PURE__*/function () {
     this.client = _index__WEBPACK_IMPORTED_MODULE_2__.axios;
     this.cancelToken = (axios__WEBPACK_IMPORTED_MODULE_1___default().CancelToken);
     this.object = object;
-    this.id = id;
+    this.objectId = objectId;
     this.collection = collection;
     this.queue = [];
     this.uploading = false;
@@ -5890,7 +5951,7 @@ var MediaUploader = /*#__PURE__*/function () {
                 formData.append('ids', JSON.stringify(ids));
                 formData.append('method', 'remove');
                 formData.append('object', this.object);
-                formData.append('objectId', this.id);
+                formData.append('objectId', this.objectId);
                 formData.append('collection', this.collection);
                 _context2.next = 10;
                 return this.client.post('/nova-vendor/nova-media-library/multiple', formData);
@@ -5944,7 +6005,7 @@ var MediaUploader = /*#__PURE__*/function () {
 
               case 4:
                 if (!(mediaUpload = this.queue.pop())) {
-                  _context3.next = 32;
+                  _context3.next = 29;
                   break;
                 }
 
@@ -5954,7 +6015,7 @@ var MediaUploader = /*#__PURE__*/function () {
                 source = this.cancelToken.source();
                 formData.append('file', mediaUpload.getFile());
                 formData.append('object', this.object);
-                formData.append('objectId', this.id);
+                formData.append('objectId', this.objectId);
                 formData.append('collection', this.collection);
                 mediaUpload.attachInterrupter(source);
                 _context3.prev = 14;
@@ -5969,7 +6030,7 @@ var MediaUploader = /*#__PURE__*/function () {
                 this.emit(new _Events__WEBPACK_IMPORTED_MODULE_4__.MediaUploadEvent({
                   response: response
                 }));
-                _context3.next = 29;
+                _context3.next = 26;
                 break;
 
               case 22:
@@ -5977,26 +6038,21 @@ var MediaUploader = /*#__PURE__*/function () {
                 _context3.t0 = _context3["catch"](14);
                 response = _context3.t0.response;
 
-                if (!axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context3.t0)) {
-                  _context3.next = 28;
-                  break;
+                if (axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context3.t0)) {
+                  mediaUpload.abort();
+                } else {
+                  mediaUpload.failure();
                 }
 
-                mediaUpload.abort();
-                return _context3.abrupt("return");
-
-              case 28:
-                mediaUpload.failure();
-
-              case 29:
+              case 26:
                 mediaUpload.setResponse(response);
                 _context3.next = 4;
                 break;
 
-              case 32:
+              case 29:
                 this.uploading = false;
 
-              case 33:
+              case 30:
               case "end":
                 return _context3.stop();
             }
@@ -6034,6 +6090,97 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _MediaUploader__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MediaUploader */ "./resources/js/utils/MediaUploader/MediaUploader.js");
 /* harmony import */ var _MediaUpload__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MediaUpload */ "./resources/js/utils/MediaUploader/MediaUpload.js");
 
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/RequestManager/Requests.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/utils/RequestManager/Requests.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "MediaRequest": () => (/* binding */ MediaRequest),
+/* harmony export */   "MultipleMediaRequest": () => (/* binding */ MultipleMediaRequest)
+/* harmony export */ });
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared */ "./resources/js/utils/shared/index.js");
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+
+var apiRoutes = {
+  multiple: '/nova-vendor/nova-media-library/multiple'
+};
+var MediaRequest = /*#__PURE__*/function (_AbstractRequest) {
+  _inherits(MediaRequest, _AbstractRequest);
+
+  var _super = _createSuper(MediaRequest);
+
+  function MediaRequest() {
+    _classCallCheck(this, MediaRequest);
+
+    return _super.apply(this, arguments);
+  }
+
+  return _createClass(MediaRequest);
+}(_shared__WEBPACK_IMPORTED_MODULE_0__.AbstractRequest);
+var MultipleMediaRequest = /*#__PURE__*/function (_MediaRequest) {
+  _inherits(MultipleMediaRequest, _MediaRequest);
+
+  var _super2 = _createSuper(MultipleMediaRequest);
+
+  function MultipleMediaRequest() {
+    _classCallCheck(this, MultipleMediaRequest);
+
+    return _super2.apply(this, arguments);
+  }
+
+  _createClass(MultipleMediaRequest, [{
+    key: "getRequestUrl",
+    value: function getRequestUrl() {
+      return apiRoutes.multiple;
+    }
+  }]);
+
+  return MultipleMediaRequest;
+}(MediaRequest);
+
+/***/ }),
+
+/***/ "./resources/js/utils/RequestManager/index.js":
+/*!****************************************************!*\
+  !*** ./resources/js/utils/RequestManager/index.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "MultipleMediaRequest": () => (/* reexport safe */ _Requests__WEBPACK_IMPORTED_MODULE_0__.MultipleMediaRequest)
+/* harmony export */ });
+/* harmony import */ var _Requests__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Requests */ "./resources/js/utils/RequestManager/Requests.js");
 
 
 /***/ }),
@@ -6257,6 +6404,475 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/utils/shared/AbstractRequest/AbstractRequest.js":
+/*!**********************************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractRequest/AbstractRequest.js ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "requestStates": () => (/* binding */ requestStates),
+/* harmony export */   "default": () => (/* binding */ AbstractRequest)
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! object-to-formdata */ "./node_modules/object-to-formdata/src/index.js");
+/* harmony import */ var object_to_formdata__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(object_to_formdata__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../index */ "./resources/js/utils/index.js");
+
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+
+var aborted = Symbol('aborted');
+var requestStates = {
+  queued: 'queued',
+  processed: 'processed',
+  failed: 'failed',
+  succeeded: 'succeeded',
+  aborted: 'aborted'
+};
+
+var AbstractRequest = /*#__PURE__*/function () {
+  /**
+   * Instance state dictionary
+   *
+   * @static
+   * @property {string} queued
+   * @property {string} processed
+   * @property {string} failed
+   * @property {string} succeeded
+   * @property {string} aborted
+   * @type {Object}
+   */
+
+  /**
+   * Event cancelable
+   *
+   * @static
+   * @abstract
+   * @property abortable
+   * @type {Boolean}
+   */
+
+  /**
+   * Request method
+   *
+   * @type {string}
+   */
+  function AbstractRequest() {
+    var sendData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var requestConfig = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, AbstractRequest);
+
+    /**
+     * Aborted flag
+     *
+     * @type {boolean}
+     */
+    this[aborted] = false;
+    /**
+     * Unique per request identifier
+     *
+     * @type {number}
+     */
+
+    this.uid = (0,_index__WEBPACK_IMPORTED_MODULE_3__.uid)();
+    /**
+     * Current completion state
+     *
+     * @type {boolean}
+     */
+
+    this.completed = false;
+    /**
+     * Axios interrupter
+     *
+     * @type {CancelTokenSource}
+     */
+
+    this.interrupter = axios__WEBPACK_IMPORTED_MODULE_1__.CancelToken.source();
+    /**
+     * Axios request's response
+     *
+     * @type {null|AxiosResponse}
+     */
+
+    this.response = null;
+    /**
+     * Request progress
+     *
+     * @type {number}
+     */
+
+    this.progress = 0;
+    /**
+     * Request payload data
+     *
+     * @type {any}
+     */
+
+    this.sendData = sendData;
+    /**
+     * Additional parameters that would be passed to request instance
+     *
+     * @type {Object}
+     */
+
+    this.requestConfig = requestConfig;
+    /**
+     * Http-based client
+     *
+     * @type {AxiosStatic}
+     */
+
+    this.client = _index__WEBPACK_IMPORTED_MODULE_3__.axios;
+    this.queue();
+  }
+  /**
+   * Read-only abortable
+   *
+   * @return {Boolean}
+   */
+
+
+  _createClass(AbstractRequest, [{
+    key: "abortable",
+    get: function get() {
+      return this.constructor.abortable;
+    }
+    /**
+     * Abort http request or prevent its further processing
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "abort",
+    value: function abort() {
+      if (this.abortable && this.processed()) {
+        this.interrupter.cancel();
+        this.state = requestStates.aborted;
+        this.complete();
+      }
+
+      return this;
+    }
+    /**
+     * Returns true if media instance is in aborted state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "aborted",
+    value: function aborted() {
+      return this.state === requestStates.aborted;
+    }
+    /**
+     * Get cancel token
+     *
+     * @return {CancelToken}
+     */
+
+  }, {
+    key: "token",
+    get: function get() {
+      return this.interrupter.token;
+    }
+    /**
+     * Set state flag to queued
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "queue",
+    value: function queue() {
+      this.state = requestStates.queued;
+      return this;
+    }
+    /**
+     * Returns true if media instance is in queued state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "queued",
+    value: function queued() {
+      return this.state === requestStates.queued;
+    }
+    /**
+     * Set state flag to processed
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "process",
+    value: function process() {
+      this.state = requestStates.processed;
+      return this;
+    }
+    /**
+     * Returns true if media instance is in processed state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "processed",
+    value: function processed() {
+      return this.state === requestStates.processed;
+    }
+    /**
+     * Set state flag to succeeded
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "succeed",
+    value: function succeed() {
+      this.state = requestStates.succeeded;
+      this.complete();
+      return this;
+    }
+    /**
+     * Returns true if this instance is in succeeded state
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "succeeded",
+    value: function succeeded() {
+      return this.state === requestStates.succeeded;
+    }
+    /**
+     * Set state flag to failed
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "failure",
+    value: function failure() {
+      this.state = requestStates.failed;
+      this.complete();
+      return this;
+    }
+    /**
+     * Returns true if media instance is in failed state
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "failed",
+    value: function failed() {
+      return this.state === requestStates.failed;
+    }
+    /**
+     * Returns true if request processing is finished
+     *
+     * @returns {Boolean}
+     */
+
+  }, {
+    key: "isCompleted",
+    value: function isCompleted() {
+      return Boolean(this.completed);
+    }
+    /**
+     * Set instance complete flag
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "complete",
+    value: function complete() {
+      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+      this.completed = state;
+      return this;
+    }
+    /**
+     * Get request progress (0-100)
+     *
+     * @returns {number}
+     */
+
+  }, {
+    key: "getProgress",
+    value: function getProgress() {
+      return Number(this.progress);
+    }
+    /**
+     * Set current session progress
+     * @param value
+     *
+     * @return {AbstractRequest}
+     */
+
+  }, {
+    key: "setProgress",
+    value: function setProgress(value) {
+      this.progress = Number(value);
+      return this;
+    }
+    /**
+     * Reset session current progress
+     *
+     * @returns {AbstractRequest}
+     */
+
+  }, {
+    key: "resetProgress",
+    value: function resetProgress() {
+      this.progress = 0;
+      return this;
+    }
+    /**
+     * Get request url
+     *
+     * @abstract
+     * @return {string}
+     */
+
+  }, {
+    key: "getRequestUrl",
+    value: function getRequestUrl() {
+      return '';
+    }
+  }, {
+    key: "getRequestConfig",
+    value: function getRequestConfig() {
+      var _this = this;
+
+      return _objectSpread({
+        onUploadProgress: function onUploadProgress(progressEvent) {
+          _this.setProgress(Math.round(progressEvent.loaded * 100 / progressEvent.total));
+        }
+      }, this.requestConfig);
+    }
+  }, {
+    key: "serializeFormData",
+    value: function serializeFormData() {
+      return (0,object_to_formdata__WEBPACK_IMPORTED_MODULE_2__.serialize)(this.sendData);
+    }
+  }, {
+    key: "responseData",
+    get: function get() {
+      return this.response.data;
+    }
+  }, {
+    key: "run",
+    value: function run() {
+      var _this2 = this;
+
+      return new Promise( /*#__PURE__*/function () {
+        var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(resolve) {
+          var response;
+          return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _this2.process();
+
+                  _context.prev = 1;
+                  _context.next = 4;
+                  return _this2.client[_this2.constructor.method](_this2.getRequestUrl(), _this2.serializeFormData(), _this2.getRequestConfig());
+
+                case 4:
+                  response = _context.sent;
+
+                  _this2.succeed();
+
+                  _context.next = 12;
+                  break;
+
+                case 8:
+                  _context.prev = 8;
+                  _context.t0 = _context["catch"](1);
+                  response = _context.t0.response;
+
+                  if (_this2.abortable && axios__WEBPACK_IMPORTED_MODULE_1___default().isCancel(_context.t0)) {
+                    _this2.abort();
+                  } else {
+                    _this2.failure();
+                  }
+
+                case 12:
+                  _this2.response = response;
+                  resolve(_this2);
+
+                case 14:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, null, [[1, 8]]);
+        }));
+
+        return function (_x) {
+          return _ref.apply(this, arguments);
+        };
+      }());
+    }
+  }]);
+
+  return AbstractRequest;
+}();
+
+_defineProperty(AbstractRequest, "states", requestStates);
+
+_defineProperty(AbstractRequest, "abortable", false);
+
+_defineProperty(AbstractRequest, "method", 'post');
+
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/shared/AbstractRequest/index.js":
+/*!************************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractRequest/index.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/utils/shared/AbstractRequest/AbstractRequest.js");
+
+
+/***/ }),
+
 /***/ "./resources/js/utils/shared/index.js":
 /*!********************************************!*\
   !*** ./resources/js/utils/shared/index.js ***!
@@ -6266,9 +6882,12 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent)
+/* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent),
+/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest)
 /* harmony export */ });
 /* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/utils/shared/AbstractEvent/index.js");
+/* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/utils/shared/AbstractRequest/index.js");
+
 
 
 /***/ }),
@@ -32792,6 +33411,137 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/object-to-formdata/src/index.js":
+/*!******************************************************!*\
+  !*** ./node_modules/object-to-formdata/src/index.js ***!
+  \******************************************************/
+/***/ ((module) => {
+
+function isUndefined(value) {
+  return value === undefined;
+}
+
+function isNull(value) {
+  return value === null;
+}
+
+function isBoolean(value) {
+  return typeof value === 'boolean';
+}
+
+function isObject(value) {
+  return value === Object(value);
+}
+
+function isArray(value) {
+  return Array.isArray(value);
+}
+
+function isDate(value) {
+  return value instanceof Date;
+}
+
+function isReactNativeBlob(value) {
+  return (
+    typeof new FormData().getParts === 'function' &&
+    isObject(value) &&
+    !isUndefined(value.uri)
+  );
+}
+
+function isBlob(value) {
+  return (
+    (isObject(value) &&
+      typeof value.size === 'number' &&
+      typeof value.type === 'string' &&
+      typeof value.slice === 'function') ||
+    isReactNativeBlob(value)
+  );
+}
+
+function isFile(value) {
+  return (
+    isBlob(value) &&
+    typeof value.name === 'string' &&
+    (isObject(value.lastModifiedDate) || typeof value.lastModified === 'number')
+  );
+}
+
+function initCfg(value) {
+  return isUndefined(value) ? false : value;
+}
+
+function serialize(obj, cfg, fd, pre) {
+  cfg = cfg || {};
+  fd = fd || new FormData();
+
+  cfg.indices = initCfg(cfg.indices);
+  cfg.nullsAsUndefineds = initCfg(cfg.nullsAsUndefineds);
+  cfg.booleansAsIntegers = initCfg(cfg.booleansAsIntegers);
+  cfg.allowEmptyArrays = initCfg(cfg.allowEmptyArrays);
+  cfg.noFilesWithArrayNotation = initCfg(cfg.noFilesWithArrayNotation);
+  cfg.dotsForObjectNotation = initCfg(cfg.dotsForObjectNotation);
+
+  if (isUndefined(obj)) {
+    return fd;
+  } else if (isNull(obj)) {
+    if (!cfg.nullsAsUndefineds) {
+      fd.append(pre, '');
+    }
+  } else if (isBoolean(obj)) {
+    if (cfg.booleansAsIntegers) {
+      fd.append(pre, obj ? 1 : 0);
+    } else {
+      fd.append(pre, obj);
+    }
+  } else if (isArray(obj)) {
+    if (obj.length) {
+      obj.forEach((value, index) => {
+        let key = pre + '[' + (cfg.indices ? index : '') + ']';
+
+        if (cfg.noFilesWithArrayNotation && isFile(value)) {
+          key = pre;
+        }
+
+        serialize(value, cfg, fd, key);
+      });
+    } else if (cfg.allowEmptyArrays) {
+      fd.append(pre + '[]', '');
+    }
+  } else if (isDate(obj)) {
+    fd.append(pre, obj.toISOString());
+  } else if (isObject(obj) && !isBlob(obj)) {
+    Object.keys(obj).forEach((prop) => {
+      const value = obj[prop];
+
+      if (isArray(value)) {
+        while (prop.length > 2 && prop.lastIndexOf('[]') === prop.length - 2) {
+          prop = prop.substring(0, prop.length - 2);
+        }
+      }
+
+      const key = pre
+        ? cfg.dotsForObjectNotation
+          ? pre + '.' + prop
+          : pre + '[' + prop + ']'
+        : prop;
+
+      serialize(value, cfg, fd, key);
+    });
+  } else {
+    fd.append(pre, obj);
+  }
+
+  return fd;
+}
+
+module.exports = {
+  serialize,
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/process/browser.js":
 /*!*****************************************!*\
   !*** ./node_modules/process/browser.js ***!
@@ -34854,7 +35604,7 @@ var render = function () {
                             staticClass:
                               "btn btn-default btn-primary whitespace-no-wrap cursor-pointer",
                             attrs: { disabled: _vm.action === "none" },
-                            on: { click: _vm.onBulkAction },
+                            on: { click: _vm.performBulkAction },
                           },
                           [_vm._v(_vm._s(_vm.__("Apply")))]
                         ),
@@ -35012,18 +35762,18 @@ var render = function () {
                                 image: file.original_url,
                                 dragged:
                                   _vm.isReordering &&
-                                  _vm.selected.includes(file.id),
-                                selected: _vm.isItemSelected(file.id),
+                                  _vm.selected.includes(index),
+                                selected: _vm.isItemSelected(index),
                                 "mine-type": file.mime_type,
-                                highlighted: file.id === _vm.selectedIndex,
+                                highlighted: index === _vm.selectedIndex,
                                 intersected:
-                                  file.id === _vm.reorderIntersectionId,
+                                  index === _vm.reorderIntersectionId,
                                 "data-key": file.id,
                                 active: "",
                               },
                               on: {
                                 click: function ($event) {
-                                  return _vm.onThumbnailClick(file, $event)
+                                  return _vm.onThumbnailClick(index, $event)
                                 },
                                 contextmenu: function ($event) {
                                   return _vm.onThumbnailContextmenu(

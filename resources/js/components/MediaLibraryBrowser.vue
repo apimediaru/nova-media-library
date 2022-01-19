@@ -50,7 +50,7 @@
               <button
                   class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer"
                   :disabled="action === 'none'"
-                  @click="onBulkAction"
+                  @click="performBulkAction"
               >{{ __('Apply') }}</button>
             </div>
             <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">
@@ -118,14 +118,14 @@
               :index="file.order_column"
               :name="file.file_name"
               :image="file.original_url"
-              @click="onThumbnailClick(file, $event)"
+              @click="onThumbnailClick(index, $event)"
               @contextmenu="onThumbnailContextmenu(file, $event)"
-              :dragged="isReordering && selected.includes(file.id)"
-              :selected="isItemSelected(file.id)"
+              :dragged="isReordering && selected.includes(index)"
+              :selected="isItemSelected(index)"
               :mine-type="file.mime_type"
               ref="thumbnail"
-              :highlighted="file.id === selectedIndex"
-              :intersected="file.id === reorderIntersectionId"
+              :highlighted="index === selectedIndex"
+              :intersected="index === reorderIntersectionId"
               :data-key="file.id"
               active
             />
@@ -175,7 +175,7 @@ import MediaThumbnail from "./MediaThumbnail";
 import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
-import Vue from 'vue';
+import { MultipleMediaRequest } from "../utils/RequestManager";
 
 const { throttle, debounce } = window._;
 
@@ -347,34 +347,49 @@ export default {
     triggerFileUpload() {
       this.getUploadInput().click();
     },
-    onBulkAction() {
+
+    /**
+     * Makes request with bulk actions
+     *
+     * @return {Promise<void>}
+     */
+    async performBulkAction() {
+      // Get processing method key
       const { action } = this;
 
-      switch (action) {
-        case 'delete': {
-          this.uploader.remove(this.selected);
-          return;
-        }
-        default: {
-          return;
+      // Launch common request for multiple bulk actions
+      const request = await new MultipleMediaRequest({
+        object: this.field.object,
+        objectId: this.resourceId,
+        collection: this.field.collection,
+        ids: this.extractSelectedIDs(),
+        method: action,
+      }).run();
+
+      // Ensure that response provides files
+      if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
+        this.files = request.responseData.data.files;
+
+        // Reset selection if selected method means change of files count
+        if (action === 'delete') {
+          this.unselectAll();
         }
       }
     },
 
 
     // Events
-    onThumbnailClick(file, event) {
+    onThumbnailClick(index, event) {
       const { shiftKey, ctrlKey } = event;
-      const id = file.id;
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, id, true);
+        this.selectRange(this.selectedIndex, index, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, id);
+        this.selectRange(this.selectedIndex, index);
       } else if (ctrlKey) {
-        this.setSelectedIndex(id);
-        this.toggleSelection(id);
+        this.setSelectedIndex(index);
+        this.toggleSelection(index);
       } else {
-        this.beginSelection(id);
+        this.beginSelection(index);
       }
     },
     onThumbnailContextmenu(file, event) {
@@ -442,18 +457,21 @@ export default {
       }
     },
     selectAll() {
-      this.selected = this.files.map((file) => file.id);
+      this.selected = this.files.map((file, index) => index);
     },
     unselectAll() {
       this.selected = [];
       this.selectedIndex = null;
+    },
+    extractSelectedIDs() {
+      return this.selected.map((i) => this.files[i].id);
     },
 
     // File input
     registerUploader() {
       this.uploader = new MediaUploader({
         object: this.field.object,
-        id: this.resourceId,
+        objectId: this.resourceId,
         collection: this.field.collection,
       }).on('file:upload', this.onFileUpload);
     },
@@ -480,8 +498,8 @@ export default {
 
       await this.uploader.upload(uploads.reverse());
     },
-    addFile(file) {
-      this.files.push(file);
+    addFile(...files) {
+      this.files.push(...files);
     },
     onFileUpload(event) {
       const { file } = event;

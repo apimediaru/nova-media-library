@@ -90,16 +90,18 @@ class MediaController extends Controller
 
     }
 
-    public function multiple(MediaMultipleRequest $request) {
+    public function multiple(MediaMultipleRequest $request): \Illuminate\Http\JsonResponse
+    {
         $method = $request->get('method');
-        $ids = $this->extractIds($request);
+        $ids = $request->get('ids');
+        $collection = $request->get('collection');
 
         $class = $request->get('object');
-        $id = $request->get('objectId');
+        $objectId = $request->get('objectId');
 
         // Vapor uploads may be implemented in future
         try {
-            $object = $class::findOrFail($id);
+            $object = $class::findOrFail($objectId);
         } catch (ModelNotFoundException $exception) {
             return $this->failure($exception->getMessage(), 404);
         }
@@ -113,8 +115,12 @@ class MediaController extends Controller
             }
         }
 
+        unset($object->media);
+        $media = $object->getMedia($collection);
+
         return $this->succeed('', [
             'errors' => $errors,
+            'files' => $media->toArray(),
         ]);
     }
 }
