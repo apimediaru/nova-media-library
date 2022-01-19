@@ -2328,7 +2328,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils/DragAndDrop */ "./resources/js/utils/DragAndDrop/index.js");
 /* harmony import */ var _utils_MediaUploader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/MediaUploader */ "./resources/js/utils/MediaUploader/index.js");
 /* harmony import */ var _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../utils/RequestManager */ "./resources/js/utils/RequestManager/index.js");
-/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../shared */ "./resources/js/shared/index.js");
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
@@ -2531,7 +2530,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 
 
-
 var _window$_ = window._,
     throttle = _window$_.throttle,
     debounce = _window$_.debounce;
@@ -2645,6 +2643,16 @@ var bodyLockedClass = 'media-library-locked';
     },
     isInteractive: function isInteractive() {
       return !this.isLoading || !this.hasFiles;
+    },
+    filesDictionary: function filesDictionary() {
+      var dictionary = {};
+      this.files.forEach(function (file, index) {
+        dictionary[file.id] = {
+          index: index,
+          attributes: file
+        };
+      });
+      return dictionary;
     }
   },
   methods: {
@@ -2751,19 +2759,19 @@ var bodyLockedClass = 'media-library-locked';
       }))();
     },
     // Events
-    onThumbnailClick: function onThumbnailClick(index, event) {
+    onThumbnailClick: function onThumbnailClick(file, index, event) {
       var shiftKey = event.shiftKey,
           ctrlKey = event.ctrlKey;
 
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, index, true);
+        this.selectRange(this.filesDictionary[this.selectedIndex].index, index, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, index);
+        this.selectRange(this.filesDictionary[this.selectedIndex].index, index);
       } else if (ctrlKey) {
-        this.setSelectedIndex(index);
-        this.toggleSelection(index);
+        this.setSelectedIndex(file.id);
+        this.toggleSelection(file.id);
       } else {
-        this.beginSelection(index);
+        this.beginSelection(file.id);
       }
     },
     onThumbnailContextmenu: function onThumbnailContextmenu(file, event) {
@@ -2798,10 +2806,11 @@ var bodyLockedClass = 'media-library-locked';
     },
     selectRange: function selectRange(start, end) {
       var keep = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      console.log(start, end);
       var selected = keep ? Array.from(this.selected) : [];
 
       for (var i = Math.min(start, end); i <= Math.max(start, end); i++) {
-        selected.push(i);
+        selected.push(this.files[i].id);
       }
 
       this.selected = Array.from(new Set(selected));
@@ -2838,8 +2847,8 @@ var bodyLockedClass = 'media-library-locked';
       }
     },
     selectAll: function selectAll() {
-      this.selected = this.files.map(function (file, index) {
-        return index;
+      this.selected = this.files.map(function (file) {
+        return file.id;
       });
     },
     unselectAll: function unselectAll() {
@@ -2847,12 +2856,11 @@ var bodyLockedClass = 'media-library-locked';
       this.selectedIndex = null;
     },
     extractSelectedIDs: function extractSelectedIDs() {
-      var files = this.files,
-          selected = this.selected;
-      return selected.sort(function (a, b) {
-        return files[a].order_column - files[b].order_column;
-      }).map(function (i) {
-        return files[i].id;
+      var filesDictionary = this.filesDictionary;
+      return this.selected.sort(function (a, b) {
+        return filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column;
+      }).map(function (id) {
+        return id;
       });
     },
     // File input
@@ -3096,68 +3104,97 @@ var bodyLockedClass = 'media-library-locked';
     onSortableDragOut: function onSortableDragOut() {
       this.resetIntersection();
     },
+
+    /**
+     * Event that triggers by dropping selected files into another file thumbnail
+     *
+     * @param event
+     * @return {Promise<void>}
+     */
     onSortableDrop: function onSortableDrop(event) {
       var _this4 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
-        var target, targetIndex, targetId, sources, copy;
+        var target, targetId, sources, filesDictionary, selected, sequence, flat, request, files;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
+                target = event.target;
+
                 _this4.resetPointerEventsOutsideFrame();
 
-                _this4.isReordering = false; // Prevent modal closing if dropped tarted is viewport outside main frame
-
-                target = event.originalEvent.target;
-
-                if (target && target.classList.contains('media-library-modal-viewport')) {
-                  _this4.preventNextBackdropClick();
-                }
-
                 if (target) {
-                  _context3.next = 6;
+                  _context3.next = 5;
                   break;
                 }
 
+                _this4.isReordering = false;
                 return _context3.abrupt("return");
 
-              case 6:
-                targetIndex = _this4.extractId(target);
-                targetId = _this4.files[targetIndex].id;
+              case 5:
+                // Prevent modal closing if dropped tarted is viewport outside main frame
+                if (event.originalEvent.target && event.originalEvent.target.classList.contains('media-library-modal-viewport')) {
+                  _this4.preventNextBackdropClick();
+                } // Get dropped on element id
+
+
+                targetId = _this4.extractId(event.target);
                 sources = _this4.extractSelectedIDs();
 
                 if (!(targetId === undefined || !Array.isArray(sources) || !sources.length)) {
-                  _context3.next = 11;
+                  _context3.next = 10;
                   break;
                 }
 
                 return _context3.abrupt("return");
 
-              case 11:
-                copy = _toConsumableArray(_this4.files);
-
-                _this4.selected.sort(function (a, b) {
-                  return _this4.files[a].order_column - _this4.files[b].order_column;
-                }).forEach(function (i, index) {
-                  return (0,_shared__WEBPACK_IMPORTED_MODULE_7__.moveArray)(copy, i, targetIndex + index);
+              case 10:
+                // Work with local copy of files. First filter array of files by selected ids that are
+                // sorted by order column. Then insert files with selected ids before target file
+                filesDictionary = _this4.filesDictionary;
+                selected = _toConsumableArray(_this4.selected).sort(function (a, b) {
+                  return filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column;
                 });
+                sequence = _this4.files.filter(function (file) {
+                  return !selected.includes(file.id);
+                });
+                sequence.splice.apply(sequence, [sequence.findIndex(function (file) {
+                  return file.id === targetId;
+                }), 0].concat(_toConsumableArray(selected.map(function (id) {
+                  return filesDictionary[id].attributes;
+                }))));
+                _this4.files = sequence; // Create a ['id' => 'value'] array with new sequence of files
 
-                _this4.files = copy; // this.files = copy;
-                // Todo: remove
-                // console.log('drop:', event.target);
-                //
-                // this.isLoading = true;
-                // const request = await new SortMediaRequest({
-                //   target: targetId,
-                //   sources,
-                //   object: this.field.object,
-                //   objectId: this.resourceId,
-                //   collection: this.field.collection,
-                // }).run();
-                // this.isLoading = false;
+                flat = {};
+                sequence.forEach(function (file, index) {
+                  flat[file.id] = index;
+                }); // Reset all selections
 
-              case 14:
+                _this4.unselectAll();
+
+                _this4.resetIntersection(); // Set loading flag
+
+
+                _this4.isLoading = true; // Make a request and replace local files with files from response
+
+                _context3.next = 22;
+                return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__.SortMediaRequest({
+                  sequence: flat,
+                  object: _this4.field.object,
+                  objectId: _this4.resourceId,
+                  collection: _this4.field.collection
+                }).run();
+
+              case 22:
+                request = _context3.sent;
+                files = request.responseData.data.files;
+                _this4.files = files; // Reset interactive flag
+
+                _this4.isLoading = false;
+                _this4.isReordering = false;
+
+              case 27:
               case "end":
                 return _context3.stop();
             }
@@ -3168,7 +3205,6 @@ var bodyLockedClass = 'media-library-locked';
   },
   watch: {
     selected: function selected(value) {
-      // console.log(value);
       if (!value.length) {
         this.selectedIndex = null;
       }
@@ -4387,13 +4423,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent),
 /* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest),
-/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__.AbstractPlugin),
-/* harmony export */   "moveArray": () => (/* reexport safe */ _utils__WEBPACK_IMPORTED_MODULE_3__.moveArray)
+/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__.AbstractPlugin)
 /* harmony export */ });
 /* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/shared/AbstractEvent/index.js");
 /* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/shared/AbstractRequest/index.js");
 /* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/shared/AbstractPlugin/index.js");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils */ "./resources/js/shared/utils/index.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_utils__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony reexport (unknown) */ var __WEBPACK_REEXPORT_OBJECT__ = {};
+/* harmony reexport (unknown) */ for(const __WEBPACK_IMPORT_KEY__ in _utils__WEBPACK_IMPORTED_MODULE_3__) if(["default","AbstractEvent","AbstractRequest","AbstractPlugin"].indexOf(__WEBPACK_IMPORT_KEY__) < 0) __WEBPACK_REEXPORT_OBJECT__[__WEBPACK_IMPORT_KEY__] = () => _utils__WEBPACK_IMPORTED_MODULE_3__[__WEBPACK_IMPORT_KEY__]
+/* harmony reexport (unknown) */ __webpack_require__.d(__webpack_exports__, __WEBPACK_REEXPORT_OBJECT__);
 
 
 
@@ -4405,64 +4444,9 @@ __webpack_require__.r(__webpack_exports__);
 /*!********************************************!*\
   !*** ./resources/js/shared/utils/index.js ***!
   \********************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ (() => {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "moveArray": () => (/* reexport safe */ _moveArray__WEBPACK_IMPORTED_MODULE_0__.moveArray)
-/* harmony export */ });
-/* harmony import */ var _moveArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./moveArray */ "./resources/js/shared/utils/moveArray/index.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/shared/utils/moveArray/index.js":
-/*!******************************************************!*\
-  !*** ./resources/js/shared/utils/moveArray/index.js ***!
-  \******************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "moveArray": () => (/* reexport safe */ _moveArray__WEBPACK_IMPORTED_MODULE_0__["default"])
-/* harmony export */ });
-/* harmony import */ var _moveArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./moveArray */ "./resources/js/shared/utils/moveArray/moveArray.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/shared/utils/moveArray/moveArray.js":
-/*!**********************************************************!*\
-  !*** ./resources/js/shared/utils/moveArray/moveArray.js ***!
-  \**********************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ array_move)
-/* harmony export */ });
-function array_move(arr, old_index, new_index) {
-  while (old_index < 0) {
-    old_index += arr.length;
-  }
-
-  while (new_index < 0) {
-    new_index += arr.length;
-  }
-
-  if (new_index >= arr.length) {
-    var k = new_index - arr.length + 1;
-
-    while (k--) {
-      arr.push(undefined);
-    }
-  }
-
-  arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
-}
+//
 
 /***/ }),
 
@@ -5621,7 +5605,7 @@ var Scrollable = /*#__PURE__*/function (_AbstractPlugin) {
 
       cancelAnimationFrame(this.scrollAnimationFrame);
 
-      if (!this.dd.isDragging()) {
+      if (!this.dd.isDragging() || this.scrollableElement.scrollHeight === this.scrollableElement.offsetHeight) {
         return;
       }
 
@@ -36006,18 +35990,22 @@ var render = function () {
                                 image: file.original_url,
                                 dragged:
                                   _vm.isReordering &&
-                                  _vm.selected.includes(index),
-                                selected: _vm.isItemSelected(index),
+                                  _vm.selected.includes(file.id),
+                                selected: _vm.isItemSelected(file.id),
                                 "mine-type": file.mime_type,
-                                highlighted: index === _vm.selectedIndex,
+                                highlighted: file.id === _vm.selectedIndex,
                                 intersected:
-                                  index === _vm.reorderIntersectionId,
-                                "data-key": index,
+                                  file.id === _vm.reorderIntersectionId,
+                                "data-key": file.id,
                                 active: "",
                               },
                               on: {
                                 click: function ($event) {
-                                  return _vm.onThumbnailClick(index, $event)
+                                  return _vm.onThumbnailClick(
+                                    file,
+                                    index,
+                                    $event
+                                  )
                                 },
                                 contextmenu: function ($event) {
                                   return _vm.onThumbnailContextmenu(

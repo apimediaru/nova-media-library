@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use \APIMedia\NovaMediaLibrary\Fields\HandlesConversionsTrait;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
+use Illuminate\Support\Carbon;
 
 
 class MediaLibraryService
@@ -86,30 +87,44 @@ class MediaLibraryService
 
     public function sort(Request $request, $object = null): JsonResponse
     {
-        // if (!$object) {
-        //     $class = $request->get('object');
-        //     try {
-        //         $object = $class::findOrFail($request->get('objectId'));
-        //     } catch (ModelNotFoundException $exception) {
-        //         return $this->failure($exception->getMessage(), [], [], 404);
-        //     }
-        // }
-
-
-        $collection = $request->get('collection');
-        $class = $request->get('object');
-        $target = $request->get('target');
-        $sources = $request->get('ids');
-
-
-        foreach ($sources as $id) {
-            $source = Media::where(['collection' => $collection]);
+        if (!$object) {
+            $class = $request->get('object');
+            try {
+                $object = $class::findOrFail($request->get('objectId'));
+            } catch (ModelNotFoundException $exception) {
+                return $this->failure($exception->getMessage(), [], [], 404);
+            }
         }
 
+        $collection = $request->get('collection');
+        $sequence = $request->get('sequence');
 
-        Media::where(['collection' => $collection]);
+        // Reference: https://github.com/laravel/ideas/issues/575
+        $table = Media::getModel()->getTable();
+        $cases = [];
+        $ids = [];
+        $params = [];
 
-        return $this->success('test');
+        foreach ($sequence as $id => $value) {
+            $id = (int) $id;
+            $cases[] = "WHEN {$id} then ?";
+            $params[] = $value;
+            $ids[] = $id;
+        }
+
+        $ids = implode(',', $ids);
+        $cases = implode(' ', $cases);
+        $params[] = Carbon::now();
+        $params[] = $collection;
+
+        \DB::update("UPDATE `{$table}` SET `order_column` = CASE `id` {$cases} END, `updated_at` = ? WHERE `id` in ({$ids}) AND `collection_name` = ?", $params);
+
+        unset($object->media);
+        $media = $object->getMedia($collection);
+
+        return $this->success('Sorted', [
+            'files' => MediaResource::collection($media),
+        ]);
     }
 
     /**

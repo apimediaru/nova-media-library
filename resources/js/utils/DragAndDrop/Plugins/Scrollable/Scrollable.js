@@ -187,7 +187,7 @@ export default class Scrollable extends AbstractPlugin {
 
     cancelAnimationFrame(this.scrollAnimationFrame);
 
-    if (!this.dd.isDragging()) {
+    if (!this.dd.isDragging() || this.scrollableElement.scrollHeight === this.scrollableElement.offsetHeight) {
       return;
     }
 

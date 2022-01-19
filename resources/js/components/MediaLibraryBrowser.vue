@@ -123,15 +123,15 @@
               :index="index"
               :name="file.file_name"
               :image="file.original_url"
-              @click="onThumbnailClick(index, $event)"
+              @click="onThumbnailClick(file, index, $event)"
               @contextmenu="onThumbnailContextmenu(file, $event)"
-              :dragged="isReordering && selected.includes(index)"
-              :selected="isItemSelected(index)"
+              :dragged="isReordering && selected.includes(file.id)"
+              :selected="isItemSelected(file.id)"
               :mine-type="file.mime_type"
               ref="thumbnail"
-              :highlighted="index === selectedIndex"
-              :intersected="index === reorderIntersectionId"
-              :data-key="index"
+              :highlighted="file.id === selectedIndex"
+              :intersected="file.id === reorderIntersectionId"
+              :data-key="file.id"
               active
             />
           </div>
@@ -181,7 +181,6 @@ import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
 import { MultipleMediaRequest, SortMediaRequest } from "../utils/RequestManager";
-import { moveArray } from "../shared";
 
 const { throttle, debounce } = window._;
 
@@ -313,6 +312,16 @@ export default {
     isInteractive() {
       return !this.isLoading || !this.hasFiles;
     },
+    filesDictionary() {
+      const dictionary = {};
+      this.files.forEach((file, index) => {
+        dictionary[file.id] = {
+          index,
+          attributes: file,
+        };
+      });
+      return dictionary;
+    },
   },
 
   methods: {
@@ -397,17 +406,17 @@ export default {
 
 
     // Events
-    onThumbnailClick(index, event) {
+    onThumbnailClick(file, index, event) {
       const { shiftKey, ctrlKey } = event;
       if (shiftKey && ctrlKey) {
-        this.selectRange(this.selectedIndex, index, true);
+        this.selectRange(this.filesDictionary[this.selectedIndex].index, index, true);
       } else if (shiftKey) {
-        this.selectRange(this.selectedIndex, index);
+        this.selectRange(this.filesDictionary[this.selectedIndex].index, index);
       } else if (ctrlKey) {
-        this.setSelectedIndex(index);
-        this.toggleSelection(index);
+        this.setSelectedIndex(file.id);
+        this.toggleSelection(file.id);
       } else {
-        this.beginSelection(index);
+        this.beginSelection(file.id);
       }
     },
     onThumbnailContextmenu(file, event) {
@@ -441,9 +450,10 @@ export default {
       this.selectedIndex = Number(id);
     },
     selectRange(start, end, keep = false) {
+      console.log(start, end);
       const selected = keep ? Array.from(this.selected) : [];
       for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
-        selected.push(i);
+        selected.push(this.files[i].id);
       }
       this.selected = Array.from(new Set(selected));
     },
@@ -475,17 +485,17 @@ export default {
       }
     },
     selectAll() {
-      this.selected = this.files.map((file, index) => index);
+      this.selected = this.files.map((file) => file.id);
     },
     unselectAll() {
       this.selected = [];
       this.selectedIndex = null;
     },
     extractSelectedIDs() {
-      const { files, selected } = this;
-      return selected
-          .sort((a, b) => files[a].order_column - files[b].order_column)
-          .map((i) => files[i].id);
+      const { filesDictionary } = this;
+      return this.selected
+          .sort((a, b) => filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column)
+          .map((id) => id);
     },
 
     // File input
@@ -710,53 +720,76 @@ export default {
     onSortableDragOut() {
       this.resetIntersection();
     },
-    async onSortableDrop(event) {
-      this.resetPointerEventsOutsideFrame();
-      this.isReordering = false;
 
-      // Prevent modal closing if dropped tarted is viewport outside main frame
-      const { target } = event.originalEvent;
-      if (target && target.classList.contains('media-library-modal-viewport')) {
-        this.preventNextBackdropClick();
-      }
+    /**
+     * Event that triggers by dropping selected files into another file thumbnail
+     *
+     * @param event
+     * @return {Promise<void>}
+     */
+    async onSortableDrop(event) {
+      const { target } = event;
+
+      this.resetPointerEventsOutsideFrame();
 
       if (!target) {
+        this.isReordering = false;
         return;
       }
 
-      const targetIndex = this.extractId(target);
-      const targetId = this.files[targetIndex].id;
-      const sources = this.extractSelectedIDs();
+      // Prevent modal closing if dropped tarted is viewport outside main frame
+      if (event.originalEvent.target && event.originalEvent.target.classList.contains('media-library-modal-viewport')) {
+        this.preventNextBackdropClick();
+      }
 
+      // Get dropped on element id
+      const targetId = this.extractId(event.target);
+      const sources = this.extractSelectedIDs();
 
       if (targetId === undefined || !Array.isArray(sources) || !sources.length) {
         return;
       }
 
-      const copy = [...this.files];
-      this.selected.sort((a, b) => this.files[a].order_column - this.files[b].order_column).forEach((i, index) => moveArray(copy, i, targetIndex + index));
-      this.files = copy;
-      // this.files = copy;
+      // Work with local copy of files. First filter array of files by selected ids that are
+      // sorted by order column. Then insert files with selected ids before target file
+      const { filesDictionary } = this;
+      const selected = [...this.selected].sort((a, b) => filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column);
+      const sequence = this.files.filter((file) => !selected.includes(file.id));
+      sequence.splice(sequence.findIndex((file) => file.id === targetId), 0, ...selected.map((id) => filesDictionary[id].attributes));
+      this.files = sequence;
 
+      // Create a ['id' => 'value'] array with new sequence of files
+      let flat = {};
+      sequence.forEach((file, index) => {
+        flat[file.id] = index;
+      });
 
-      // Todo: remove
-      // console.log('drop:', event.target);
-      //
-      // this.isLoading = true;
-      // const request = await new SortMediaRequest({
-      //   target: targetId,
-      //   sources,
-      //   object: this.field.object,
-      //   objectId: this.resourceId,
-      //   collection: this.field.collection,
-      // }).run();
-      // this.isLoading = false;
+      // Reset all selections
+      this.unselectAll();
+      this.resetIntersection();
+
+      // Set loading flag
+      this.isLoading = true;
+
+      // Make a request and replace local files with files from response
+      const request = await new SortMediaRequest({
+        sequence: flat,
+        object: this.field.object,
+        objectId: this.resourceId,
+        collection: this.field.collection,
+      }).run();
+
+      const { files } = request.responseData.data;
+      this.files = files;
+
+      // Reset interactive flag
+      this.isLoading = false;
+      this.isReordering = false;
     },
   },
 
   watch: {
     selected(value) {
-      // console.log(value);
       if (!value.length) {
         this.selectedIndex = null;
       }
