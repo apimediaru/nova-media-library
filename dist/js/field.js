@@ -3001,7 +3001,7 @@ var bodyLockedClass = 'media-library-locked';
       applyImportantGhostStyles(ghost);
       var wrapperSizeSet = false;
       var thumbs = this.$refs.thumbnail.filter(function (thumb) {
-        return _this4.selected.includes(thumb.index);
+        return _this4.selected.includes(_this4.extractId(thumb.$el));
       }).slice(0, 5).map(function (node) {
         return node.$el;
       });
@@ -3080,7 +3080,9 @@ var bodyLockedClass = 'media-library-locked';
     onSortableDrop: function onSortableDrop(event) {
       this.resetPointerEventsOutsideFrame(); // Prevent modal closing if dropped tarted is backdrop
 
-      if (event.originalEvent.target.classList.contains('media-library-modal-backdrop')) {
+      var target = event.originalEvent.target;
+
+      if (target && target.classList.contains('media-library-modal-backdrop')) {
         this.preventNextBackdropClick();
       }
 
@@ -3878,6 +3880,8 @@ var DragAndDrop = /*#__PURE__*/function () {
         originalEvent: event
       });
 
+      _this.emit(beforeStartEvent);
+
       if (beforeStartEvent.canceled()) {
         return;
       } // Get event mouse start position and save it
@@ -4512,7 +4516,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "defaultOptions": () => (/* binding */ defaultOptions),
 /* harmony export */   "default": () => (/* binding */ Scrollable)
 /* harmony export */ });
-/* harmony import */ var _Utils_AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Utils/AbstractPlugin */ "./resources/js/utils/DragAndDrop/Utils/AbstractPlugin.js");
+/* harmony import */ var _shared__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../shared */ "./resources/js/utils/shared/index.js");
 /* harmony import */ var _Events__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Events */ "./resources/js/utils/DragAndDrop/Events.js");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/DragAndDrop/utils/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -4805,7 +4809,7 @@ var Scrollable = /*#__PURE__*/function (_AbstractPlugin) {
   }]);
 
   return Scrollable;
-}(_Utils_AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__["default"]);
+}(_shared__WEBPACK_IMPORTED_MODULE_0__.AbstractPlugin);
 /**
  * Returns true if the passed element has overflow
  * @param {HTMLElement} element
@@ -4908,75 +4912,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "defaultScrollableOptions": () => (/* reexport safe */ _Scrollable__WEBPACK_IMPORTED_MODULE_0__.defaultOptions)
 /* harmony export */ });
 /* harmony import */ var _Scrollable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Scrollable */ "./resources/js/utils/DragAndDrop/Plugins/Scrollable/index.js");
-
-
-/***/ }),
-
-/***/ "./resources/js/utils/DragAndDrop/Utils/AbstractPlugin.js":
-/*!****************************************************************!*\
-  !*** ./resources/js/utils/DragAndDrop/Utils/AbstractPlugin.js ***!
-  \****************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ AbstractPlugin)
-/* harmony export */ });
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-
-/**
- * All library plugins inherit from this class.
- * @abstract
- * @class AbstractPlugin
- * @module AbstractPlugin
- */
-var AbstractPlugin = /*#__PURE__*/function () {
-  /**
-   * AbstractPlugin constructor.
-   * @constructs AbstractPlugin
-   * @param {DragAndDrop} dd - DragAndDrop instance
-   */
-  function AbstractPlugin(dd) {
-    _classCallCheck(this, AbstractPlugin);
-
-    /**
-     * DragAndDrop instance
-     * @property dd
-     * @type {DragAndDrop}
-     */
-    this.dd = dd;
-  }
-  /**
-   * Override to add listeners
-   * @abstract
-   */
-
-
-  _createClass(AbstractPlugin, [{
-    key: "attach",
-    value: function attach() {
-      throw new Error('Not Implemented');
-    }
-    /**
-     * Override to remove listeners
-     * @abstract
-     */
-
-  }, {
-    key: "detach",
-    value: function detach() {
-      throw new Error('Not Implemented');
-    }
-  }]);
-
-  return AbstractPlugin;
-}();
-
 
 
 /***/ }),
@@ -6443,6 +6378,91 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js":
+/*!********************************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js ***!
+  \********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ AbstractPlugin)
+/* harmony export */ });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+/**
+ * All library plugins inherit from this class.
+ * @abstract
+ * @class AbstractPlugin
+ * @module AbstractPlugin
+ */
+var AbstractPlugin = /*#__PURE__*/function () {
+  /**
+   * AbstractPlugin constructor.
+   * @constructs AbstractPlugin
+   * @param {DragAndDrop} dd - DragAndDrop instance
+   */
+  function AbstractPlugin(dd) {
+    _classCallCheck(this, AbstractPlugin);
+
+    /**
+     * DragAndDrop instance
+     * @property dd
+     * @type {DragAndDrop}
+     */
+    this.dd = dd;
+  }
+  /**
+   * Override to add listeners
+   * @abstract
+   */
+
+
+  _createClass(AbstractPlugin, [{
+    key: "attach",
+    value: function attach() {
+      throw new Error('Not Implemented');
+    }
+    /**
+     * Override to remove listeners
+     * @abstract
+     */
+
+  }, {
+    key: "detach",
+    value: function detach() {
+      throw new Error('Not Implemented');
+    }
+  }]);
+
+  return AbstractPlugin;
+}();
+
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/shared/AbstractPlugin/index.js":
+/*!***********************************************************!*\
+  !*** ./resources/js/utils/shared/AbstractPlugin/index.js ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/utils/shared/AbstractPlugin/AbstractPlugin.js");
+
+
+/***/ }),
+
 /***/ "./resources/js/utils/shared/AbstractRequest/AbstractRequest.js":
 /*!**********************************************************************!*\
   !*** ./resources/js/utils/shared/AbstractRequest/AbstractRequest.js ***!
@@ -6922,10 +6942,13 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "AbstractEvent": () => (/* reexport safe */ _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__.AbstractEvent),
-/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest)
+/* harmony export */   "AbstractRequest": () => (/* reexport safe */ _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__.AbstractRequest),
+/* harmony export */   "AbstractPlugin": () => (/* reexport safe */ _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__.AbstractPlugin)
 /* harmony export */ });
 /* harmony import */ var _AbstractEvent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AbstractEvent */ "./resources/js/utils/shared/AbstractEvent/index.js");
 /* harmony import */ var _AbstractRequest__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AbstractRequest */ "./resources/js/utils/shared/AbstractRequest/index.js");
+/* harmony import */ var _AbstractPlugin__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./AbstractPlugin */ "./resources/js/utils/shared/AbstractPlugin/index.js");
+
 
 
 

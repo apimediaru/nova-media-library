@@ -611,7 +611,7 @@ export default {
       let wrapperSizeSet = false;
 
       const thumbs = this.$refs.thumbnail
-          .filter((thumb) => this.selected.includes(thumb.index))
+          .filter((thumb) => this.selected.includes(this.extractId(thumb.$el)))
           .slice(0, 5)
           .map((node) => node.$el);
 
@@ -693,7 +693,8 @@ export default {
       this.resetPointerEventsOutsideFrame();
 
       // Prevent modal closing if dropped tarted is backdrop
-      if (event.originalEvent.target.classList.contains('media-library-modal-backdrop')) {
+      const { target } = event.originalEvent;
+      if (target && target.classList.contains('media-library-modal-backdrop')) {
         this.preventNextBackdropClick();
       }
 

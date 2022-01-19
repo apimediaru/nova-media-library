@@ -1,7 +1,7 @@
 // Took and a bit modified code from this nice library:
 // https://github.com/Shopify/draggable/blob/master/src/Draggable/Plugins/Scrollable/Scrollable.js
 
-import AbstractPlugin from "../../Utils/AbstractPlugin";
+import { AbstractPlugin } from "../../../shared";
 import { DragAndDropEvents } from '../../Events';
 import { closest } from "../../utils";
 

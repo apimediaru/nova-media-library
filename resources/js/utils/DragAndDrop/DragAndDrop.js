@@ -212,6 +212,8 @@ class DragAndDrop {
       source,
       originalEvent: event,
     });
+    this.emit(beforeStartEvent);
+
     if (beforeStartEvent.canceled()) { return; }
 
     // Get event mouse start position and save it
@@ -313,9 +315,9 @@ class DragAndDrop {
     } else if (this.current !== el) {
       this.current = el;
       this.emit(new DragOverEvent({
-          originalEvent: event,
+        originalEvent: event,
         source: this.source,
-          target: el,
+        target: el,
       }));
     }
   }
