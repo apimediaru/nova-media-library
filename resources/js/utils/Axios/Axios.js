@@ -10,7 +10,7 @@ instance.defaults.headers.common['X-CSRF-TOKEN'] = document.head.querySelector(
 
 instance.interceptors.response.use(
   (response) => {
-    const { errors } = response.data;
+    const { errors, message } = response.data;
 
     // Show error messages
     if (errors) {
@@ -32,10 +32,11 @@ instance.interceptors.response.use(
   },
   (error) => {
     const { status } = error.response;
+    const { message } = error.response.data;
 
     // Show the user a 500 error
-    if (status >= 500) {
-      Nova.$emit('error', error.response.data.message);
+    if (message && (status >= 500 || status === 400)) {
+      Nova.$emit('error', message);
     }
     // Handle Token Timeouts
     if (status === 419) {

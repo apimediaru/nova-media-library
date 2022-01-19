@@ -3619,7 +3619,9 @@ instance.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 instance.defaults.headers.common['Content-Type'] = 'multipart/form-data';
 instance.defaults.headers.common['X-CSRF-TOKEN'] = document.head.querySelector('meta[name="csrf-token"]').content;
 instance.interceptors.response.use(function (response) {
-  var errors = response.data.errors; // Show error messages
+  var _response$data = response.data,
+      errors = _response$data.errors,
+      message = _response$data.message; // Show error messages
 
   if (errors) {
     var iterable;
@@ -3639,10 +3641,11 @@ instance.interceptors.response.use(function (response) {
 
   return response;
 }, function (error) {
-  var status = error.response.status; // Show the user a 500 error
+  var status = error.response.status;
+  var message = error.response.data.message; // Show the user a 500 error
 
-  if (status >= 500) {
-    Nova.$emit('error', error.response.data.message);
+  if (message && (status >= 500 || status === 400)) {
+    Nova.$emit('error', message);
   } // Handle Token Timeouts
 
 

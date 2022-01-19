@@ -33,10 +33,15 @@ class MediaLibraryService
         $errors = [];
         $collection = $request->get('collection');
         $ids = $request->get('ids');
+        $method = $request->get('method');
+
+        if (!method_exists($this, $method)) {
+            return $this->failure('Method "' . $method . '" does not exists.');
+        }
 
         foreach ($ids as $id) {
             try {
-                $this->{$request->get('method')}($object, $id);
+                $this->{$method}($object, $id);
             } catch (MediaCannotBeDeleted $exception) {
                 $errors[$id] = $exception->getMessage();
             }
