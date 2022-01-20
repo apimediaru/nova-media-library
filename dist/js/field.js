@@ -3003,6 +3003,8 @@ var bodyLockedClass = 'media-library-locked';
         container: this.$refs.layout,
         createGhost: this.createGhost,
         whiteList: ['.media-library-thumbnail'],
+        clickDelay: 250,
+        threshold: 5,
         on: (_on = {}, _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.beforeStart, this.onSortableBeforeStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.beforeStart, this.onSortableBeforeDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.start, this.onSortableDragStart), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.over, this.onSortableDragOver), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.out, this.onSortableDragOut), _defineProperty(_on, _utils_DragAndDrop__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.drop, this.onSortableDrop), _on),
         scrollable: {
           scrollableElements: [this.$refs.layout],
@@ -3115,7 +3117,7 @@ var bodyLockedClass = 'media-library-locked';
       var _this4 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
-        var target, targetId, sources, filesDictionary, selected, sequence, flat, request, files;
+        var target, targetId, sources, filesDictionary, selected, sequence, flatTree, request, files;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -3166,9 +3168,9 @@ var bodyLockedClass = 'media-library-locked';
                 }))));
                 _this4.files = sequence; // Create a ['id' => 'value'] array with new sequence of files
 
-                flat = {};
+                flatTree = {};
                 sequence.forEach(function (file, index) {
-                  flat[file.id] = index;
+                  flatTree[file.id] = index;
                 }); // Reset all selections
 
                 _this4.unselectAll();
@@ -3180,7 +3182,7 @@ var bodyLockedClass = 'media-library-locked';
 
                 _context3.next = 22;
                 return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__.SortMediaRequest({
-                  sequence: flat,
+                  sources: flatTree,
                   object: _this4.field.object,
                   objectId: _this4.resourceId,
                   collection: _this4.field.collection
@@ -3188,13 +3190,19 @@ var bodyLockedClass = 'media-library-locked';
 
               case 22:
                 request = _context3.sent;
-                files = request.responseData.data.files;
-                _this4.files = files; // Reset interactive flag
+
+                if (request.succeeded()) {
+                  files = request.responseData.data.files;
+                  _this4.files = files;
+                } else {
+                  Nova.$emit('error', _this4.__('Sorting finished with an error'));
+                } // Reset interactive flag
+
 
                 _this4.isLoading = false;
                 _this4.isReordering = false;
 
-              case 27:
+              case 26:
               case "end":
                 return _context3.stop();
             }
@@ -3208,6 +3216,9 @@ var bodyLockedClass = 'media-library-locked';
       if (!value.length) {
         this.selectedIndex = null;
       }
+    },
+    files: function files(value) {
+      this.$emit('files-update', value);
     }
   }
 });
@@ -4601,6 +4612,7 @@ var defaultOptions = {
     y: 10
   },
   clickDelay: 250,
+  threshold: 10,
   on: _defineProperty({}, _Events__WEBPACK_IMPORTED_MODULE_4__.DragAndDropEvents.drag.beforeStart, function (event) {
     return event.proceed();
   }),
@@ -4748,10 +4760,12 @@ var DragAndDrop = /*#__PURE__*/function () {
 
     _defineProperty(this, "onBeforeDragStart", function () {
       // Emit 'beforeDragStart' event that should call next callback to proceed, or stop to stop dragging
-      _this.emit(new _Events__WEBPACK_IMPORTED_MODULE_4__.BeforeDragStartEvent({
-        source: _this.source,
-        proceed: _this.startDragging
-      }));
+      if (!_this.isDragging()) {
+        _this.emit(new _Events__WEBPACK_IMPORTED_MODULE_4__.BeforeDragStartEvent({
+          source: _this.source,
+          proceed: _this.startDragging
+        }));
+      }
     });
 
     _defineProperty(this, "startDragging", function (event) {
@@ -4798,16 +4812,32 @@ var DragAndDrop = /*#__PURE__*/function () {
       // Store coordinates
       var xy = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.getXY)(event);
       _this.deltaX = xy[0] - _this.startX;
-      _this.deltaY = xy[1] - _this.startY;
-
-      _this.emit(new _Events__WEBPACK_IMPORTED_MODULE_4__.DragMoveEvent({
-        originalEvent: event
-      })); // If dragging in progress perform actions
-
+      _this.deltaY = xy[1] - _this.startY; // If dragging in progress perform actions
 
       if (_this.dragging) {
-        // Update ghost position
+        var dragMoveEvent = new _Events__WEBPACK_IMPORTED_MODULE_4__.DragMoveEvent({
+          originalEvent: event
+        });
+
+        _this.emit(dragMoveEvent); // If event is canceled stop dragging immediately
+
+
+        if (dragMoveEvent.canceled()) {
+          _this.stop();
+
+          return;
+        } // Update ghost position
+
+
         _this.updateGhostPosition();
+      } else {
+        // Check distance from initial position and start dragging
+        // even if start timeout is not over
+        if (Math.abs(_this.deltaY) >= _this.options.threshold || Math.abs(_this.deltaX) >= _this.options.threshold) {
+          _this.clickTimeout = null;
+
+          _this.onBeforeDragStart();
+        }
       }
     });
 
@@ -5255,6 +5285,8 @@ var DragMoveEvent = /*#__PURE__*/function (_DragEvent5) {
 }(DragEvent);
 
 _defineProperty(DragMoveEvent, "type", DragAndDropEvents.drag.move);
+
+_defineProperty(DragMoveEvent, "cancellable", true);
 
 var DragDropEvent = /*#__PURE__*/function (_DragInstersectionEve3) {
   _inherits(DragDropEvent, _DragInstersectionEve3);

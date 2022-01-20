@@ -7,7 +7,7 @@ class MediaSortRequest extends MediaRequest
     public function rules(): array
     {
         return array_merge(parent::rules(), [
-            'sequence' => ['required', 'array'],
+            'sources' => ['required', 'array'],
         ]);
     }
 }

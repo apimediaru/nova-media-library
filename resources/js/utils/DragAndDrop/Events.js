@@ -86,6 +86,7 @@ export class DragOutEvent extends DragInstersectionEvent {
 
 export class DragMoveEvent extends DragEvent {
   static type = DragAndDropEvents.drag.move;
+  static cancellable = true;
 }
 
 export class DragDropEvent extends DragInstersectionEvent {

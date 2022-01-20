@@ -23,6 +23,7 @@ export const defaultOptions = {
     y: 10,
   },
   clickDelay: 250,
+  threshold: 10,
   on: {
     [DragAndDropEvents.drag.beforeStart]: (event) => event.proceed(),
   },
@@ -231,10 +232,12 @@ class DragAndDrop {
 
   onBeforeDragStart = () => {
     // Emit 'beforeDragStart' event that should call next callback to proceed, or stop to stop dragging
-    this.emit(new BeforeDragStartEvent({
-      source: this.source,
-      proceed: this.startDragging,
-    }));
+    if (!this.isDragging()) {
+      this.emit(new BeforeDragStartEvent({
+        source: this.source,
+        proceed: this.startDragging,
+      }));
+    }
   }
 
   startDragging = (event) => {
@@ -279,14 +282,31 @@ class DragAndDrop {
     this.deltaX = xy[0] - this.startX;
     this.deltaY = xy[1] - this.startY;
 
-    this.emit(new DragMoveEvent({
-      originalEvent: event,
-    }));
-
     // If dragging in progress perform actions
     if (this.dragging) {
+      const dragMoveEvent = new DragMoveEvent({
+        originalEvent: event,
+      });
+      this.emit(dragMoveEvent);
+
+      // If event is canceled stop dragging immediately
+      if (dragMoveEvent.canceled()) {
+        this.stop();
+        return;
+      }
+
       // Update ghost position
       this.updateGhostPosition();
+    } else {
+      // Check distance from initial position and start dragging
+      // even if start timeout is not over
+      if (
+        Math.abs(this.deltaY) >= this.options.threshold
+        || Math.abs(this.deltaX) >= this.options.threshold
+      ) {
+        this.clickTimeout = null;
+        this.onBeforeDragStart();
+      }
     }
   }
 

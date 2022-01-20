@@ -613,6 +613,8 @@ export default {
         container: this.$refs.layout,
         createGhost: this.createGhost,
         whiteList: ['.media-library-thumbnail'],
+        clickDelay: 250,
+        threshold: 5,
         on: {
           [DragAndDropEvents.beforeStart]: this.onSortableBeforeStart,
           [DragAndDropEvents.drag.beforeStart]: this.onSortableBeforeDragStart,
@@ -759,9 +761,9 @@ export default {
       this.files = sequence;
 
       // Create a ['id' => 'value'] array with new sequence of files
-      let flat = {};
+      let flatTree = {};
       sequence.forEach((file, index) => {
-        flat[file.id] = index;
+        flatTree[file.id] = index;
       });
 
       // Reset all selections
@@ -773,14 +775,18 @@ export default {
 
       // Make a request and replace local files with files from response
       const request = await new SortMediaRequest({
-        sequence: flat,
+        sources: flatTree,
         object: this.field.object,
         objectId: this.resourceId,
         collection: this.field.collection,
       }).run();
 
-      const { files } = request.responseData.data;
-      this.files = files;
+      if (request.succeeded()) {
+        const { files } = request.responseData.data;
+        this.files = files;
+      } else {
+        Nova.$emit('error', this.__('Sorting finished with an error'));
+      }
 
       // Reset interactive flag
       this.isLoading = false;
@@ -794,6 +800,9 @@ export default {
         this.selectedIndex = null;
       }
     },
+    files(value) {
+      this.$emit('files-update', value);
+    }
   },
 }
 </script>

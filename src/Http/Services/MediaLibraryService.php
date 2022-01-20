@@ -97,7 +97,7 @@ class MediaLibraryService
         }
 
         $collection = $request->get('collection');
-        $sequence = $request->get('sequence');
+        $sources = $request->get('sources');
 
         // Reference: https://github.com/laravel/ideas/issues/575
         $table = Media::getModel()->getTable();
@@ -105,7 +105,7 @@ class MediaLibraryService
         $ids = [];
         $params = [];
 
-        foreach ($sequence as $id => $value) {
+        foreach ($sources as $id => $value) {
             $id = (int) $id;
             $cases[] = "WHEN {$id} then ?";
             $params[] = $value;
