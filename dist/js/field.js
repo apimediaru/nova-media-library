@@ -4971,19 +4971,30 @@ var DragAndDrop = /*#__PURE__*/function () {
           source: _this.source,
           proceed: _this.startDragging
         }));
+      } else {
+        window.clearTimeout(_this.clickTimeout);
       }
     });
 
     _defineProperty(this, "startDragging", function (event) {
-      // Check if 'drag:beforeStart' event was canceled
+      console.log('start'); // Check if 'drag:beforeStart' event was canceled
+
       if (event.canceled()) {
         return _this.stop();
+      }
+
+      if (_this.isDragging()) {
+        return;
       } // Set dragging flag
 
 
       _this.dragging = true; // Todo: remove
 
       console.log('started dragging'); // Create ghost and locate it
+
+      if (_this.ghost) {
+        _this.removeGhost();
+      }
 
       var ghost = _this.options.createGhost(_this.source, _utils__WEBPACK_IMPORTED_MODULE_0__.createGhost, {
         applyStyles: _utils__WEBPACK_IMPORTED_MODULE_0__.applyStyles,
@@ -5040,6 +5051,7 @@ var DragAndDrop = /*#__PURE__*/function () {
         // Check distance from initial position and start dragging
         // even if start timeout is not over
         if (Math.abs(_this.deltaY) >= _this.options.threshold || Math.abs(_this.deltaX) >= _this.options.threshold) {
+          window.clearTimeout(_this.clickTimeout);
           _this.clickTimeout = null;
 
           _this.onBeforeDragStart();
@@ -5102,7 +5114,7 @@ var DragAndDrop = /*#__PURE__*/function () {
       // Always stop tracking 'mousemove' event
       document.removeEventListener('mousemove', _this.onMouseMove);
 
-      if (!_this.dragging) {
+      if (!_this.isDragging()) {
         return;
       } // Todo: remove
 

@@ -237,13 +237,20 @@ class DragAndDrop {
         source: this.source,
         proceed: this.startDragging,
       }));
+    } else {
+      window.clearTimeout(this.clickTimeout);
     }
   }
 
   startDragging = (event) => {
+    console.log('start');
     // Check if 'drag:beforeStart' event was canceled
     if (event.canceled()) {
       return this.stop();
+    }
+
+    if (this.isDragging()) {
+      return;
     }
 
     // Set dragging flag
@@ -253,6 +260,10 @@ class DragAndDrop {
     console.log('started dragging');
 
     // Create ghost and locate it
+    if (this.ghost) {
+      this.removeGhost();
+    }
+
     const ghost = this.options.createGhost(this.source, createGhost, { applyStyles, applyImportantGhostStyles });
     this.ghost = ghost;
     if (ghost) {
@@ -304,6 +315,7 @@ class DragAndDrop {
         Math.abs(this.deltaY) >= this.options.threshold
         || Math.abs(this.deltaX) >= this.options.threshold
       ) {
+        window.clearTimeout(this.clickTimeout);
         this.clickTimeout = null;
         this.onBeforeDragStart();
       }
@@ -358,7 +370,7 @@ class DragAndDrop {
     // Always stop tracking 'mousemove' event
     document.removeEventListener('mousemove', this.onMouseMove);
 
-    if (!this.dragging) { return; }
+    if (!this.isDragging()) { return; }
 
     // Todo: remove
     console.log('ended dragging');
