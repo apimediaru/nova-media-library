@@ -91,7 +91,11 @@ export default {
       if (Array.isArray(file)) {
         file.forEach((item) => this.removeFile(item, silent));
       } else {
-        this.filesRepository.splice(this.filesRepository.indexOf(file), 1);
+        const index = this.filesRepository.indexOf(file);
+        if (index === -1) {
+          return;
+        }
+        this.filesRepository.splice(index, 1);
         if (!silent && this.emitEventOnFilesUpdate) {
           this.emitFilesUpdateEvent(value);
         }
