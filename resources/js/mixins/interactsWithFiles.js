@@ -50,9 +50,7 @@ export default {
      */
     setFiles(value, silent = false) {
       this.filesRepository = value;
-      if (!silent && this.emitEventOnFilesUpdate) {
-        this.emitFilesUpdateEvent(value);
-      }
+      this.handleFilesUpdateEvent(silent);
     },
 
     /**
@@ -72,12 +70,11 @@ export default {
      */
     addFile(file, silent = false) {
       if (Array.isArray(file)) {
-        file.forEach((item) => this.addFile(item, silent));
+        file.forEach((item) => this.addFile(item, true));
+        this.handleFilesUpdateEvent(silent, silent);
       } else {
         this.filesRepository.push(file);
-        if (!silent && this.emitEventOnFilesUpdate) {
-          this.emitFilesUpdateEvent(this.files);
-        }
+        this.handleFilesUpdateEvent(silent);
       }
     },
 
@@ -89,16 +86,26 @@ export default {
      */
     removeFile(file, silent = false) {
       if (Array.isArray(file)) {
-        file.forEach((item) => this.removeFile(item, silent));
+        file.forEach((item) => this.removeFile(item, true));
+        this.handleFilesUpdateEvent(silent);
       } else {
         const index = this.filesRepository.indexOf(file);
         if (index === -1) {
           return;
         }
         this.filesRepository.splice(index, 1);
-        if (!silent && this.emitEventOnFilesUpdate) {
-          this.emitFilesUpdateEvent(value);
-        }
+        this.handleFilesUpdateEvent(silent);
+      }
+    },
+
+    /**
+     * Helper function for event emitting
+     *
+     * @param {Boolean} silent
+     */
+    handleFilesUpdateEvent(silent = false) {
+      if (!silent && this.emitEventOnFilesUpdate) {
+        this.emitFilesUpdateEvent(this.files);
       }
     },
 
