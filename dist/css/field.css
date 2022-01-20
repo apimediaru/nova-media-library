@@ -273,23 +273,10 @@ body.media-library-locked {
 .media-library-layout--hidden {
   visibility: hidden;
 }
-.media-library-layout-add-file {
-  border-radius: 0.5rem;
-  border: 2px dashed #D9D9D9;
-  font-size: 3.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  cursor: pointer;
-  transition: 200ms;
-  transition-property: background-color, border-color, color;
-  font-weight: 300;
-  min-height: 100px;
-}
-.media-library-layout-add-file:hover, .media-library-layout-add-file:focus {
-  border-color: var(--primary);
-  color: var(--primary);
+.media-library-layout--view {
+  border: 1px solid var(--40);
+  max-height: 400px;
+  padding: 0.25rem;
 }
 
 .media-library-layout-message {

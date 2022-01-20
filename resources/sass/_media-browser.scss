@@ -63,25 +63,11 @@ body.media-library-locked {
     visibility: hidden;
   }
 
-  &-add-file {
-    border-radius: $border-radius;
-    border: 2px dashed $color-border;
-    font-size: 3.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    cursor: pointer;
-    transition: 200ms;
-    transition-property: background-color, border-color, color;
-    font-weight: 300;
-    min-height: 100px;
-
-    &:hover,
-    &:focus {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
+  // For details view mode
+  &--view {
+    border: 1px solid var(--40);
+    max-height: 400px;
+    padding: .25rem;
   }
 }
 

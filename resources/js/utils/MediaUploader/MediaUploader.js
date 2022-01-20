@@ -106,21 +106,20 @@ export default class MediaUploader {
           ...requestConfig,
           cancelToken: source.token,
         });
+        mediaUpload.setResponse(response);
         mediaUpload.succeed();
         this.emit(new MediaUploadEvent({
           response,
         }));
       } catch (e) {
-
         response = e.response;
+        mediaUpload.setResponse(response);
         if (Axios.isCancel(e)) {
           mediaUpload.abort();
         } else {
           mediaUpload.failure();
         }
       }
-
-      mediaUpload.setResponse(response);
     }
 
     this.uploading = false;

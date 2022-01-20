@@ -1,5 +1,10 @@
 <template>
-  <default-field :field="field" :errors="errors" :show-help-text="showHelpText">
+  <default-field
+      :field="field"
+      :errors="errors"
+      :show-help-text="showHelpText"
+      full-width-content
+  >
     <template slot="field">
       <portal to="modals" transition="fade-transition">
         <MediaLibraryBrowser
@@ -7,11 +12,15 @@
           @close="onBrowsingModalClose"
           :resourceId="resourceId"
           :field="field"
+          :passed-files="field.value"
         />
       </portal>
 
+      <MediaBoard
+        :value="this.value"
+      />
 
-      <div class="field-buttons ml-auto">
+      <div class="field-buttons ml-auto mt-8">
         <button
             type="button"
             class="btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3"
@@ -36,13 +45,15 @@
 
 <script>
 import { FormField, HandlesValidationErrors } from 'laravel-nova';
-import MediaLibraryBrowser from "./MediaLibraryBrowser";
+import MediaLibraryBrowser from "../MediaLibraryBrowser";
+import MediaBoard from "../MediaBoard";
 
 export default {
   mixins: [FormField, HandlesValidationErrors],
 
   components: {
     MediaLibraryBrowser,
+    MediaBoard,
   },
 
   props: ['resourceName', 'resourceId', 'field'],
@@ -50,7 +61,7 @@ export default {
   data() {
     return {
       isBrowsingModalOpen: false,
-    }
+    };
   },
 
   methods: {
@@ -65,15 +76,16 @@ export default {
      * Fill the given FormData object with the field's internal value.
      */
     fill(formData) {
-      // formData.append(this.field.attribute, this.value || '')
+      // Just do nothing
     },
 
     // actual
     openMediaBrowser() {
       this.isBrowsingModalOpen = true;
     },
-    onBrowsingModalClose() {
+    onBrowsingModalClose(event) {
       this.isBrowsingModalOpen = false;
+      this.value = event.files;
     },
   },
 }

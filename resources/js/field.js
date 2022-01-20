@@ -1,6 +1,6 @@
-import IndexField from "./components/IndexField";
-import DetailField from "./components/DetailField";
-import FormField from "./components/FormField";
+import IndexField from "./components/Fields/IndexField";
+import DetailField from "./components/Fields/DetailField";
+import FormField from "./components/Fields/FormField";
 
 Nova.booting((Vue, router, store) => {
   Vue.component('index-nova-media-library', IndexField);

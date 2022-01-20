@@ -34,14 +34,14 @@ class MediaLibraryService
 
         $errors = [];
         $collection = $request->get('collection');
-        $ids = $request->get('ids');
+        $sources = $request->get('sources');
         $method = $request->get('method');
 
         if (!method_exists($this, $method)) {
             return $this->failure('Method "' . $method . '" does not exists.');
         }
 
-        foreach ($ids as $id) {
+        foreach ($sources as $id) {
             try {
                 $this->{$method}($object, $id);
             } catch (MediaCannotBeDeleted $exception) {

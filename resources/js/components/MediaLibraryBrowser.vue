@@ -132,7 +132,7 @@
               :highlighted="file.id === selectedIndex"
               :intersected="file.id === reorderIntersectionId"
               :data-key="file.id"
-              active
+              :active="file.active"
             />
           </div>
 
@@ -181,6 +181,7 @@ import UploadsList from "./UploadsList";
 import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
 import { MultipleMediaRequest, SortMediaRequest } from "../utils/RequestManager";
+import { interactsWithFiles } from '../mixins';
 
 const { throttle, debounce } = window._;
 
@@ -193,6 +194,8 @@ const bodyLockedClass = 'media-library-locked';
 
 export default {
   name: "MediaLibraryBrowser",
+
+  mixins: [interactsWithFiles],
 
   components: {
     MediaLibraryModal,
@@ -216,9 +219,6 @@ export default {
 
       // Prevent any upload and reorder interactive actions
       inactive: false,
-
-      // Uploaded files
-      files: [],
 
       // Array of selected files IDs
       selected: [],
@@ -255,15 +255,12 @@ export default {
       default: null,
       required: true,
     },
-    loadedFiles: {
-      type: Array,
-      default: () => ([]),
-    },
+
   },
 
   created() {
     // Merge provided via props media files on component creation
-    this.files = [...this.field.value || []];
+    this.setFiles([...this.passedFiles || []], true);
 
     // Create and attach media uploader to instance
     this.registerUploader();
@@ -291,43 +288,26 @@ export default {
     isDropzoneVisible() {
       return !this.paused && this.isDragAndDropEnabled && this.isDragging;
     },
-    hasFiles() {
-      return this.filesCount > 0;
-    },
     hasUploads() {
       return this.uploads.length > 0;
     },
     selectedCount() {
       return this.selected.length;
     },
-    filesCount() {
-      return this.files.length;
-    },
     canBeSorted() {
       return !this.paused && (this.filesCount && (this.selectedCount !== this.filesCount));
     },
-    canAddFiles() {
-      return true;
-    },
     isInteractive() {
       return !this.isLoading || !this.hasFiles;
-    },
-    filesDictionary() {
-      const dictionary = {};
-      this.files.forEach((file, index) => {
-        dictionary[file.id] = {
-          index,
-          attributes: file,
-        };
-      });
-      return dictionary;
     },
   },
 
   methods: {
     // Actions
     close() {
-      this.$emit('close');
+      this.$emit('close', {
+        files: this.files,
+      });
     },
     setUploadingMode() {
       this.mode = MODES.UPLOADING;
@@ -392,7 +372,7 @@ export default {
 
       // Ensure that response provides files
       if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
-        this.files = request.responseData.data.files;
+        this.setFiles(request.responseData.data.files);
 
         // Reset selection if selected method means change of files count
         if (action === 'delete') {
@@ -450,7 +430,6 @@ export default {
       this.selectedIndex = Number(id);
     },
     selectRange(start, end, keep = false) {
-      console.log(start, end);
       const selected = keep ? Array.from(this.selected) : [];
       for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
         selected.push(this.files[i].id);
@@ -528,9 +507,6 @@ export default {
       target.value = null;
 
       await this.uploader.upload(uploads.reverse());
-    },
-    addFile(...files) {
-      this.files.push(...files);
     },
     onFileUpload(event) {
       const { file } = event;
@@ -760,10 +736,11 @@ export default {
       sequence.splice(sequence.findIndex((file) => file.id === targetId), 0, ...selected.map((id) => filesDictionary[id].attributes));
       this.files = sequence;
 
-      // Create a ['id' => 'value'] array with new sequence of files
+      // Create a ['id' => 'value'] array with new sequence of files,
+      // also index starts with 1
       let flatTree = {};
       sequence.forEach((file, index) => {
-        flatTree[file.id] = index;
+        flatTree[file.id] = index + 1;
       });
 
       // Reset all selections
@@ -783,7 +760,7 @@ export default {
 
       if (request.succeeded()) {
         const { files } = request.responseData.data;
-        this.files = files;
+        this.setFiles(files);
       } else {
         Nova.$emit('error', this.__('Sorting finished with an error'));
       }
@@ -800,9 +777,6 @@ export default {
         this.selectedIndex = null;
       }
     },
-    files(value) {
-      this.$emit('files-update', value);
-    }
   },
 }
 </script>
