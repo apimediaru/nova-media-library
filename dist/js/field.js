@@ -3838,7 +3838,7 @@ __webpack_require__.r(__webpack_exports__);
     setFiles: function setFiles(value) {
       var silent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       this.filesRepository = value;
-      this.handleFilesUpdateEvent(silent);
+      this.resolveFilesUpdateEvent(silent);
     },
 
     /**
@@ -3866,10 +3866,10 @@ __webpack_require__.r(__webpack_exports__);
         file.forEach(function (item) {
           return _this.addFile(item, true);
         });
-        this.handleFilesUpdateEvent(silent, silent);
+        this.resolveFilesUpdateEvent(silent);
       } else {
         this.filesRepository.push(file);
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       }
     },
 
@@ -3888,7 +3888,7 @@ __webpack_require__.r(__webpack_exports__);
         file.forEach(function (item) {
           return _this2.removeFile(item, true);
         });
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       } else {
         var index = this.filesRepository.indexOf(file);
 
@@ -3897,7 +3897,7 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         this.filesRepository.splice(index, 1);
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       }
     },
 
@@ -3906,7 +3906,7 @@ __webpack_require__.r(__webpack_exports__);
      *
      * @param {Boolean} silent
      */
-    handleFilesUpdateEvent: function handleFilesUpdateEvent() {
+    resolveFilesUpdateEvent: function resolveFilesUpdateEvent() {
       var silent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
       if (!silent && this.emitEventOnFilesUpdate) {

@@ -50,7 +50,7 @@ export default {
      */
     setFiles(value, silent = false) {
       this.filesRepository = value;
-      this.handleFilesUpdateEvent(silent);
+      this.resolveFilesUpdateEvent(silent);
     },
 
     /**
@@ -71,10 +71,10 @@ export default {
     addFile(file, silent = false) {
       if (Array.isArray(file)) {
         file.forEach((item) => this.addFile(item, true));
-        this.handleFilesUpdateEvent(silent, silent);
+        this.resolveFilesUpdateEvent(silent);
       } else {
         this.filesRepository.push(file);
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       }
     },
 
@@ -87,14 +87,14 @@ export default {
     removeFile(file, silent = false) {
       if (Array.isArray(file)) {
         file.forEach((item) => this.removeFile(item, true));
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       } else {
         const index = this.filesRepository.indexOf(file);
         if (index === -1) {
           return;
         }
         this.filesRepository.splice(index, 1);
-        this.handleFilesUpdateEvent(silent);
+        this.resolveFilesUpdateEvent(silent);
       }
     },
 
@@ -103,7 +103,7 @@ export default {
      *
      * @param {Boolean} silent
      */
-    handleFilesUpdateEvent(silent = false) {
+    resolveFilesUpdateEvent(silent = false) {
       if (!silent && this.emitEventOnFilesUpdate) {
         this.emitFilesUpdateEvent(this.files);
       }
