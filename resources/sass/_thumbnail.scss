@@ -46,10 +46,8 @@
     }
   }
 
-  &--drop {
-    border-color: green;
-    border-style: dashed;
-    background: greenyellow;
+  &--dragged {
+    background-color: #CDE8FF !important;
   }
 
   &--intersected {

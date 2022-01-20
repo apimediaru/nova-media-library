@@ -130,7 +130,6 @@
               :mine-type="file.mime_type"
               ref="thumbnail"
               :highlighted="file.id === selectedIndex"
-              :intersected="file.id === reorderIntersectionId"
               :data-key="file.id"
               :active="file.active"
             />
@@ -178,10 +177,10 @@
 import MediaLibraryModal from "./MediaLibraryModal";
 import MediaThumbnail from "./MediaThumbnail";
 import UploadsList from "./UploadsList";
-import { DragAndDrop, DragAndDropEvents } from "../utils/DragAndDrop";
 import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
 import { MultipleMediaRequest, SortMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
+import { Draggable } from '@shopify/draggable';
 
 const { throttle, debounce } = window._;
 
@@ -213,9 +212,9 @@ export default {
       endDragging: false,
 
       // Sortable drag and drop
-      sortable: null,
+      draggable: null,
       isReordering: false,
-      reorderIntersectionId: null,
+      intersectedElement: null,
 
       // Prevent any upload and reorder interactive actions
       inactive: false,
@@ -268,13 +267,13 @@ export default {
 
   mounted() {
     this.addDragAndDropEventListeners();
-    this.registerSortable();
+    this.registerDraggable();
 
   },
 
   beforeDestroy() {
     this.removeDragAndDropEventListeners();
-    this.destroySortable();
+    this.destroyDraggable();
     this.destroyUploader();
   },
 
@@ -583,148 +582,115 @@ export default {
     }, 200),
 
 
-    // Sortable
-    registerSortable() {
-      this.sortable = new DragAndDrop({
-        container: this.$refs.layout,
-        createGhost: this.createGhost,
-        whiteList: ['.media-library-thumbnail'],
-        clickDelay: 250,
-        threshold: 5,
-        on: {
-          [DragAndDropEvents.beforeStart]: this.onSortableBeforeStart,
-          [DragAndDropEvents.drag.beforeStart]: this.onSortableBeforeDragStart,
-          [DragAndDropEvents.drag.start]: this.onSortableDragStart,
-          [DragAndDropEvents.drag.over]: this.onSortableDragOver,
-          [DragAndDropEvents.drag.out]: this.onSortableDragOut,
-          [DragAndDropEvents.drag.drop]: this.onSortableDrop,
+    /**
+     * Register Draggable.js for sorting media files
+     */
+    registerDraggable() {
+      this.draggable = new Draggable(this.$refs.layout, {
+        exclude: {
+          plugins: [Draggable.Plugins.Focusable],
+        },
+        draggable: '.media-library-thumbnail',
+        delay: 0,
+        distance: 5,
+        mirror: {
+          cursorOffsetX: -10,
+          cursorOffsetY: -20,
+          constrainDimensions: true,
         },
         scrollable: {
           scrollableElements: [this.$refs.layout],
-          strict: true,
         },
-      });
-    },
-    destroySortable() {
-      this.sortable.destroy();
-    },
-    createGhost(element, fn, { applyStyles, applyImportantGhostStyles }) {
-      const { selectedCount } = this;
-
-      if (selectedCount === 1) {
-        return fn(element);
-      }
-
-      const ghost = document.createElement('div');
-      applyImportantGhostStyles(ghost);
-      let wrapperSizeSet = false;
-
-      const thumbs = this.$refs.thumbnail
-          .filter((thumb) => this.selected.includes(this.extractId(thumb.$el)))
-          .slice(0, 5)
-          .map((node) => node.$el);
-
-      thumbs.forEach((thumb, index) => {
-        const clone = thumb.cloneNode(true);
-        clone.classList.add('media-library-thumbnail--ghost');
-        if (!wrapperSizeSet) {
-          const rect = thumb.getBoundingClientRect();
-          applyStyles(ghost, {
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-          });
-          wrapperSizeSet = true;
-        }
-        const modifiers = {
-          x: 3,
-          y: -1,
-        };
-
-        applyStyles(clone, {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: '100%',
-          height: '100%',
-          opacity: 1,
-          transform: `translateX(${index * modifiers.x}px) translateY(${index * modifiers.y * -1}px)`,
-          zIndex: thumbs.length - index + 1,
-        });
-        ghost.appendChild(clone);
-      });
-
-      const counter = document.createElement('div');
-      counter.classList.add('media-library-ghost-counter');
-      counter.innerText = selectedCount;
-      ghost.appendChild(counter);
-
-      return ghost;
-    },
-    resetIntersection() {
-      this.reorderIntersectionId = null;
-    },
-
-    // Sortable events
-    onSortableBeforeStart(event) {
-      if (!this.canBeSorted) {
-        event.cancel();
-      }
-    },
-    onSortableBeforeDragStart(event) {
-      const id = this.extractId(event.source);
-      this.addSelection(id);
-      this.preventNextLayoutClick();
-      this.$nextTick(() => {
-        event.proceed();
-      });
-    },
-    onSortableDragStart(event) {
-      if (!this.canBeSorted) {
-        return event.cancel();
-      }
-
-      this.preventPointerEventsOutsideFrame();
-
-      this.isReordering = true;
-    },
-    onSortableDragOver(event) {
-      const id = this.extractId(event.target);
-      if (this.selected.includes(id)) {
-        this.resetIntersection();
-      } else {
-        this.reorderIntersectionId = id;
-      }
-    },
-    onSortableDragOut() {
-      this.resetIntersection();
+        classes: {
+          'source:dragging': ['media-library-thumbnail--dragged', 'media-library-thumbnail--selected'],
+          'draggable:over': 'media-library-thumbnail--intersected',
+          'mirror': ['media-library-thumbnail--selected', 'media-library-thumbnail--selected'],
+        },
+      })
+        .on('drag:start', this.onDraggableStart)
+        .on('mirror:created', this.onDraggableMirrorCreated)
+        .on('drag:over', this.onDraggableOver)
+        .on('drag:out', this.onDraggableOut)
+        .on('drag:stop', this.onDraggableStop)
+        .on('drag:stopped', this.onDraggableStopped);
     },
 
     /**
-     * Event that triggers by dropping selected files into another file thumbnail
+     * Handle Draggable drag:start event
      *
-     * @param event
-     * @return {Promise<void>}
+     * @param {DragStartEvent} event
      */
-    async onSortableDrop(event) {
-      const { target } = event;
+    onDraggableStart(event) {
+      const { originalSource } = event;
+      this.addSelection(this.extractId(originalSource));
 
-      this.resetPointerEventsOutsideFrame();
-
-      if (!target) {
-        this.isReordering = false;
+      if (!this.canBeSorted) {
+        event.cancel();
         return;
       }
 
-      // Prevent modal closing if dropped tarted is viewport outside main frame
-      if (event.originalEvent.target && event.originalEvent.target.classList.contains('media-library-modal-viewport')) {
-        this.preventNextBackdropClick();
+      this.isReordering = true;
+    },
+
+    /**
+     * Handle Draggable mirror:created event
+     *
+     * @param {MirrorCreatedEvent} event
+     */
+    onDraggableMirrorCreated(event) {
+      const { selectedCount } = this;
+      if (selectedCount === 1) {
+        return;
       }
 
-      // Get dropped on element id
-      const targetId = this.extractId(event.target);
-      const sources = this.extractSelectedIDs();
+      const { mirror } = event;
+      const counter = document.createElement('div');
+      counter.classList.add('media-library-ghost-counter');
+      counter.innerText = selectedCount;
+      mirror.appendChild(counter);
+    },
 
-      if (targetId === undefined || !Array.isArray(sources) || !sources.length) {
+    /**
+     * Handle Draggable drag:over event
+     *
+     * @param {DragOverEvent} event
+     */
+    onDraggableOver(event) {
+      this.intersectedElement = event.over;
+    },
+
+    /**
+     * Handle Draggable drag:out event
+     *
+     * @param {DragOutEvent} event
+     */
+    onDraggableOut(event) {
+      this.intersectedElement = null;
+    },
+
+    /**
+     * Handle Draggable drag:stop event
+     *
+     * @param {DragStopEvent} event
+     */
+    async onDraggableStop(event) {
+      const { intersectedElement } = this;
+
+      // Check for dragged over thumbnail
+      if (!intersectedElement) {
+        return;
+      }
+
+      const targetId = this.extractId(intersectedElement);
+      // If element contains empty id for some reason
+      // or if element is one of selected stop further
+      if (targetId === undefined || this.selected.includes(targetId)) {
+        return;
+      }
+
+      const sources = this.extractSelectedIDs();
+      // Check that sources are OK
+      if (!Array.isArray(sources) || !sources.length) {
         return;
       }
 
@@ -745,7 +711,6 @@ export default {
 
       // Reset all selections
       this.unselectAll();
-      this.resetIntersection();
 
       // Set loading flag
       this.isLoading = true;
@@ -765,10 +730,53 @@ export default {
         Nova.$emit('error', this.__('Sorting finished with an error'));
       }
 
-      // Reset interactive flag
+      // Reset loading flag
       this.isLoading = false;
+    },
+
+    /**
+     * Handle Draggable drag:stopped event
+     *
+     * @param {DragStoppedEvent} event
+     */
+    onDraggableStopped(event) {
       this.isReordering = false;
     },
+
+    /**
+     * Destroy Draggable instance
+     */
+    destroyDraggable() {
+      const { draggable } = this;
+      if (draggable instanceof Draggable) {
+        draggable.destroy();
+        this.draggable = null;
+      }
+    },
+
+    // // Sortable events
+    // onSortableBeforeStart(event) {
+    //   if (!this.canBeSorted) {
+    //     event.cancel();
+    //   }
+    // },
+    // onSortableBeforeDragStart(event) {
+    //   const id = this.extractId(event.source);
+    //   this.addSelection(id);
+    //   this.preventNextLayoutClick();
+    //   this.$nextTick(() => {
+    //     event.proceed();
+    //   });
+    // },
+    // onSortableDragStart(event) {
+    //   if (!this.canBeSorted) {
+    //     return event.cancel();
+    //   }
+    //
+    //   this.preventPointerEventsOutsideFrame();
+    //
+    //   this.isReordering = true;
+    // },
   },
 
   watch: {

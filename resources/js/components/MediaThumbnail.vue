@@ -6,7 +6,6 @@
         'media-library-thumbnail--disabled': !active,
         'media-library-thumbnail--highlighted': highlighted,
         'media-library-thumbnail--dragged': dragged,
-        'media-library-thumbnail--intersected': intersected,
       }"
       :title="name"
       v-on="listeners"
@@ -45,7 +44,6 @@ export default {
     highlighted: Boolean,
     dragged: Boolean,
     processContextMenu: Boolean,
-    intersected: Boolean,
     mineType: String,
     image: String,
   },
