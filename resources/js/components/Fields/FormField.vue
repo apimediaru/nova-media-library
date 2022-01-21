@@ -12,18 +12,26 @@
           @close="onBrowsingModalClose"
           :resourceId="resourceId"
           :field="field"
-          :passed-files="field.value"
+          :passed-files="value"
         />
       </portal>
 
       <MediaBoard
-        :value="this.value"
+        v-if="value.length"
+        :value="value"
+        :loading="loading"
       />
+      <div
+        v-else
+      >
+        {{ __('Media library is empty') }}
+      </div>
 
       <div class="field-buttons ml-auto mt-8">
         <button
             type="button"
             class="btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3"
+            @click="clearCollection"
         >
             <span>
               {{ __('Clear') }}
@@ -31,8 +39,8 @@
         </button>
         <button
             type="button"
-            @click="openMediaBrowser"
             class="btn btn-default btn-primary inline-flex items-center relative ml-auto mr-3"
+            @click="openMediaBrowser"
         >
             <span>
               {{ __('Media library') }}
@@ -47,6 +55,7 @@
 import { FormField, HandlesValidationErrors } from 'laravel-nova';
 import MediaLibraryBrowser from "../MediaLibraryBrowser";
 import MediaBoard from "../MediaBoard";
+import { ClearMediaRequest } from "../../utils/RequestManager/Requests";
 
 export default {
   mixins: [FormField, HandlesValidationErrors],
@@ -61,6 +70,7 @@ export default {
   data() {
     return {
       isBrowsingModalOpen: false,
+      isLoading: false,
     };
   },
 
@@ -83,9 +93,34 @@ export default {
     openMediaBrowser() {
       this.isBrowsingModalOpen = true;
     },
+
     onBrowsingModalClose(event) {
       this.isBrowsingModalOpen = false;
       this.value = event.files;
+    },
+
+    async clearCollection() {
+      const { field } = this;
+      if (!field.collection) {
+        return;
+      }
+
+      this.isLoading = true;
+
+      // Todo: perform user check
+      const request = await new ClearMediaRequest({
+        object: field.object,
+        objectId: this.resourceId,
+        collection: field.collection,
+      }).run();
+
+      if (request.succeeded()) {
+        const response = request.responseData;
+        const { files } = response.data;
+        this.value = files;
+      }
+
+      this.isLoading = false;
     },
   },
 }

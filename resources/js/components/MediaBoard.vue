@@ -1,30 +1,41 @@
 <template>
-  <div
-      class="media-library-layout media-library-layout--view"
-      v-if="hasValue"
-  >
-    <MediaThumbnail
-        v-if="value.length"
-        v-for="(file, index) in value"
-        :key="index"
-        :index="index"
-        :name="file.file_name"
-        :image="file.original_url"
-        :mine-type="file.mime_type"
-        :data-key="file.id"
-        :active="file.active"
-    />
+  <div class="media-board">
+    <div
+        class="media-browser-loader"
+        v-if="loading"
+    >
+      <loader class="text-60" />
+    </div>
+
+    <div
+        class="media-library-layout"
+        v-if="hasValue"
+    >
+      <MediaThumbnail
+          v-if="value.length"
+          v-for="(file, index) in value"
+          :key="index"
+          :index="index"
+          :name="file.file_name"
+          :image="file.original_url"
+          :mine-type="file.mime_type"
+          :data-key="file.id"
+          :active="file.active"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import MediaThumbnail from "./MediaThumbnail";
+import MediaLoader from "./MediaLoader";
 
 export default {
   name: "MediaBoard",
 
   components: {
     MediaThumbnail,
+    MediaLoader,
   },
 
   props: {
@@ -32,6 +43,7 @@ export default {
       type: Array,
       default: () => ([]),
     },
+    loading: Boolean,
   },
 
   computed: {

@@ -62,13 +62,6 @@ body.media-library-locked {
   &--hidden {
     visibility: hidden;
   }
-
-  // For details view mode
-  &--view {
-    border: 1px solid var(--40);
-    max-height: 400px;
-    padding: .25rem;
-  }
 }
 
 .media-library-layout-message {
@@ -173,4 +166,15 @@ body.media-library-locked {
   top: 50%;
   transform: translate(-50%, -50%);
   border: 1px solid #ffffff;
+}
+
+.media-board {
+  position: relative;
+  border: 1px solid var(--40);
+  overflow: hidden;
+  min-height: 150px;
+
+  .media-library-layout {
+    max-height: 400px;
+  }
 }

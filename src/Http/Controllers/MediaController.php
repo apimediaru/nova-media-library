@@ -3,6 +3,7 @@
 namespace APIMedia\NovaMediaLibrary\Http\Controllers;
 
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaMultipleRequest;
+use APIMedia\NovaMediaLibrary\Http\Requests\MediaRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaSortRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaUploadRequest;
 use APIMedia\NovaMediaLibrary\Http\Requests\MediaGetRequest;
@@ -43,6 +44,10 @@ class MediaController extends Controller
      */
     public function remove(Request $request) {
 
+    }
+
+    public function clear(MediaRequest $request) {
+        return $this->service->clear($request);
     }
 
     /**

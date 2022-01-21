@@ -273,11 +273,6 @@ body.media-library-locked {
 .media-library-layout--hidden {
   visibility: hidden;
 }
-.media-library-layout--view {
-  border: 1px solid var(--40);
-  max-height: 400px;
-  padding: 0.25rem;
-}
 
 .media-library-layout-message {
   position: absolute;
@@ -367,6 +362,16 @@ body.media-library-locked {
   top: 50%;
   transform: translate(-50%, -50%);
   border: 1px solid #ffffff;
+}
+
+.media-board {
+  position: relative;
+  border: 1px solid var(--40);
+  overflow: hidden;
+  min-height: 150px;
+}
+.media-board .media-library-layout {
+  max-height: 400px;
 }
 
 .media-library-thumbnail {

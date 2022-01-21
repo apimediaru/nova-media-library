@@ -129,6 +129,31 @@ class MediaLibraryService
         return $media->update(['active' => $active]);
     }
 
+    public function clear(Request $request, $object = null) {
+        if (!$object) {
+            $class = $request->get('object');
+            try {
+                $object = $class::findOrFail($request->get('objectId'));
+            } catch (ModelNotFoundException $exception) {
+                return $this->failure($exception->getMessage(), [], [], 404);
+            }
+        }
+
+        $collection = $request->get('collection');
+
+        // Todo: handle potential errors
+        $object->clearMediaCollection($collection);
+
+        if ($object->relationLoaded('media')) {
+            unset($this->media);
+        }
+
+        return $this->success('Cleared', [
+            'collection' => $collection,
+            'files' => MediaResource::collection($object->getMedia($collection)),
+        ]);
+    }
+
     public function sort(Request $request, $object = null): JsonResponse
     {
         if (!$object) {

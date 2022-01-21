@@ -849,30 +849,6 @@ export default {
         this.draggable = null;
       }
     },
-
-    // // Sortable events
-    // onSortableBeforeStart(event) {
-    //   if (!this.canBeSorted) {
-    //     event.cancel();
-    //   }
-    // },
-    // onSortableBeforeDragStart(event) {
-    //   const id = this.extractId(event.source);
-    //   this.addSelection(id);
-    //   this.preventNextLayoutClick();
-    //   this.$nextTick(() => {
-    //     event.proceed();
-    //   });
-    // },
-    // onSortableDragStart(event) {
-    //   if (!this.canBeSorted) {
-    //     return event.cancel();
-    //   }
-    //
-    //   this.preventPointerEventsOutsideFrame();
-    //
-    //   this.isReordering = true;
-    // },
   },
 
   watch: {
