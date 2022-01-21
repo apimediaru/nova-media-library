@@ -20,6 +20,7 @@ export default class MediaUploader {
     this.uploading = false;
   }
 
+
   on(type, ...callbacks) {
     this.emitter.on(type, ...callbacks);
     return this;

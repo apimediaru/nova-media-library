@@ -1,9 +1,9 @@
 <template>
   <default-field
-      :field="field"
-      :errors="errors"
-      :show-help-text="showHelpText"
-      full-width-content
+    :field="field"
+    :errors="errors"
+    :show-help-text="showHelpText"
+    full-width-content
   >
     <template slot="field">
       <portal to="modals" transition="fade-transition">
@@ -14,6 +14,18 @@
           :field="field"
           :passed-files="value"
         />
+
+        <ConfirmActionModal
+          v-if="isClearConfirmActionModalShown"
+          @close="closeConfirmModal"
+          @confirm="clearCollection"
+        >
+          <template v-slot:heading>{{ __('Are you sure you want to clear this collection?') }}</template>
+
+          <template v-slot:content>
+            <p class="text-80 leading-normal">{{ __('All files will be removed') }}</p>
+          </template>
+        </ConfirmActionModal>
       </portal>
 
       <MediaBoard
@@ -21,30 +33,28 @@
         :value="value"
         :loading="loading"
       />
-      <div
-        v-else
-      >
+      <div v-else>
         {{ __('Media library is empty') }}
       </div>
 
       <div class="field-buttons ml-auto mt-8">
         <button
-            type="button"
-            class="btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3"
-            @click="clearCollection"
+          type="button"
+          class="btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3"
+          @click="showConfirmModal"
         >
-            <span>
-              {{ __('Clear') }}
-            </span>
+          <span>
+            {{ __('Clear') }}
+          </span>
         </button>
         <button
-            type="button"
-            class="btn btn-default btn-primary inline-flex items-center relative ml-auto mr-3"
-            @click="openMediaBrowser"
+          type="button"
+          class="btn btn-default btn-primary inline-flex items-center relative ml-auto mr-3"
+          @click="openMediaBrowser"
         >
-            <span>
-              {{ __('Media library') }}
-            </span>
+          <span>
+            {{ __('Media library') }}
+          </span>
         </button>
       </div>
     </template>
@@ -54,6 +64,7 @@
 <script>
 import { FormField, HandlesValidationErrors } from 'laravel-nova';
 import MediaLibraryBrowser from "../MediaLibraryBrowser";
+import ConfirmActionModal from "../ConfirmActionModal";
 import MediaBoard from "../MediaBoard";
 import { ClearMediaRequest } from "../../utils/RequestManager/Requests";
 
@@ -63,6 +74,7 @@ export default {
   components: {
     MediaLibraryBrowser,
     MediaBoard,
+    ConfirmActionModal,
   },
 
   props: ['resourceName', 'resourceId', 'field'],
@@ -71,6 +83,7 @@ export default {
     return {
       isBrowsingModalOpen: false,
       isLoading: false,
+      isClearConfirmActionModalShown: false,
     };
   },
 
@@ -86,20 +99,46 @@ export default {
      * Fill the given FormData object with the field's internal value.
      */
     fill(formData) {
-      // Just do nothing
+      // Just do nothing, don't modify that value
     },
 
-    // actual
+    /**
+     * Show media browser
+     */
     openMediaBrowser() {
       this.isBrowsingModalOpen = true;
     },
 
+    /**
+     * Event which is triggered by browsing modal close
+     *
+     * @param event
+     */
     onBrowsingModalClose(event) {
       this.isBrowsingModalOpen = false;
       this.value = event.files;
     },
 
+    /**
+     * Show clear action confirmation modal
+     */
+    showConfirmModal() {
+      this.isClearConfirmActionModalShown = true;
+    },
+
+    /**
+     * Hide clear action confirmation modal
+     */
+    closeConfirmModal() {
+      this.isClearConfirmActionModalShown = false;
+    },
+
+    /**
+     * Completely clear linked to current field media collection
+     */
     async clearCollection() {
+      this.closeConfirmModal();
+
       const { field } = this;
       if (!field.collection) {
         return;
@@ -107,7 +146,6 @@ export default {
 
       this.isLoading = true;
 
-      // Todo: perform user check
       const request = await new ClearMediaRequest({
         object: field.object,
         objectId: this.resourceId,
