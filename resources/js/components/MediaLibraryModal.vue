@@ -26,7 +26,7 @@
         </div>
         <div
           class="media-library-modal-viewport-element-close"
-          @click="backdropClose"
+          @click="crossClose"
         >
           <IconCross />
         </div>
@@ -60,6 +60,11 @@ export default {
     },
 
     closesViaBackdrop: {
+      type: [Boolean, Function],
+      default: true,
+    },
+
+    closesViaCross: {
       type: [Boolean, Function],
       default: true,
     },
@@ -140,6 +145,18 @@ export default {
         this.close(e);
       }
     },
+
+    crossClose(e) {
+      if (typeof this.closesViaCross === 'function' && this.closesViaCross()) {
+        this.close(e);
+        return;
+      }
+
+      if (this.closesViaCross) {
+        this.close(e);
+      }
+    },
+
     close(e) {
       this.$emit('modal-close', e);
     },

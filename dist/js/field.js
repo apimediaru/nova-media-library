@@ -11115,6 +11115,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       type: [Boolean, Function],
       "default": true
     },
+    closesViaCross: {
+      type: [Boolean, Function],
+      "default": true
+    },
     paused: Boolean,
     width: {
       type: [Number, String],
@@ -11182,6 +11186,16 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
 
       if (this.closesViaBackdrop === true) {
+        this.close(e);
+      }
+    },
+    crossClose: function crossClose(e) {
+      if (typeof this.closesViaCross === 'function' && this.closesViaCross()) {
+        this.close(e);
+        return;
+      }
+
+      if (this.closesViaCross) {
         this.close(e);
       }
     },
@@ -42948,7 +42962,7 @@ var render = function () {
             "div",
             {
               staticClass: "media-library-modal-viewport-element-close",
-              on: { click: _vm.backdropClose },
+              on: { click: _vm.crossClose },
             },
             [_c("IconCross")],
             1
