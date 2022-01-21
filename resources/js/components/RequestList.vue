@@ -10,13 +10,13 @@
       >{{ __('Clear') }}</div>
     </div>
     <div class="media-uploads">
-      <UploadsListItem
-          v-for="(upload, i) in uploads"
-          :media="upload"
-          :name="upload.name"
-          :size="upload.humanSize"
-          :key="i"
-          uploaded
+      <RequestListItem
+        v-for="(request, i) in requests"
+        :request="request"
+        :name="request.name"
+        :size="request.humanSize"
+        :key="i"
+        uploaded
       />
     </div>
     <div class="media-uploads-info">
@@ -38,34 +38,39 @@
 </template>
 
 <script>
-import UploadsListItem from "./UploadsListItem";
+import RequestListItem from "./RequestListItem";
+import { UploadMediaRequest } from "../utils/RequestManager";
+
 export default {
-  name: "UploadsList",
+  name: "RequestList",
 
   components: {
-    UploadsListItem,
+    RequestListItem,
   },
 
   computed: {
+    uploadRequests() {
+      return this.requests.filter((request) => request instanceof UploadMediaRequest);
+    },
     totalCount() {
-      return this.uploads.length;
+      return this.uploadRequests.length;
     },
     processedCount() {
-      return this.uploads.filter((upload) => upload.isCompleted()).length;
+      return this.uploadRequests.filter((request) => request.isCompleted()).length;
     },
     queuedCount() {
-      return this.uploads.filter((upload) => upload.queued()).length;
+      return this.uploadRequests.filter((request) => request.queued()).length;
     },
     succeededCount() {
-      return this.uploads.filter((upload) => upload.succeeded()).length;
+      return this.uploadRequests.filter((request) => request.succeeded()).length;
     },
     failedCount() {
-      return this.uploads.filter((upload) => upload.failed()).length;
+      return this.uploadRequests.filter((request) => request.failed()).length;
     },
   },
 
   props: {
-    uploads: {
+    requests: {
       type: Array,
       default: () => ([]),
     },

@@ -44,6 +44,13 @@ export default class AbstractRequest {
    */
   static method = 'post';
 
+  /**
+   * Event type
+   *
+   * @type {string}
+   */
+  static type = 'request';
+
   constructor(sendData = {}, requestConfig = {}) {
     /**
      * Aborted flag
@@ -67,18 +74,18 @@ export default class AbstractRequest {
     this.completed = false;
 
     /**
+     * Request response
+     *
+     * @type {AxiosResponse|null}
+     */
+    this.response = null;
+
+    /**
      * Axios interrupter
      *
      * @type {CancelTokenSource}
      */
     this.interrupter = CancelToken.source();
-
-    /**
-     * Axios request's response
-     *
-     * @type {null|AxiosResponse}
-     */
-    this.response = null;
 
     /**
      * Request progress
@@ -109,6 +116,15 @@ export default class AbstractRequest {
     this.client = axios;
 
     this.queue();
+  }
+
+  /**
+   * Read-only type
+   * @abstract
+   * @return {String}
+   */
+  get type() {
+    return this.constructor.type;
   }
 
   /**
@@ -290,6 +306,17 @@ export default class AbstractRequest {
   }
 
   /**
+   * Set request response
+   *
+   * @param response
+   * @return {AbstractRequest}
+   */
+  setResponse(response) {
+    this.response = response;
+    return this;
+  }
+
+  /**
    * Get request url
    *
    * @abstract
@@ -299,8 +326,14 @@ export default class AbstractRequest {
     return '';
   }
 
+  /**
+   * Http client request config
+   *
+   * @return {Object}
+   */
   getRequestConfig() {
     return {
+      cancelToken: this.interrupter.token,
       onUploadProgress: (progressEvent) => {
         this.setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
       },
@@ -308,14 +341,29 @@ export default class AbstractRequest {
     };
   }
 
+  /**
+   * Serialize send data into FormData
+   *
+   * @return {FormData}
+   */
   serializeFormData() {
     return serialize(this.sendData);
   }
 
+  /**
+   * Get response data
+   *
+   * @return {Object}
+   */
   get responseData() {
     return this.response.data;
   }
 
+  /**
+   * Execute request
+   *
+   * @return {Promise}
+   */
   run() {
     return new Promise(async (resolve) => {
       this.process();
@@ -333,11 +381,12 @@ export default class AbstractRequest {
         if (this.abortable && Axios.isCancel(exception)) {
           this.abort();
         } else {
+          console.error(exception);
           this.failure();
         }
       }
 
-      this.response = response;
+      this.setResponse(response);
       resolve(this);
     });
   }

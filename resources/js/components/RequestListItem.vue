@@ -12,7 +12,7 @@
       <div class="media-upload-info-name">{{ name }}</div>
       <div
           class="media-upload-info-progress"
-          v-if="media.processed()"
+          v-if="request.processed()"
       >
         <div
             class="media-upload-info-progress-bar media-upload-progress"
@@ -27,7 +27,7 @@
         </div>
         <div
             class="media-upload-info-progress-abort"
-            @click="media.interrupt()"
+            @click="request.abort()"
         >{{ __('Abort') }}</div>
       </div>
     </div>
@@ -36,23 +36,23 @@
       <div
           class="media-upload-details-state"
           :class="{
-            'media-upload-details-state-uploaded': media.succeeded(),
-            'media-upload-details-state-queued': media.queued(),
-            'media-upload-details-state-failed': media.failed(),
-            'media-upload-details-state-aborted': media.aborted(),
-            'media-upload-details-state-processed': media.processed(),
+            'media-upload-details-state-uploaded': request.succeeded(),
+            'media-upload-details-state-queued': request.queued(),
+            'media-upload-details-state-failed': request.failed(),
+            'media-upload-details-state-aborted': request.aborted(),
+            'media-upload-details-state-processed': request.processed(),
           }"
       >
-        <template v-if="media.queued() ">{{ __('Queued...') }}</template>
-        <template v-else-if="media.succeeded()">{{ __('Uploaded') }}</template>
-        <template v-else-if="media.processed()">{{ __('Processing...') }}</template>
-        <template v-else-if="media.aborted()">{{ __('Aborted') }}</template>
+        <template v-if="request.queued() ">{{ __('Queued...') }}</template>
+        <template v-else-if="request.succeeded()">{{ __('Uploaded') }}</template>
+        <template v-else-if="request.processed()">{{ __('Processing...') }}</template>
+        <template v-else-if="request.aborted()">{{ __('Aborted') }}</template>
         <template v-else>{{ __('Failed') }}</template>
       </div>
     </div>
     <div
         class="media-upload-information"
-        v-if="media.failed() && media.response"
+        v-if="request.failed() && request.response"
     >
       <span>{{ response.status }}: {{ response.statusText }}</span>
     </div>
@@ -60,28 +60,28 @@
 </template>
 
 <script>
-import { MediaUpload } from "../utils/MediaUploader";
+import { AbstractRequest } from "../shared";
 
 export default {
-  name: "UploadsListItem",
+  name: "RequestListItem",
 
   props: {
     name: String,
     size: [Number, String],
     queued: Boolean,
     uploaded: Boolean,
-    media: {
-      type: [MediaUpload],
+    request: {
+      type: [AbstractRequest],
       default: () => ({}),
     },
   },
 
   computed: {
     progressPercentage() {
-      return `${this.media.getProgress()}%`;
+      return `${this.request.getProgress()}%`;
     },
     response() {
-      return this.media.getResponse();
+      return this.request.response || {};
     },
   },
 }

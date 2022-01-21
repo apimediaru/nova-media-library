@@ -193,20 +193,20 @@
                 {{ __('Drop your images here') }}
               </p>
               <input
-                  type="file"
-                  multiple
-                  class="media-library-dropzone-input"
-                  ref="upload"
-                  @change="onFileInputChange"
+                type="file"
+                multiple
+                class="media-library-dropzone-input"
+                ref="upload"
+                @change="onFileInputChange"
               >
             </div>
           </div>
         </div>
-        <UploadsList
+        <RequestList
           v-if="(hasFiles || hasUploads) && uploadDetailsVisible"
           class="media-library-browser-uploads"
-          :uploads="uploads"
-          @clear="onUploadsClear"
+          :requests="requests"
+          @clear="onRequestListClear"
         />
       </div>
 
@@ -217,9 +217,8 @@
 <script>
 import MediaLibraryModal from "./MediaLibraryModal";
 import MediaThumbnail from "./MediaThumbnail";
-import UploadsList from "./UploadsList";
-import { MediaUploader, MediaUpload } from "../utils/MediaUploader";
-import { MultipleMediaRequest, SortMediaRequest } from "../utils/RequestManager";
+import RequestList from "./RequestList";
+import { RequestManager, MultipleMediaRequest, SortMediaRequest, RequestCompletedEvent, UploadMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
 import { Draggable } from '@shopify/draggable';
 
@@ -240,7 +239,7 @@ export default {
   components: {
     MediaLibraryModal,
     MediaThumbnail,
-    UploadsList,
+    RequestList,
   },
 
   data() {
@@ -275,9 +274,9 @@ export default {
       // Pause modal events
       paused: false,
 
-      // Uploads
+      // Requests
       uploadDetailsVisible: false,
-      uploads: [],
+      requests: [],
 
       // Loading
       isLoading: false,
@@ -303,7 +302,7 @@ export default {
     this.setFiles([...this.passedFiles || []], true);
 
     // Create and attach media uploader to instance
-    this.registerUploader();
+    this.registerRequestManager();
   },
 
   mounted() {
@@ -315,7 +314,7 @@ export default {
   beforeDestroy() {
     this.removeDragAndDropEventListeners();
     this.destroyDraggable();
-    this.destroyUploader();
+    this.destroyRequestManager();
   },
 
   computed: {
@@ -572,27 +571,44 @@ export default {
           .map((id) => id);
     },
 
-    // File input
-    registerUploader() {
-      this.uploader = new MediaUploader({
-        object: this.field.object,
-        objectId: this.resourceId,
-        collection: this.field.collection,
-      }).on('file:upload', this.onFileUpload);
+    /**
+     * Register request manager
+     */
+    registerRequestManager() {
+      this.requestManager = new RequestManager()
+        .on('request:completed', this.onRequestManagerComplete);
     },
-    destroyUploader() {
-      this.uploader.off('file:upload', this.onFileUpload);
-      this.uploader = null;
+    destroyRequestManager() {
+      this.requestManager.destroy();
+      this.requestManager = null;
     },
+
+    /**
+     * Get file upload input
+     *
+     * @return {HTMLInputElement}
+     */
     getUploadInput() {
       return this.$refs.upload;
     },
+
+    /**
+     * Event that occurs on file input change
+     *
+     * @param {InputEvent} event
+     * @return {Promise<void>}
+     */
     async onFileInputChange(event) {
       const { target } = event;
       const { files } = target;
 
-      const uploads = [...files].map((item) => new MediaUpload(item));
-      this.uploads.push(...uploads);
+      const uploads = [...files].map((item) => new UploadMediaRequest({
+        object: this.field.object,
+        objectId: this.resourceId,
+        collection: this.field.collection,
+        file: item,
+      }));
+      this.requests.push(...uploads);
 
       this.setUploadingMode();
       this.uploadDetailsVisible = true;
@@ -601,20 +617,41 @@ export default {
       // to upload the same pull of files again
       target.value = null;
 
-      await this.uploader.upload(uploads.reverse());
+      await this.requestManager.perform(uploads.reverse());
     },
-    onFileUpload(event) {
-      const { file } = event;
-      if (file) {
-        this.addFile(file);
+
+    /**
+     * Request manager request complete callback
+     *
+     * @param {typeof RequestEvent} event
+     */
+    onRequestManagerComplete(event) {
+      const { request } = event;
+      if (request instanceof UploadMediaRequest) {
+        this.onFileUpload(request);
       }
     },
-    onUploadsClear() {
-      if (this.uploader.isUploading()) {
+
+    /**
+     * Triggers on media file upload
+     *
+     * @param {UploadMediaRequest} event
+     */
+    onFileUpload(event) {
+      if (event.succeeded()) {
+        const {file} = event.responseData.data;
+        if (file) {
+          this.addFile(file);
+        }
+      }
+    },
+
+    onRequestListClear() {
+      if (this.requestManager.isWorking()) {
         return;
       }
 
-      this.uploads = [];
+      this.requests = [];
     },
 
     // Drag and drop
