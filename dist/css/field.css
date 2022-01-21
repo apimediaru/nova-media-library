@@ -381,17 +381,26 @@ body.media-library-locked {
   background-color: #E5F3FF;
   border-color: #E5F3FF;
 }
+.media-library-thumbnail--disabled {
+  opacity: 0.5;
+}
+.media-library-thumbnail--disabled, .media-library-thumbnail--disabled:hover {
+  border-color: var(--60);
+  background-color: var(--30);
+  color: var(--80);
+}
 .media-library-thumbnail--highlighted {
   border-style: dashed;
 }
 .media-library-thumbnail--highlighted, .media-library-thumbnail--highlighted:hover, .media-library-thumbnail--selected, .media-library-thumbnail--selected:hover {
   border-color: #99D1FF;
+  opacity: 1;
 }
 .media-library-thumbnail--selected, .media-library-thumbnail--selected:hover, .media-library-thumbnail--ghost, .media-library-thumbnail--ghost:hover {
   background-color: #CDE8FF;
   border-style: solid;
 }
-.media-library-thumbnail--disabled, .media-library-thumbnail--dragged {
+.media-library-thumbnail--dragged {
   opacity: 0.5;
 }
 .media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover, .media-library-thumbnail--ghost, .media-library-thumbnail--ghost:hover {

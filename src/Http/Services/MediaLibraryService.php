@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeDeleted;
 use Illuminate\Database\Eloquent\Model;
 use \APIMedia\NovaMediaLibrary\Fields\HandlesConversionsTrait;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeUpdated;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
 use Illuminate\Support\Carbon;
@@ -43,8 +43,8 @@ class MediaLibraryService
 
         foreach ($sources as $id) {
             try {
-                $this->{$method}($object, $id);
-            } catch (MediaCannotBeDeleted $exception) {
+                $this->{$method}($object, $id, $collection);
+            } catch (\Exception $exception) {
                 $errors[$id] = $exception->getMessage();
             }
         }
@@ -83,6 +83,50 @@ class MediaLibraryService
 
     public function delete($object, $id) {
         return $object->deleteMedia($id);
+    }
+
+    /**
+     * Mark media as active
+     *
+     * @param $object
+     * @param $id
+     * @param $collection
+     * @return mixed
+     * @throws MediaCannotBeUpdated
+     */
+    public function activate($object, $id, $collection) {
+        return $this->changeActivity($object, $id, $collection, true);
+    }
+
+    /**
+     * Mark media as not active
+     *
+     * @param $object
+     * @param $id
+     * @param $collection
+     * @return mixed
+     * @throws MediaCannotBeUpdated
+     */
+    public function deactivate($object, $id, $collection) {
+        return $this->changeActivity($object, $id, $collection, false);
+    }
+
+    /**
+     * Change media active column
+     *
+     * @param $object
+     * @param $id
+     * @param $collection
+     * @param bool $active
+     * @return mixed
+     * @throws MediaCannotBeUpdated
+     */
+    public function changeActivity($object, $id, $collection, bool $active) {
+        $media = $object->media->find($id);
+        if (!$media) {
+            throw MediaCannotBeUpdated::doesNotBelongToCollection($id, $object, $collection);
+        }
+        return $media->update(['active' => $active]);
     }
 
     public function sort(Request $request, $object = null): JsonResponse

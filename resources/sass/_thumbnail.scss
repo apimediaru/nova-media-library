@@ -11,6 +11,17 @@
     border-color: #E5F3FF;
   }
 
+  &--disabled {
+    opacity: .5;
+
+    &,
+    &:hover {
+      border-color: var(--60);
+      background-color: var(--30);
+      color: var(--80);
+    }
+  }
+
   &--highlighted {
     border-style: dashed;
   }
@@ -20,6 +31,7 @@
     &,
     &:hover {
       border-color: #99D1FF;
+      opacity: 1;
     }
   }
 
@@ -32,7 +44,6 @@
     }
   }
 
-  &--disabled,
   &--dragged {
     opacity: .5;
   }

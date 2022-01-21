@@ -46,8 +46,8 @@
               >
                 <option value="none" selected>{{ __('Select an action') }}</option>
                 <option value="delete">{{ __('Delete') }}</option>
-                <option value="makeActive">{{ __('Make active') }}</option>
-                <option value="makeInactive">{{ __('Make inactive') }}</option>
+                <option value="activate">{{ __('Activate') }}</option>
+                <option value="deactivate">{{ __('Deactivate') }}</option>
                 <option value="regenerateThumbnails">{{ __('Regenerate thumbnails') }}</option>
               </select>
             </div>
@@ -123,8 +123,8 @@
               :index="index"
               :name="file.file_name"
               :image="file.original_url"
-              @click="onThumbnailClick(file, index, $event)"
-              @contextmenu="onThumbnailContextmenu(file, $event)"
+              :file="file"
+              :thumbnail=""
               :dragged="isReordering && selected.includes(file.id)"
               :selected="isItemSelected(file.id)"
               :mine-type="file.mime_type"
@@ -132,6 +132,8 @@
               :highlighted="file.id === selectedIndex"
               :data-key="file.id"
               :active="file.active"
+              @click="onThumbnailClick(file, index, $event)"
+              @contextmenu="onThumbnailContextmenu(file, $event)"
             />
           </div>
 

@@ -46,6 +46,10 @@ export default {
     processContextMenu: Boolean,
     mineType: String,
     image: String,
+    file: {
+      type: Object,
+      default: () => ({}),
+    },
   },
 
   computed: {
