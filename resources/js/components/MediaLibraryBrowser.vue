@@ -1,7 +1,7 @@
 <template>
   <MediaLibraryModal
     @modal-close="close"
-    :closes-via-backdrop="onBackdropClick"
+    :closes-via-backdrop="false"
     class="media-library-browser media-library-modal--entire-scrollable"
     width="1400"
     :paused="paused"
@@ -29,14 +29,54 @@
                 'media-library-action-static': !isLoading,
               }"
             >
-              <input
-                type="checkbox"
-                class="checkbox cursor-pointer"
-                @change="isInteractive && filesCount !== selectedCount ? selectAll() : unselectAll()"
-                :checked="filesCount === selectedCount"
-                :disabled="!filesCount"
-                :title="__('Select / Reset all')"
+              <!-- Select All -->
+              <dropdown
+                placement="bottom-end"
+                class="-mx-2"
               >
+                <dropdown-trigger
+                  class="px-2"
+                >
+                  <fake-checkbox
+                    :checked="selectAllChecked"
+                  />
+                </dropdown-trigger>
+
+                <dropdown-menu
+                    slot="menu"
+                    direction="ltr"
+                    width="250"
+                >
+                  <div class="p-4">
+                    <ul class="list-reset">
+                      <li class="flex items-center mb-3">
+                        <checkbox-with-label
+                          @input="selectAll"
+                          :checked="selectAllChecked"
+                        >
+                          {{ __('Select all') }} ({{ filesCount }})
+                        </checkbox-with-label>
+                      </li>
+                      <li class="flex items-center mb-3">
+                        <checkbox-with-label
+                          @input="selectAllActive"
+                          :checked="selectAllActiveChecked"
+                        >
+                          {{ __('Select active') }} ({{ activeFilesCount }})
+                        </checkbox-with-label>
+                      </li>
+                      <li class="flex items-center">
+                        <checkbox-with-label
+                          @input="selectAllInactive"
+                          :checked="selectAllInactiveChecked"
+                        >
+                          {{ __('Select inactive') }} ({{ inactiveFilesCount }})
+                        </checkbox-with-label>
+                      </li>
+                    </ul>
+                  </div>
+                </dropdown-menu>
+              </dropdown>
             </div>
             <div class="media-library-actions-action media-library-action">
               <select
@@ -124,7 +164,6 @@
               :name="file.file_name"
               :image="file.original_url"
               :file="file"
-              :thumbnail=""
               :dragged="isReordering && selected.includes(file.id)"
               :selected="isItemSelected(file.id)"
               :mine-type="file.mime_type"
@@ -301,6 +340,44 @@ export default {
     isInteractive() {
       return !this.isLoading || !this.hasFiles;
     },
+
+    /**
+     * True if any selection is active
+     *
+     * @return {Boolean}
+     */
+    hasSelections() {
+      return this.filesCount && this.selectedCount;
+    },
+
+    /**
+     * Determine if all files are checked
+     */
+    selectAllChecked() {
+      return this.filesCount && this.filesCount === this.selectedCount;
+    },
+
+    /**
+     * Determine if all selected files are active
+     *
+     * @return {Boolean}
+     */
+    selectAllActiveChecked() {
+      const { filesDictionary } = this;
+      return this.hasSelections
+          && this.selected.every((id) => filesDictionary[id] && filesDictionary[id].attributes.active === true);
+    },
+
+    /**
+     * Determine if all selected files are inactive
+     *
+     * @return {Boolean}
+     */
+    selectAllInactiveChecked() {
+      const { filesDictionary } = this;
+      return this.hasSelections
+          && this.selected.every((id) => filesDictionary[id] && filesDictionary[id].attributes.active === false);
+    },
   },
 
   methods: {
@@ -338,14 +415,7 @@ export default {
         body.classList.add(bodyLockedClass);
       }
     },
-    onBackdropClick() {
-      let resolution = true;
-      if (this.isBackdropClickPrevented) {
-        resolution = false;
-        this.isBackdropClickPrevented = false;
-      }
-      return resolution;
-    },
+
     triggerFileUpload() {
       this.getUploadInput().click();
     },
@@ -464,9 +534,33 @@ export default {
         this.unselectAll();
       }
     },
-    selectAll() {
-      this.selected = this.files.map((file) => file.id);
+    setSelection(value) {
+      if (Array.isArray(value)) {
+        this.selected = value;
+      }
     },
+
+    /**
+     * Select all active files
+     */
+    selectAllActive() {
+      this.setSelection(this.activeFiles.map((file) => file.id));
+    },
+
+    /**
+     * Select all inactive files
+     */
+    selectAllInactive() {
+      this.setSelection(this.inactiveFiles.map((file) => file.id));
+    },
+
+    /**
+     * Select all available files
+     */
+    selectAll() {
+      this.setSelection(this.files.map((file) => file.id));
+    },
+
     unselectAll() {
       this.selected = [];
       this.selectedIndex = null;

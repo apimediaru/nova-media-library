@@ -64,7 +64,7 @@
   overflow: hidden;
   direction: ltr;
   transform: translateZ(0);
-  z-index: 9999;
+  z-index: 30;
   position: fixed;
 }
 .media-library-modal--entire-scrollable > .media-library-modal-viewport {

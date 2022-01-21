@@ -8,27 +8,60 @@ export default {
 
   data() {
     return {
-      // Files repository
+      /**
+       * Files repository
+       */
       filesRepository: [],
 
-      // If set to true emit event on files update
+      /**
+       * If true component will emit files change event on files update
+       */
       emitEventOnFilesUpdate: true,
     };
   },
 
   computed: {
+    /**
+     * Get array of files
+     *
+     * @return {Object[]}
+     */
     files() {
       return this.filesRepository.filter(Boolean);
     },
+
+    /**
+     * Get files count
+     *
+     * @return {Number}
+     */
     filesCount() {
       return this.files.length;
     },
+
+    /**
+     * True if files exists
+     *
+     * @return {boolean}
+     */
     hasFiles() {
       return this.filesCount > 0;
     },
+
+    /**
+     * True if library can add more files
+     *
+     * @return {boolean}
+     */
     canAddFiles() {
       return true;
     },
+
+    /**
+     * Get files dictionary in format id => index, attributes
+     *
+     * @return {Object}
+     */
     filesDictionary() {
       const dictionary = {};
       this.files.forEach((file, index) => {
@@ -38,6 +71,42 @@ export default {
         };
       });
       return dictionary;
+    },
+
+    /**
+     * Get active files
+     *
+     * @return {Object[]}
+     */
+    activeFiles() {
+      return this.files.filter((file) => file.active);
+    },
+
+    /**
+     * Get inactive files
+     *
+     * @return {Object[]}
+     */
+    inactiveFiles() {
+      return this.files.filter((file) => !file.active);
+    },
+
+    /**
+     * Get active files count
+     *
+     * @return {Number}
+     */
+    activeFilesCount() {
+      return this.activeFiles.length;
+    },
+
+    /**
+     * Get inactive files count
+     *
+     * @return {Number}
+     */
+    inactiveFilesCount() {
+      return this.inactiveFiles.length;
     },
   },
 

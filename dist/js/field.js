@@ -10253,6 +10253,45 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -10357,6 +10396,46 @@ var bodyLockedClass = 'media-library-locked';
     },
     isInteractive: function isInteractive() {
       return !this.isLoading || !this.hasFiles;
+    },
+
+    /**
+     * True if any selection is active
+     *
+     * @return {Boolean}
+     */
+    hasSelections: function hasSelections() {
+      return this.filesCount && this.selectedCount;
+    },
+
+    /**
+     * Determine if all files are checked
+     */
+    selectAllChecked: function selectAllChecked() {
+      return this.filesCount && this.filesCount === this.selectedCount;
+    },
+
+    /**
+     * Determine if all selected files are active
+     *
+     * @return {Boolean}
+     */
+    selectAllActiveChecked: function selectAllActiveChecked() {
+      var filesDictionary = this.filesDictionary;
+      return this.hasSelections && this.selected.every(function (id) {
+        return filesDictionary[id] && filesDictionary[id].attributes.active === true;
+      });
+    },
+
+    /**
+     * Determine if all selected files are inactive
+     *
+     * @return {Boolean}
+     */
+    selectAllInactiveChecked: function selectAllInactiveChecked() {
+      var filesDictionary = this.filesDictionary;
+      return this.hasSelections && this.selected.every(function (id) {
+        return filesDictionary[id] && filesDictionary[id].attributes.active === false;
+      });
     }
   },
   methods: {
@@ -10398,16 +10477,6 @@ var bodyLockedClass = 'media-library-locked';
       if (body.classList.contains(bodyLockedClass)) {
         body.classList.add(bodyLockedClass);
       }
-    },
-    onBackdropClick: function onBackdropClick() {
-      var resolution = true;
-
-      if (this.isBackdropClickPrevented) {
-        resolution = false;
-        this.isBackdropClickPrevented = false;
-      }
-
-      return resolution;
     },
     triggerFileUpload: function triggerFileUpload() {
       this.getUploadInput().click();
@@ -10552,10 +10621,37 @@ var bodyLockedClass = 'media-library-locked';
         this.unselectAll();
       }
     },
-    selectAll: function selectAll() {
-      this.selected = this.files.map(function (file) {
+    setSelection: function setSelection(value) {
+      if (Array.isArray(value)) {
+        this.selected = value;
+      }
+    },
+
+    /**
+     * Select all active files
+     */
+    selectAllActive: function selectAllActive() {
+      this.setSelection(this.activeFiles.map(function (file) {
         return file.id;
-      });
+      }));
+    },
+
+    /**
+     * Select all inactive files
+     */
+    selectAllInactive: function selectAllInactive() {
+      this.setSelection(this.inactiveFiles.map(function (file) {
+        return file.id;
+      }));
+    },
+
+    /**
+     * Select all available files
+     */
+    selectAll: function selectAll() {
+      this.setSelection(this.files.map(function (file) {
+        return file.id;
+      }));
     },
     unselectAll: function unselectAll() {
       this.selected = [];
@@ -11474,25 +11570,59 @@ __webpack_require__.r(__webpack_exports__);
   },
   data: function data() {
     return {
-      // Files repository
+      /**
+       * Files repository
+       */
       filesRepository: [],
-      // If set to true emit event on files update
+
+      /**
+       * If true component will emit files change event on files update
+       */
       emitEventOnFilesUpdate: true
     };
   },
   computed: {
+    /**
+     * Get array of files
+     *
+     * @return {Object[]}
+     */
     files: function files() {
       return this.filesRepository.filter(Boolean);
     },
+
+    /**
+     * Get files count
+     *
+     * @return {Number}
+     */
     filesCount: function filesCount() {
       return this.files.length;
     },
+
+    /**
+     * True if files exists
+     *
+     * @return {boolean}
+     */
     hasFiles: function hasFiles() {
       return this.filesCount > 0;
     },
+
+    /**
+     * True if library can add more files
+     *
+     * @return {boolean}
+     */
     canAddFiles: function canAddFiles() {
       return true;
     },
+
+    /**
+     * Get files dictionary in format id => index, attributes
+     *
+     * @return {Object}
+     */
     filesDictionary: function filesDictionary() {
       var dictionary = {};
       this.files.forEach(function (file, index) {
@@ -11502,6 +11632,46 @@ __webpack_require__.r(__webpack_exports__);
         };
       });
       return dictionary;
+    },
+
+    /**
+     * Get active files
+     *
+     * @return {Object[]}
+     */
+    activeFiles: function activeFiles() {
+      return this.files.filter(function (file) {
+        return file.active;
+      });
+    },
+
+    /**
+     * Get inactive files
+     *
+     * @return {Object[]}
+     */
+    inactiveFiles: function inactiveFiles() {
+      return this.files.filter(function (file) {
+        return !file.active;
+      });
+    },
+
+    /**
+     * Get active files count
+     *
+     * @return {Number}
+     */
+    activeFilesCount: function activeFilesCount() {
+      return this.activeFiles.length;
+    },
+
+    /**
+     * Get inactive files count
+     *
+     * @return {Number}
+     */
+    inactiveFilesCount: function inactiveFilesCount() {
+      return this.inactiveFiles.length;
     }
   },
   methods: {
@@ -42154,8 +42324,561 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "render": () => (/* binding */ render),
 /* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
 /* harmony export */ });
-var render = function () {}
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "MediaLibraryModal",
+    {
+      staticClass:
+        "media-library-browser media-library-modal--entire-scrollable",
+      attrs: {
+        "closes-via-backdrop": false,
+        width: "1400",
+        paused: _vm.paused,
+      },
+      on: { "modal-close": _vm.close },
+    },
+    [
+      _c(
+        "div",
+        {
+          staticClass: "media-library-browser-container",
+          attrs: { slot: "container" },
+          slot: "container",
+        },
+        [
+          _c("div", { staticClass: "media-library-browser-head" }, [
+            _c("h2", { staticClass: "media-library-browser-head-title" }, [
+              _c(
+                "span",
+                [
+                  _vm._v(_vm._s(_vm.__("Browse media library"))),
+                  _vm.field.name
+                    ? [_vm._v(": " + _vm._s(_vm.field.name))]
+                    : _vm._e(),
+                ],
+                2
+              ),
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass: "media-library-panel-actions",
+                class: {
+                  "media-library-panel-actions-disabled":
+                    !_vm.selectedCount || _vm.isLoading,
+                  "media-library-panel-actions-hidden":
+                    !_vm.filesCount && !_vm.hasUploads,
+                },
+              },
+              [
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "media-library-actions-panel media-library-actions-panel-left media-library-actions",
+                  },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action",
+                        class: {
+                          "media-library-action-static": !_vm.isLoading,
+                        },
+                      },
+                      [
+                        _c(
+                          "dropdown",
+                          {
+                            staticClass: "-mx-2",
+                            attrs: { placement: "bottom-end" },
+                          },
+                          [
+                            _c(
+                              "dropdown-trigger",
+                              { staticClass: "px-2" },
+                              [
+                                _c("fake-checkbox", {
+                                  attrs: { checked: _vm.selectAllChecked },
+                                }),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "dropdown-menu",
+                              {
+                                attrs: {
+                                  slot: "menu",
+                                  direction: "ltr",
+                                  width: "250",
+                                },
+                                slot: "menu",
+                              },
+                              [
+                                _c("div", { staticClass: "p-4" }, [
+                                  _c("ul", { staticClass: "list-reset" }, [
+                                    _c(
+                                      "li",
+                                      { staticClass: "flex items-center mb-3" },
+                                      [
+                                        _c(
+                                          "checkbox-with-label",
+                                          {
+                                            attrs: {
+                                              checked: _vm.selectAllChecked,
+                                            },
+                                            on: { input: _vm.selectAll },
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                        " +
+                                                _vm._s(_vm.__("Select all")) +
+                                                " (" +
+                                                _vm._s(_vm.filesCount) +
+                                                ")\n                      "
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "li",
+                                      { staticClass: "flex items-center mb-3" },
+                                      [
+                                        _c(
+                                          "checkbox-with-label",
+                                          {
+                                            attrs: {
+                                              checked:
+                                                _vm.selectAllActiveChecked,
+                                            },
+                                            on: { input: _vm.selectAllActive },
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                        " +
+                                                _vm._s(
+                                                  _vm.__("Select active")
+                                                ) +
+                                                " (" +
+                                                _vm._s(_vm.activeFilesCount) +
+                                                ")\n                      "
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "li",
+                                      { staticClass: "flex items-center" },
+                                      [
+                                        _c(
+                                          "checkbox-with-label",
+                                          {
+                                            attrs: {
+                                              checked:
+                                                _vm.selectAllInactiveChecked,
+                                            },
+                                            on: {
+                                              input: _vm.selectAllInactive,
+                                            },
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                        " +
+                                                _vm._s(
+                                                  _vm.__("Select inactive")
+                                                ) +
+                                                " (" +
+                                                _vm._s(_vm.inactiveFilesCount) +
+                                                ")\n                      "
+                                            ),
+                                          ]
+                                        ),
+                                      ],
+                                      1
+                                    ),
+                                  ]),
+                                ]),
+                              ]
+                            ),
+                          ],
+                          1
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action",
+                      },
+                      [
+                        _c(
+                          "select",
+                          {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.action,
+                                expression: "action",
+                              },
+                            ],
+                            staticClass:
+                              "w-full form-control form-select cursor-pointer",
+                            attrs: {
+                              disabled:
+                                !_vm.selectedCount || !_vm.isInteractive,
+                            },
+                            on: {
+                              change: function ($event) {
+                                var $$selectedVal = Array.prototype.filter
+                                  .call($event.target.options, function (o) {
+                                    return o.selected
+                                  })
+                                  .map(function (o) {
+                                    var val = "_value" in o ? o._value : o.value
+                                    return val
+                                  })
+                                _vm.action = $event.target.multiple
+                                  ? $$selectedVal
+                                  : $$selectedVal[0]
+                              },
+                            },
+                          },
+                          [
+                            _c(
+                              "option",
+                              { attrs: { value: "none", selected: "" } },
+                              [_vm._v(_vm._s(_vm.__("Select an action")))]
+                            ),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "delete" } }, [
+                              _vm._v(_vm._s(_vm.__("Delete"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "activate" } }, [
+                              _vm._v(_vm._s(_vm.__("Activate"))),
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "deactivate" } }, [
+                              _vm._v(_vm._s(_vm.__("Deactivate"))),
+                            ]),
+                            _vm._v(" "),
+                            _c(
+                              "option",
+                              { attrs: { value: "regenerateThumbnails" } },
+                              [_vm._v(_vm._s(_vm.__("Regenerate thumbnails")))]
+                            ),
+                          ]
+                        ),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-action",
+                      },
+                      [
+                        _c(
+                          "button",
+                          {
+                            staticClass:
+                              "btn btn-default btn-primary whitespace-no-wrap cursor-pointer",
+                            attrs: { disabled: _vm.action === "none" },
+                            on: { click: _vm.performBulkAction },
+                          },
+                          [_vm._v(_vm._s(_vm.__("Apply")))]
+                        ),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "media-library-actions-action media-library-browser-actions-action-search media-library-action",
+                      },
+                      [
+                        _c("input", {
+                          staticClass:
+                            "w-full form-control form-input form-input-bordered",
+                          attrs: {
+                            type: "text",
+                            placeholder: _vm.__("Search..."),
+                          },
+                        }),
+                      ]
+                    ),
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "media-library-actions-panel media-library-actions-panel-right media-library-actions",
+                  },
+                  [
+                    _vm.files.length > 0
+                      ? _c(
+                          "div",
+                          {
+                            staticClass:
+                              "media-library-browser-actions-action-for-selected",
+                          },
+                          [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.__("Selected:")) +
+                                " "
+                            ),
+                            _c(
+                              "span",
+                              {
+                                staticClass:
+                                  "media-library-browser-actions-action-for-selected-value",
+                              },
+                              [
+                                _vm._v(
+                                  _vm._s(_vm.selectedCount) +
+                                    " / " +
+                                    _vm._s(_vm.files.length)
+                                ),
+                              ]
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-default btn-primary whitespace-no-wrap cursor-pointer media-library-actions-action",
+                        on: {
+                          click: function ($event) {
+                            _vm.uploadDetailsVisible = !_vm.uploadDetailsVisible
+                          },
+                        },
+                      },
+                      [_vm._v(_vm._s(_vm.__("Upload details")))]
+                    ),
+                  ]
+                ),
+              ]
+            ),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "media-library-browser-grid" },
+            [
+              _c(
+                "div",
+                {
+                  ref: "area",
+                  staticClass: "media-library-browser-area",
+                  on: { click: _vm.onBrowserAreaClick },
+                },
+                [
+                  _vm.isLoading
+                    ? _c(
+                        "div",
+                        { staticClass: "media-browser-loader" },
+                        [_c("loader", { staticClass: "text-60" })],
+                        1
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      ref: "layout",
+                      staticClass: "media-library-layout",
+                      class: {
+                        "media-library-layout--hidden": _vm.isDragging,
+                      },
+                    },
+                    [
+                      !_vm.hasFiles
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "media-library-layout-message",
+                              class: {
+                                "cursor-pointer": _vm.canAddFiles,
+                              },
+                              on: { click: _vm.triggerFileUpload },
+                            },
+                            [
+                              _vm._v(
+                                "\n            " +
+                                  _vm._s(
+                                    _vm.__(
+                                      "There are currently no media files in this library."
+                                    )
+                                  ) +
+                                  "\n            "
+                              ),
+                              _vm.canAddFiles
+                                ? [
+                                    _c("br"),
+                                    _vm._v(" "),
+                                    _c("p", { staticClass: "mt-2" }, [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.__(
+                                            "Drag and drop, or click to browse and select your files"
+                                          )
+                                        )
+                                      ),
+                                    ]),
+                                  ]
+                                : _vm._e(),
+                            ],
+                            2
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm._l(_vm.files, function (file, index) {
+                        return _vm.hasFiles
+                          ? _c("MediaThumbnail", {
+                              key: index,
+                              ref: "thumbnail",
+                              refInFor: true,
+                              attrs: {
+                                index: index,
+                                name: file.file_name,
+                                image: file.original_url,
+                                file: file,
+                                dragged:
+                                  _vm.isReordering &&
+                                  _vm.selected.includes(file.id),
+                                selected: _vm.isItemSelected(file.id),
+                                "mine-type": file.mime_type,
+                                highlighted: file.id === _vm.selectedIndex,
+                                "data-key": file.id,
+                                active: file.active,
+                              },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.onThumbnailClick(
+                                    file,
+                                    index,
+                                    $event
+                                  )
+                                },
+                                contextmenu: function ($event) {
+                                  return _vm.onThumbnailContextmenu(
+                                    file,
+                                    $event
+                                  )
+                                },
+                              },
+                            })
+                          : _vm._e()
+                      }),
+                    ],
+                    2
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      staticClass: "media-library-dropzone",
+                      class: {
+                        "media-library-dropzone-visible": _vm.isDropzoneVisible,
+                        "media-library-dropzone-highlighted":
+                          _vm.isDropzoneVisible && _vm.isDraggingOverDropzone,
+                      },
+                    },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "media-library-dropzone-inner" },
+                        [
+                          _c(
+                            "p",
+                            { staticClass: "media-library-dropzone-icon" },
+                            [
+                              _c(
+                                "svg",
+                                {
+                                  staticClass: "fill-current w-4 h-4 mx-auto",
+                                  attrs: {
+                                    xmlns: "http://www.w3.org/2000/svg",
+                                    viewBox: "0 0 20 20",
+                                  },
+                                },
+                                [
+                                  _c("path", {
+                                    attrs: {
+                                      d: "M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z",
+                                    },
+                                  }),
+                                ]
+                              ),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "p",
+                            { staticClass: "media-library-dropzone-notice" },
+                            [
+                              _vm._v(
+                                "\n              " +
+                                  _vm._s(_vm.__("Drop your images here")) +
+                                  "\n            "
+                              ),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            ref: "upload",
+                            staticClass: "media-library-dropzone-input",
+                            attrs: { type: "file", multiple: "" },
+                            on: { change: _vm.onFileInputChange },
+                          }),
+                        ]
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+              _vm._v(" "),
+              (_vm.hasFiles || _vm.hasUploads) && _vm.uploadDetailsVisible
+                ? _c("UploadsList", {
+                    staticClass: "media-library-browser-uploads",
+                    attrs: { uploads: _vm.uploads },
+                    on: { clear: _vm.onUploadsClear },
+                  })
+                : _vm._e(),
+            ],
+            1
+          ),
+        ]
+      ),
+    ]
+  )
+}
 var staticRenderFns = []
+render._withStripped = true
 
 
 
