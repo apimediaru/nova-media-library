@@ -51,24 +51,35 @@
                     <ul class="list-reset">
                       <li class="flex items-center mb-3">
                         <checkbox-with-label
-                          @input="selectAll"
                           :checked="selectAllChecked"
+                          @input="toggleSelectAll"
                         >
                           {{ __('Select all') }} ({{ filesCount }})
                         </checkbox-with-label>
                       </li>
-                      <li class="flex items-center mb-3">
+                      <li
+                        class="flex items-center mb-3"
+                        :class="{
+                          'text-60': !activeFilesCount,
+                        }"
+                      >
                         <checkbox-with-label
-                          @input="selectAllActive"
                           :checked="selectAllActiveChecked"
+                          :disabled="!activeFilesCount"
+                          @input="toggleAllActive"
                         >
                           {{ __('Select active') }} ({{ activeFilesCount }})
                         </checkbox-with-label>
                       </li>
-                      <li class="flex items-center">
+                      <li class="flex items-center"
+                        :class="{
+                          'text-60': !inactiveFilesCount,
+                        }"
+                      >
                         <checkbox-with-label
-                          @input="selectAllInactive"
                           :checked="selectAllInactiveChecked"
+                          :disabled="!inactiveFilesCount"
+                          @input="toggleAllInactive"
                         >
                           {{ __('Select inactive') }} ({{ inactiveFilesCount }})
                         </checkbox-with-label>
@@ -98,13 +109,13 @@
                   @click="performBulkAction"
               >{{ __('Apply') }}</button>
             </div>
-            <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">
-              <input
-                  type="text"
-                  class="w-full form-control form-input form-input-bordered"
-                  :placeholder="__('Search...')"
-              >
-            </div>
+<!--            <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">-->
+<!--              <input-->
+<!--                  type="text"-->
+<!--                  class="w-full form-control form-input form-input-bordered"-->
+<!--                  :placeholder="__('Search...')"-->
+<!--              >-->
+<!--            </div>-->
           </div>
           <div class="media-library-actions-panel media-library-actions-panel-right media-library-actions">
             <div
@@ -362,9 +373,9 @@ export default {
      * @return {Boolean}
      */
     selectAllActiveChecked() {
-      const { filesDictionary } = this;
       return this.hasSelections
-          && this.selected.every((id) => filesDictionary[id] && filesDictionary[id].attributes.active === true);
+        && this.filesCount
+        && this.activeFiles.every((file) => this.selected.includes(file.id));
     },
 
     /**
@@ -373,9 +384,9 @@ export default {
      * @return {Boolean}
      */
     selectAllInactiveChecked() {
-      const { filesDictionary } = this;
       return this.hasSelections
-          && this.selected.every((id) => filesDictionary[id] && filesDictionary[id].attributes.active === false);
+        && this.filesCount
+        && this.inactiveFiles.every((file) => this.selected.includes(file.id));
     },
   },
 
@@ -448,6 +459,8 @@ export default {
         if (action === 'delete') {
           this.unselectAll();
         }
+
+        this.$toasted.success(this.__(`Action ":action" processed successfully`, { action }));
       }
 
       // Reset loading state
@@ -490,15 +503,33 @@ export default {
       this.unselectAll();
     },
 
-    // Selection logic
+    /**
+     * Start selection with provided id
+     *
+     * @param {Number} id
+     */
     beginSelection(id) {
       this.unselectAll();
       this.addSelection(id);
       this.setSelectedIndex(id);
     },
+
+    /**
+     * Store selection anchor
+     *
+     * @param {Number} id
+     */
     setSelectedIndex(id) {
       this.selectedIndex = Number(id);
     },
+
+    /**
+     * Select all entries within provided range
+     *
+     * @param {Number} start
+     * @param {Number} end
+     * @param {Boolean} keep
+     */
     selectRange(start, end, keep = false) {
       const selected = keep ? Array.from(this.selected) : [];
       for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
@@ -506,33 +537,102 @@ export default {
       }
       this.selected = Array.from(new Set(selected));
     },
+
+    /**
+     * Makes entry with provided id selected if possible
+     * otherwise removes it from selection
+     *
+     * @param {Number} id
+     */
     toggleSelection(id) {
-      const i = Number(id);
-      if (this.isItemSelected(i)) {
-        this.removeSelection(i);
+      if (this.isItemSelected(id)) {
+        this.removeSelection(id);
       } else {
-        this.addSelection(i);
+        this.addSelection(id);
       }
     },
+
+    /**
+     * Returns true if entry with provided id is selected
+     *
+     * @param {Number} id
+     * @return {boolean}
+     */
     isItemSelected(id) {
       return this.selected.includes(Number(id));
     },
-    removeSelection(id) {
-      this.selected = this.selected.filter((item) => item !== Number(id));
+
+    /**
+     * Remove entry from selection
+     *
+     * @param {...Number} payload
+     */
+    removeSelection(...payload) {
+      this.setSelection(this.selected.filter((id) => !payload.includes(Number(id))));
     },
-    addSelection(id) {
-      const key = Number(id);
-      if (!this.selected.includes(key)) {
-        this.selected.push(Number(key));
+
+    /**
+     * Add a new entry to selection
+     *
+     * @param {...Number} payload
+     */
+    addSelection(...payload) {
+      if (payload.length > 1) {
+        const items = new Set([...this.selected, ...payload]);
+        this.setSelection(Array.from(items));
+      } else {
+        const key = Number(payload[0]);
+        if (!this.selected.includes(key)) {
+          this.selected.push(Number(key));
+        }
       }
     },
+
+    /**
+     * Select all files if possible otherwise reset selection
+     */
     toggleSelectAll() {
-      if (this.files.length !== this.selectedCount) {
+      if (this.filesCount !== this.selectedCount) {
         this.selectAll();
       } else {
         this.unselectAll();
       }
     },
+
+    /**
+     * Toggle selection of files in provided ids by condition
+     *
+     * @param {Object[]} files
+     * @param {Boolean} condition
+     */
+    toggleFilesSelectionByCondition(files = [], condition = true) {
+      const ids = this.extractFileIds(files);
+      if (condition) {
+        this.removeSelection(...ids);
+      } else {
+        this.addSelection(...ids);
+      }
+    },
+
+    /**
+     * Toggle all active files
+     */
+    toggleAllActive() {
+      this.toggleFilesSelectionByCondition(this.activeFiles, this.selectAllActiveChecked);
+    },
+
+    /**
+     * Toggle all inactive files
+     */
+    toggleAllInactive() {
+      this.toggleFilesSelectionByCondition(this.inactiveFiles, this.selectAllInactiveChecked);
+    },
+
+    /**
+     * Set selection
+     *
+     * @param {Number[]} value
+     */
     setSelection(value) {
       if (Array.isArray(value)) {
         this.selected = value;
@@ -560,15 +660,34 @@ export default {
       this.setSelection(this.files.map((file) => file.id));
     },
 
+    /**
+     * Reset all selections
+     */
     unselectAll() {
       this.selected = [];
       this.selectedIndex = null;
     },
+
+    /**
+     * Get array with id of selected files sorted by column order
+     *
+     * @return {Number[]}
+     */
     extractSelectedIDs() {
       const { filesDictionary } = this;
       return this.selected
           .sort((a, b) => filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column)
           .map((id) => id);
+    },
+
+    /**
+     * Extract id from files
+     *
+     * @param {Object[]} files
+     * @return {Number[]}
+     */
+    extractFileIds(files) {
+      return files.map((file) => file.id);
     },
 
     /**
@@ -578,6 +697,10 @@ export default {
       this.requestManager = new RequestManager()
         .on('request:completed', this.onRequestManagerComplete);
     },
+
+    /**
+     * Destroy request manager
+     */
     destroyRequestManager() {
       this.requestManager.destroy();
       this.requestManager = null;

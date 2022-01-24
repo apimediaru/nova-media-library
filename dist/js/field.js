@@ -10510,6 +10510,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -10637,9 +10648,10 @@ var bodyLockedClass = 'media-library-locked';
      * @return {Boolean}
      */
     selectAllActiveChecked: function selectAllActiveChecked() {
-      var filesDictionary = this.filesDictionary;
-      return this.hasSelections && this.selected.every(function (id) {
-        return filesDictionary[id] && filesDictionary[id].attributes.active === true;
+      var _this = this;
+
+      return this.hasSelections && this.filesCount && this.activeFiles.every(function (file) {
+        return _this.selected.includes(file.id);
       });
     },
 
@@ -10649,9 +10661,10 @@ var bodyLockedClass = 'media-library-locked';
      * @return {Boolean}
      */
     selectAllInactiveChecked: function selectAllInactiveChecked() {
-      var filesDictionary = this.filesDictionary;
-      return this.hasSelections && this.selected.every(function (id) {
-        return filesDictionary[id] && filesDictionary[id].attributes.active === false;
+      var _this2 = this;
+
+      return this.hasSelections && this.filesCount && this.inactiveFiles.every(function (file) {
+        return _this2.selected.includes(file.id);
       });
     }
   },
@@ -10705,7 +10718,7 @@ var bodyLockedClass = 'media-library-locked';
      * @return {Promise<void>}
      */
     performBulkAction: function performBulkAction() {
-      var _this = this;
+      var _this3 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var action, request;
@@ -10714,16 +10727,16 @@ var bodyLockedClass = 'media-library-locked';
             switch (_context.prev = _context.next) {
               case 0:
                 // Get processing method key
-                action = _this.action; // Set loading state
+                action = _this3.action; // Set loading state
 
-                _this.isLoading = true; // Launch common request for multiple bulk actions
+                _this3.isLoading = true; // Launch common request for multiple bulk actions
 
                 _context.next = 4;
                 return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_4__.MultipleMediaRequest({
-                  object: _this.field.object,
-                  objectId: _this.resourceId,
-                  collection: _this.field.collection,
-                  sources: _this.extractSelectedIDs(),
+                  object: _this3.field.object,
+                  objectId: _this3.resourceId,
+                  collection: _this3.field.collection,
+                  sources: _this3.extractSelectedIDs(),
                   method: action
                 }).run();
 
@@ -10732,16 +10745,20 @@ var bodyLockedClass = 'media-library-locked';
 
                 // Ensure that response provides files
                 if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
-                  _this.setFiles(request.responseData.data.files); // Reset selection if selected method means change of files count
+                  _this3.setFiles(request.responseData.data.files); // Reset selection if selected method means change of files count
 
 
                   if (action === 'delete') {
-                    _this.unselectAll();
+                    _this3.unselectAll();
                   }
+
+                  _this3.$toasted.success(_this3.__("Action \":action\" processed successfully", {
+                    action: action
+                  }));
                 } // Reset loading state
 
 
-                _this.isLoading = false;
+                _this3.isLoading = false;
 
               case 7:
               case "end":
@@ -10788,15 +10805,34 @@ var bodyLockedClass = 'media-library-locked';
 
       this.unselectAll();
     },
-    // Selection logic
+
+    /**
+     * Start selection with provided id
+     *
+     * @param {Number} id
+     */
     beginSelection: function beginSelection(id) {
       this.unselectAll();
       this.addSelection(id);
       this.setSelectedIndex(id);
     },
+
+    /**
+     * Store selection anchor
+     *
+     * @param {Number} id
+     */
     setSelectedIndex: function setSelectedIndex(id) {
       this.selectedIndex = Number(id);
     },
+
+    /**
+     * Select all entries within provided range
+     *
+     * @param {Number} start
+     * @param {Number} end
+     * @param {Boolean} keep
+     */
     selectRange: function selectRange(start, end) {
       var keep = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var selected = keep ? Array.from(this.selected) : [];
@@ -10807,37 +10843,116 @@ var bodyLockedClass = 'media-library-locked';
 
       this.selected = Array.from(new Set(selected));
     },
-    toggleSelection: function toggleSelection(id) {
-      var i = Number(id);
 
-      if (this.isItemSelected(i)) {
-        this.removeSelection(i);
+    /**
+     * Makes entry with provided id selected if possible
+     * otherwise removes it from selection
+     *
+     * @param {Number} id
+     */
+    toggleSelection: function toggleSelection(id) {
+      if (this.isItemSelected(id)) {
+        this.removeSelection(id);
       } else {
-        this.addSelection(i);
+        this.addSelection(id);
       }
     },
+
+    /**
+     * Returns true if entry with provided id is selected
+     *
+     * @param {Number} id
+     * @return {boolean}
+     */
     isItemSelected: function isItemSelected(id) {
       return this.selected.includes(Number(id));
     },
-    removeSelection: function removeSelection(id) {
-      this.selected = this.selected.filter(function (item) {
-        return item !== Number(id);
-      });
-    },
-    addSelection: function addSelection(id) {
-      var key = Number(id);
 
-      if (!this.selected.includes(key)) {
-        this.selected.push(Number(key));
+    /**
+     * Remove entry from selection
+     *
+     * @param {...Number} payload
+     */
+    removeSelection: function removeSelection() {
+      for (var _len = arguments.length, payload = new Array(_len), _key = 0; _key < _len; _key++) {
+        payload[_key] = arguments[_key];
+      }
+
+      this.setSelection(this.selected.filter(function (id) {
+        return !payload.includes(Number(id));
+      }));
+    },
+
+    /**
+     * Add a new entry to selection
+     *
+     * @param {...Number} payload
+     */
+    addSelection: function addSelection() {
+      for (var _len2 = arguments.length, payload = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        payload[_key2] = arguments[_key2];
+      }
+
+      if (payload.length > 1) {
+        var items = new Set([].concat(_toConsumableArray(this.selected), payload));
+        this.setSelection(Array.from(items));
+      } else {
+        var key = Number(payload[0]);
+
+        if (!this.selected.includes(key)) {
+          this.selected.push(Number(key));
+        }
       }
     },
+
+    /**
+     * Select all files if possible otherwise reset selection
+     */
     toggleSelectAll: function toggleSelectAll() {
-      if (this.files.length !== this.selectedCount) {
+      if (this.filesCount !== this.selectedCount) {
         this.selectAll();
       } else {
         this.unselectAll();
       }
     },
+
+    /**
+     * Toggle selection of files in provided ids by condition
+     *
+     * @param {Object[]} files
+     * @param {Boolean} condition
+     */
+    toggleFilesSelectionByCondition: function toggleFilesSelectionByCondition() {
+      var files = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+      var condition = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var ids = this.extractFileIds(files);
+
+      if (condition) {
+        this.removeSelection.apply(this, _toConsumableArray(ids));
+      } else {
+        this.addSelection.apply(this, _toConsumableArray(ids));
+      }
+    },
+
+    /**
+     * Toggle all active files
+     */
+    toggleAllActive: function toggleAllActive() {
+      this.toggleFilesSelectionByCondition(this.activeFiles, this.selectAllActiveChecked);
+    },
+
+    /**
+     * Toggle all inactive files
+     */
+    toggleAllInactive: function toggleAllInactive() {
+      this.toggleFilesSelectionByCondition(this.inactiveFiles, this.selectAllInactiveChecked);
+    },
+
+    /**
+     * Set selection
+     *
+     * @param {Number[]} value
+     */
     setSelection: function setSelection(value) {
       if (Array.isArray(value)) {
         this.selected = value;
@@ -10870,10 +10985,20 @@ var bodyLockedClass = 'media-library-locked';
         return file.id;
       }));
     },
+
+    /**
+     * Reset all selections
+     */
     unselectAll: function unselectAll() {
       this.selected = [];
       this.selectedIndex = null;
     },
+
+    /**
+     * Get array with id of selected files sorted by column order
+     *
+     * @return {Number[]}
+     */
     extractSelectedIDs: function extractSelectedIDs() {
       var filesDictionary = this.filesDictionary;
       return this.selected.sort(function (a, b) {
@@ -10884,11 +11009,27 @@ var bodyLockedClass = 'media-library-locked';
     },
 
     /**
+     * Extract id from files
+     *
+     * @param {Object[]} files
+     * @return {Number[]}
+     */
+    extractFileIds: function extractFileIds(files) {
+      return files.map(function (file) {
+        return file.id;
+      });
+    },
+
+    /**
      * Register request manager
      */
     registerRequestManager: function registerRequestManager() {
       this.requestManager = new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_4__.RequestManager().on('request:completed', this.onRequestManagerComplete);
     },
+
+    /**
+     * Destroy request manager
+     */
     destroyRequestManager: function destroyRequestManager() {
       this.requestManager.destroy();
       this.requestManager = null;
@@ -10910,10 +11051,10 @@ var bodyLockedClass = 'media-library-locked';
      * @return {Promise<void>}
      */
     onFileInputChange: function onFileInputChange(event) {
-      var _this2 = this;
+      var _this4 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
-        var _this2$requests;
+        var _this4$requests;
 
         var target, files, uploads;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
@@ -10924,23 +11065,23 @@ var bodyLockedClass = 'media-library-locked';
                 files = target.files;
                 uploads = _toConsumableArray(files).map(function (item) {
                   return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_4__.UploadMediaRequest({
-                    object: _this2.field.object,
-                    objectId: _this2.resourceId,
-                    collection: _this2.field.collection,
+                    object: _this4.field.object,
+                    objectId: _this4.resourceId,
+                    collection: _this4.field.collection,
                     file: item
                   });
                 });
 
-                (_this2$requests = _this2.requests).push.apply(_this2$requests, _toConsumableArray(uploads));
+                (_this4$requests = _this4.requests).push.apply(_this4$requests, _toConsumableArray(uploads));
 
-                _this2.setUploadingMode();
+                _this4.setUploadingMode();
 
-                _this2.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
+                _this4.uploadDetailsVisible = true; // Reset input field value to provide an opportunity
                 // to upload the same pull of files again
 
                 target.value = null;
                 _context2.next = 9;
-                return _this2.requestManager.perform(uploads.reverse());
+                return _this4.requestManager.perform(uploads.reverse());
 
               case 9:
               case "end":
@@ -11135,7 +11276,7 @@ var bodyLockedClass = 'media-library-locked';
      * @param {DragStopEvent} event
      */
     onDraggableStop: function onDraggableStop(event) {
-      var _this3 = this;
+      var _this5 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
         var intersectedElement, targetId, sources, filesDictionary, selected, sequence, flatTree, request, files;
@@ -11143,7 +11284,7 @@ var bodyLockedClass = 'media-library-locked';
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                intersectedElement = _this3.intersectedElement; // Check for dragged over thumbnail
+                intersectedElement = _this5.intersectedElement; // Check for dragged over thumbnail
 
                 if (intersectedElement) {
                   _context3.next = 3;
@@ -11153,10 +11294,10 @@ var bodyLockedClass = 'media-library-locked';
                 return _context3.abrupt("return");
 
               case 3:
-                targetId = _this3.extractId(intersectedElement); // If element contains empty id for some reason
+                targetId = _this5.extractId(intersectedElement); // If element contains empty id for some reason
                 // or if element is one of selected stop further
 
-                if (!(targetId === undefined || _this3.selected.includes(targetId))) {
+                if (!(targetId === undefined || _this5.selected.includes(targetId))) {
                   _context3.next = 6;
                   break;
                 }
@@ -11164,7 +11305,7 @@ var bodyLockedClass = 'media-library-locked';
                 return _context3.abrupt("return");
 
               case 6:
-                sources = _this3.extractSelectedIDs(); // Check that sources are OK
+                sources = _this5.extractSelectedIDs(); // Check that sources are OK
 
                 if (!(!Array.isArray(sources) || !sources.length)) {
                   _context3.next = 9;
@@ -11176,11 +11317,11 @@ var bodyLockedClass = 'media-library-locked';
               case 9:
                 // Work with local copy of files. First filter array of files by selected ids that are
                 // sorted by order column. Then insert files with selected ids before target file
-                filesDictionary = _this3.filesDictionary;
-                selected = _toConsumableArray(_this3.selected).sort(function (a, b) {
+                filesDictionary = _this5.filesDictionary;
+                selected = _toConsumableArray(_this5.selected).sort(function (a, b) {
                   return filesDictionary[a].attributes.order_column - filesDictionary[b].attributes.order_column;
                 });
-                sequence = _this3.files.filter(function (file) {
+                sequence = _this5.files.filter(function (file) {
                   return !selected.includes(file.id);
                 });
                 sequence.splice.apply(sequence, [sequence.findIndex(function (file) {
@@ -11188,7 +11329,7 @@ var bodyLockedClass = 'media-library-locked';
                 }), 0].concat(_toConsumableArray(selected.map(function (id) {
                   return filesDictionary[id].attributes;
                 }))));
-                _this3.files = sequence; // Create a ['id' => 'value'] array with new sequence of files,
+                _this5.files = sequence; // Create a ['id' => 'value'] array with new sequence of files,
                 // also index starts with 1
 
                 flatTree = {};
@@ -11196,17 +11337,17 @@ var bodyLockedClass = 'media-library-locked';
                   flatTree[file.id] = index + 1;
                 }); // Reset all selections
 
-                _this3.unselectAll(); // Set loading flag
+                _this5.unselectAll(); // Set loading flag
 
 
-                _this3.isLoading = true; // Make a request and replace local files with files from response
+                _this5.isLoading = true; // Make a request and replace local files with files from response
 
                 _context3.next = 20;
                 return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_4__.SortMediaRequest({
                   sources: flatTree,
-                  object: _this3.field.object,
-                  objectId: _this3.resourceId,
-                  collection: _this3.field.collection
+                  object: _this5.field.object,
+                  objectId: _this5.resourceId,
+                  collection: _this5.field.collection
                 }).run();
 
               case 20:
@@ -11215,13 +11356,13 @@ var bodyLockedClass = 'media-library-locked';
                 if (request.succeeded()) {
                   files = request.responseData.data.files;
 
-                  _this3.setFiles(files);
+                  _this5.setFiles(files);
                 } else {
-                  Nova.$emit('error', _this3.__('Sorting finished with an error'));
+                  Nova.$emit('error', _this5.__('Sorting finished with an error'));
                 } // Reset loading flag
 
 
-                _this3.isLoading = false;
+                _this5.isLoading = false;
 
               case 23:
               case "end":
@@ -42818,15 +42959,15 @@ var render = function () {
                                             attrs: {
                                               checked: _vm.selectAllChecked,
                                             },
-                                            on: { input: _vm.selectAll },
+                                            on: { input: _vm.toggleSelectAll },
                                           },
                                           [
                                             _vm._v(
-                                              "\n                        " +
+                                              "\n                          " +
                                                 _vm._s(_vm.__("Select all")) +
                                                 " (" +
                                                 _vm._s(_vm.filesCount) +
-                                                ")\n                      "
+                                                ")\n                        "
                                             ),
                                           ]
                                         ),
@@ -42836,7 +42977,12 @@ var render = function () {
                                     _vm._v(" "),
                                     _c(
                                       "li",
-                                      { staticClass: "flex items-center mb-3" },
+                                      {
+                                        staticClass: "flex items-center mb-3",
+                                        class: {
+                                          "text-60": !_vm.activeFilesCount,
+                                        },
+                                      },
                                       [
                                         _c(
                                           "checkbox-with-label",
@@ -42844,18 +42990,19 @@ var render = function () {
                                             attrs: {
                                               checked:
                                                 _vm.selectAllActiveChecked,
+                                              disabled: !_vm.activeFilesCount,
                                             },
-                                            on: { input: _vm.selectAllActive },
+                                            on: { input: _vm.toggleAllActive },
                                           },
                                           [
                                             _vm._v(
-                                              "\n                        " +
+                                              "\n                          " +
                                                 _vm._s(
                                                   _vm.__("Select active")
                                                 ) +
                                                 " (" +
                                                 _vm._s(_vm.activeFilesCount) +
-                                                ")\n                      "
+                                                ")\n                        "
                                             ),
                                           ]
                                         ),
@@ -42865,7 +43012,12 @@ var render = function () {
                                     _vm._v(" "),
                                     _c(
                                       "li",
-                                      { staticClass: "flex items-center" },
+                                      {
+                                        staticClass: "flex items-center",
+                                        class: {
+                                          "text-60": !_vm.inactiveFilesCount,
+                                        },
+                                      },
                                       [
                                         _c(
                                           "checkbox-with-label",
@@ -42873,20 +43025,21 @@ var render = function () {
                                             attrs: {
                                               checked:
                                                 _vm.selectAllInactiveChecked,
+                                              disabled: !_vm.inactiveFilesCount,
                                             },
                                             on: {
-                                              input: _vm.selectAllInactive,
+                                              input: _vm.toggleAllInactive,
                                             },
                                           },
                                           [
                                             _vm._v(
-                                              "\n                        " +
+                                              "\n                          " +
                                                 _vm._s(
                                                   _vm.__("Select inactive")
                                                 ) +
                                                 " (" +
                                                 _vm._s(_vm.inactiveFilesCount) +
-                                                ")\n                      "
+                                                ")\n                        "
                                             ),
                                           ]
                                         ),
@@ -42992,24 +43145,6 @@ var render = function () {
                         ),
                       ]
                     ),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass:
-                          "media-library-actions-action media-library-browser-actions-action-search media-library-action",
-                      },
-                      [
-                        _c("input", {
-                          staticClass:
-                            "w-full form-control form-input form-input-bordered",
-                          attrs: {
-                            type: "text",
-                            placeholder: _vm.__("Search..."),
-                          },
-                        }),
-                      ]
-                    ),
                   ]
                 ),
                 _vm._v(" "),
@@ -43029,7 +43164,7 @@ var render = function () {
                           },
                           [
                             _vm._v(
-                              "\n            " +
+                              "\n              " +
                                 _vm._s(_vm.__("Selected:")) +
                                 " "
                             ),
@@ -43113,13 +43248,13 @@ var render = function () {
                             },
                             [
                               _vm._v(
-                                "\n            " +
+                                "\n              " +
                                   _vm._s(
                                     _vm.__(
                                       "There are currently no media files in this library."
                                     )
                                   ) +
-                                  "\n            "
+                                  "\n              "
                               ),
                               _vm.canAddFiles
                                 ? [
@@ -43227,9 +43362,9 @@ var render = function () {
                             { staticClass: "media-library-dropzone-notice" },
                             [
                               _vm._v(
-                                "\n              " +
+                                "\n                " +
                                   _vm._s(_vm.__("Drop your images here")) +
-                                  "\n            "
+                                  "\n              "
                               ),
                             ]
                           ),
