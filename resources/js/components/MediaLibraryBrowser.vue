@@ -19,7 +19,7 @@
             class="media-library-panel-actions"
             :class="{
               'media-library-panel-actions-disabled': !selectedCount || isLoading,
-              'media-library-panel-actions-hidden': !filesCount && !hasUploads,
+              'media-library-panel-actions-hidden': !filesCount,
             }"
         >
           <div class="media-library-actions-panel media-library-actions-panel-left media-library-actions">
@@ -144,6 +144,7 @@
           >
             <loader class="text-60" />
           </div>
+
           <div
             class="media-library-layout"
             :class="{
@@ -183,7 +184,6 @@
               :data-key="file.id"
               :active="file.active"
               @click="onThumbnailClick(file, index, $event)"
-              @contextmenu="onThumbnailContextmenu(file, $event)"
             />
           </div>
 
@@ -212,9 +212,39 @@
               >
             </div>
           </div>
+
+          <ContextMenu
+            ref="menu"
+            :reference="() => $refs.layout"
+            @before-open="onContextMenuBeforeOpen"
+          >
+            <ContextMenuItem
+              v-if="selectedCount === 1 && selectedIndex"
+              @click="openFileOriginal(selectedIndex)"
+              divider="bottom"
+            >
+              <IconDownload class="mr-1" /> {{ __('Open original at new page') }}
+            </ContextMenuItem>
+            <ContextMenuItem
+              @click="performBulkAction('activate')"
+            >
+              <IconSwitchOff class="mr-1" /> {{ __('Activate checked') }}
+            </ContextMenuItem>
+            <ContextMenuItem
+              @click="performBulkAction('deactivate')"
+            >
+              <IconSwitchOff class="mr-1" /> {{ __('Deactivate checked') }}
+            </ContextMenuItem>
+            <ContextMenuItem
+              @click="performBulkAction('delete')"
+              divider="top"
+            >
+              <IconDelete class="mr-1" /> {{ __('Delete checked') }}
+            </ContextMenuItem>
+          </ContextMenu>
         </div>
         <RequestList
-          v-if="(hasFiles || hasUploads) && uploadDetailsVisible"
+          v-if="hasFiles && uploadDetailsVisible"
           class="media-library-browser-uploads"
           :requests="requests"
           @clear="onRequestListClear"
@@ -229,8 +259,12 @@
 import MediaLibraryModal from "./MediaLibraryModal";
 import MediaThumbnail from "./MediaThumbnail";
 import RequestList from "./RequestList";
+import ContextMenu from "./ContextMenu/ContextMenu";
+import ContextMenuItem from "./ContextMenu/ContextMenuItem";
 import { RequestManager, MultipleMediaRequest, SortMediaRequest, RequestCompletedEvent, UploadMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
+import { IconDownload, IconDelete, IconSwitchOff } from "./Icons";
+import { closest } from "../shared/utils/closest";
 import { Draggable } from '@shopify/draggable';
 
 const { throttle, debounce } = window._;
@@ -251,6 +285,11 @@ export default {
     MediaLibraryModal,
     MediaThumbnail,
     RequestList,
+    ContextMenu,
+    ContextMenuItem,
+    IconDownload,
+    IconDelete,
+    IconSwitchOff,
   },
 
   data() {
@@ -337,9 +376,6 @@ export default {
     },
     isDropzoneVisible() {
       return !this.paused && this.isDragAndDropEnabled && this.isDragging;
-    },
-    hasUploads() {
-      return this.uploads.length > 0;
     },
     selectedCount() {
       return this.selected.length;
@@ -433,11 +469,12 @@ export default {
     /**
      * Makes request with bulk actions
      *
+     * @param {String|null} specifiedAction
      * @return {Promise<void>}
      */
-    async performBulkAction() {
+    async performBulkAction(specifiedAction = null) {
       // Get processing method key
-      const { action } = this;
+      const action = specifiedAction || this.action;
 
       // Set loading state
       this.isLoading = true;
@@ -460,7 +497,7 @@ export default {
           this.unselectAll();
         }
 
-        this.$toasted.success(this.__(`Action ":action" processed successfully`, { action }));
+        this.$toasted.success(this.__(`Action ":action" was completed successfully`, { action }));
       }
 
       // Reset loading state
@@ -471,9 +508,9 @@ export default {
     // Events
     onThumbnailClick(file, index, event) {
       const { shiftKey, ctrlKey } = event;
-      if (shiftKey && ctrlKey) {
+      if (shiftKey && ctrlKey && this.selectedIndex) {
         this.selectRange(this.filesDictionary[this.selectedIndex].index, index, true);
-      } else if (shiftKey) {
+      } else if (shiftKey && this.selectedIndex) {
         this.selectRange(this.filesDictionary[this.selectedIndex].index, index);
       } else if (ctrlKey) {
         this.setSelectedIndex(file.id);
@@ -495,8 +532,8 @@ export default {
         return false;
       }
     },
-    onBrowserAreaClick() {
-      if (this.isBrowserAreaClickPrevented) {
+    onBrowserAreaClick(event) {
+      if (this.isBrowserAreaClickPrevented || closest(event.target, '.context-menu')) {
         this.resetLayoutClickAbility();
         return;
       }
@@ -724,6 +761,7 @@ export default {
     async onFileInputChange(event) {
       const { target } = event;
       const { files } = target;
+      this.setBrowsingMode();
 
       const uploads = [...files].map((item) => new UploadMediaRequest({
         object: this.field.object,
@@ -733,7 +771,6 @@ export default {
       }));
       this.requests.push(...uploads);
 
-      this.setUploadingMode();
       this.uploadDetailsVisible = true;
 
       // Reset input field value to provide an opportunity
@@ -1008,6 +1045,47 @@ export default {
         draggable.destroy();
         this.draggable = null;
       }
+    },
+
+    /**
+     * Before open handler for before open context menu event
+     *
+     * @param {ContextMenuBeforeOpenEvent} event
+     */
+    onContextMenuBeforeOpen(event) {
+      const { target } = event.originalEvent;
+      const thumbnail = closest(target, '.media-library-thumbnail');
+      if (!thumbnail) {
+        event.cancel();
+        return;
+      }
+
+      const id = this.extractId(thumbnail);
+      if (id === undefined) {
+        return;
+      }
+
+      if (this.selectedCount === 0 || this.selectedCount === 1) {
+        this.beginSelection(id);
+      }
+    },
+
+    /**
+     * Open file original image at new window
+     *
+     * @param {Number} id
+     */
+    openFileOriginal(id) {
+      if (!id) {
+        return;
+      }
+
+      const file = this.filesDictionary[id];
+      if (!file || !file.attributes.original_url) {
+        return;
+      }
+
+      window.open(file.attributes.original_url, '_blank');
     },
   },
 

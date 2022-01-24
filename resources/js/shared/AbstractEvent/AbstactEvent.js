@@ -33,7 +33,7 @@ export default class AbstractEvent {
    * @constructs AbstractEvent
    * @param {object} data - Event data
    */
-  constructor(data) {
+  constructor(data = {}) {
     this[canceled] = false;
     this.data = data;
   }
