@@ -13,7 +13,7 @@
             'media-library-modal-viewport-element--has-controls': !!$slots.buttons,
           },
         ]"
-        v-on-clickaway="backdropClose"
+        v-click-outside="backdropClose"
       >
         <div class="media-library-modal-viewport-element-body">
           <slot name="container" />
@@ -37,13 +37,15 @@
 
 <script>
 import IconCross from "./Icons/IconCross";
-import { mixin as clickaway } from 'vue-clickaway';
 import { composedPath } from '../utils';
+import { ClickOutside } from "../directives";
 
 export default {
   name: "MediaLibraryModal",
 
-  mixins: [clickaway],
+  directives: {
+    ClickOutside,
+  },
 
   components: {
     IconCross,
