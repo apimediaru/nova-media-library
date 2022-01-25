@@ -10286,6 +10286,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
 
 
 
@@ -10924,7 +10925,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
 
 
 
@@ -10982,8 +10982,6 @@ var bodyLockedClass = 'media-library-locked';
       isBrowserAreaClickPrevented: false,
       // Prevent next click on modal backdrop
       isBackdropClickPrevented: false,
-      // Pause modal events
-      paused: false,
       // Requests
       uploadDetailsVisible: false,
       requests: [],
@@ -11022,22 +11020,22 @@ var bodyLockedClass = 'media-library-locked';
   },
   computed: {
     isInBrowsingMode: function isInBrowsingMode() {
-      return this.mode === MODES.BROWSING || this.paused;
+      return this.mode === MODES.BROWSING;
     },
     isInUploadingMode: function isInUploadingMode() {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible: function isDropzoneVisible() {
-      return !this.paused && this.isDragAndDropEnabled && this.isDragging;
+      return this.isDragAndDropEnabled && this.isDragging;
     },
     selectedCount: function selectedCount() {
       return this.selected.length;
     },
     canBeSorted: function canBeSorted() {
-      return !this.paused && this.filesCount && this.selectedCount !== this.filesCount;
+      return !this.requestManager.isWorking() && this.filesCount > 0 && this.selectedCount !== this.filesCount;
     },
     isInteractive: function isInteractive() {
-      return !this.isLoading || !this.hasFiles;
+      return !this.requestManager.isWorking() && !this.isLoading || !this.hasFiles;
     },
 
     /**
@@ -11909,7 +11907,7 @@ var bodyLockedClass = 'media-library-locked';
      * @param {ContextMenuBeforeOpenEvent} event
      */
     onContextMenuBeforeOpen: function onContextMenuBeforeOpen(event) {
-      if (this.isLoading) {
+      if (this.requestManager.isWorking()) {
         event.cancel();
         return;
       }
@@ -44199,22 +44197,24 @@ var render = function () {
               ]),
           _vm._v(" "),
           _c("div", { staticClass: "field-buttons ml-auto mt-8" }, [
-            _c(
-              "button",
-              {
-                staticClass:
-                  "btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3",
-                attrs: { type: "button" },
-                on: { click: _vm.showConfirmModal },
-              },
-              [
-                _c("span", [
-                  _vm._v(
-                    "\n          " + _vm._s(_vm.__("Clear")) + "\n        "
-                  ),
-                ]),
-              ]
-            ),
+            _vm.value.length
+              ? _c(
+                  "button",
+                  {
+                    staticClass:
+                      "btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3",
+                    attrs: { type: "button" },
+                    on: { click: _vm.showConfirmModal },
+                  },
+                  [
+                    _c("span", [
+                      _vm._v(
+                        "\n          " + _vm._s(_vm.__("Clear")) + "\n        "
+                      ),
+                    ]),
+                  ]
+                )
+              : _vm._e(),
             _vm._v(" "),
             _c(
               "button",
@@ -44533,9 +44533,9 @@ var render = function () {
           _vm._l(_vm.value, function (file, index) {
             return _vm.value.length
               ? _c("MediaThumbnail", {
-                  key: index,
+                  key: file.id,
                   attrs: {
-                    index: index,
+                    index: file.order_column,
                     name: file.file_name,
                     image: file.original_url,
                     "mine-type": file.mime_type,
@@ -44578,11 +44578,7 @@ var render = function () {
     {
       staticClass:
         "media-library-browser media-library-modal--entire-scrollable",
-      attrs: {
-        "closes-via-backdrop": false,
-        width: "1400",
-        paused: _vm.paused,
-      },
+      attrs: { "closes-via-backdrop": false, width: "1400" },
       on: { "modal-close": _vm.close },
     },
     [
@@ -45003,11 +44999,11 @@ var render = function () {
                       _vm._l(_vm.files, function (file, index) {
                         return _vm.hasFiles
                           ? _c("MediaThumbnail", {
-                              key: index,
+                              key: file.id,
                               ref: "thumbnail",
                               refInFor: true,
                               attrs: {
-                                index: index,
+                                index: file.order_column,
                                 name: file.file_name,
                                 image: file.original_url,
                                 file: file,

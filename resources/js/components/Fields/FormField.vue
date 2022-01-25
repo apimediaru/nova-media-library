@@ -42,6 +42,7 @@
           type="button"
           class="btn btn-default btn-danger inline-flex items-center relative ml-auto mr-3"
           @click="showConfirmModal"
+          v-if="value.length"
         >
           <span>
             {{ __('Clear') }}

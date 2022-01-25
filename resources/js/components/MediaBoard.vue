@@ -15,8 +15,8 @@
       <MediaThumbnail
           v-if="value.length"
           v-for="(file, index) in value"
-          :key="index"
-          :index="index"
+          :key="file.id"
+          :index="file.order_column"
           :name="file.file_name"
           :image="file.original_url"
           :mine-type="file.mime_type"

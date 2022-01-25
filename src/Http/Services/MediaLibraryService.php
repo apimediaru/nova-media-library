@@ -96,7 +96,7 @@ class MediaLibraryService
      * @param $id
      * @param $collection
      * @return mixed
-     * @throws MediaCannotBeUpdated
+     * @throws MediaLibraryMediaCannotBeUpdated
      */
     public function activate($object, $id, $collection) {
         return $this->changeActivity($object, $id, $collection, true);
@@ -109,7 +109,7 @@ class MediaLibraryService
      * @param $id
      * @param $collection
      * @return mixed
-     * @throws MediaCannotBeUpdated
+     * @throws MediaLibraryMediaCannotBeUpdated
      */
     public function deactivate($object, $id, $collection) {
         return $this->changeActivity($object, $id, $collection, false);
@@ -153,7 +153,8 @@ class MediaLibraryService
         $fileManipulator->createDerivedFiles($media->first());
     }
 
-    public function clear(Request $request, $object = null) {
+    public function clear(Request $request, $object = null): JsonResponse
+    {
         if (!$object) {
             $class = $request->get('object');
             try {

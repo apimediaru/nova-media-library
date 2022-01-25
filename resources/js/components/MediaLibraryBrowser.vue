@@ -4,7 +4,6 @@
     :closes-via-backdrop="false"
     class="media-library-browser media-library-modal--entire-scrollable"
     width="1400"
-    :paused="paused"
   >
     <div
         slot="container"
@@ -172,8 +171,8 @@
             <MediaThumbnail
               v-if="hasFiles"
               v-for="(file, index) in files"
-              :key="index"
-              :index="index"
+              :key="file.id"
+              :index="file.order_column"
               :name="file.file_name"
               :image="file.original_url"
               :file="file"
@@ -262,7 +261,7 @@ import MediaThumbnail from "./MediaThumbnail";
 import RequestList from "./RequestList";
 import ContextMenu from "./ContextMenu/ContextMenu";
 import ContextMenuItem from "./ContextMenu/ContextMenuItem";
-import { RequestManager, MultipleMediaRequest, SortMediaRequest, RequestCompletedEvent, UploadMediaRequest } from "../utils/RequestManager";
+import { RequestManager, MultipleMediaRequest, SortMediaRequest, UploadMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
 import { IconDownload, IconDelete, IconSwitchOff } from "./Icons";
 import { LazyLoadContainer } from "../directives";
@@ -327,9 +326,6 @@ export default {
       // Prevent next click on modal backdrop
       isBackdropClickPrevented: false,
 
-      // Pause modal events
-      paused: false,
-
       // Requests
       uploadDetailsVisible: false,
       requests: [],
@@ -373,22 +369,24 @@ export default {
 
   computed: {
     isInBrowsingMode() {
-      return this.mode === MODES.BROWSING || this.paused;
+      return this.mode === MODES.BROWSING;
     },
     isInUploadingMode() {
       return this.mode === MODES.UPLOADING;
     },
     isDropzoneVisible() {
-      return !this.paused && this.isDragAndDropEnabled && this.isDragging;
+      return this.isDragAndDropEnabled && this.isDragging;
     },
     selectedCount() {
       return this.selected.length;
     },
     canBeSorted() {
-      return !this.paused && (this.filesCount && (this.selectedCount !== this.filesCount));
+      return !this.requestManager.isWorking()
+        && this.filesCount > 0
+        && this.selectedCount !== this.filesCount;
     },
     isInteractive() {
-      return !this.isLoading || !this.hasFiles;
+      return (!this.requestManager.isWorking() && !this.isLoading) || !this.hasFiles;
     },
 
     /**
@@ -1131,7 +1129,7 @@ export default {
      * @param {ContextMenuBeforeOpenEvent} event
      */
     onContextMenuBeforeOpen(event) {
-      if (this.isLoading) {
+      if (this.requestManager.isWorking()) {
         event.cancel();
         return;
       }
