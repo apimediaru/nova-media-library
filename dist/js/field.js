@@ -11008,7 +11008,7 @@ var bodyLockedClass = 'media-library-locked';
      * @return {Boolean}
      */
     hasSelections: function hasSelections() {
-      return this.filesCount && this.selectedCount;
+      return Boolean(this.filesCount && this.selectedCount);
     },
 
     /**
@@ -11045,24 +11045,49 @@ var bodyLockedClass = 'media-library-locked';
     }
   },
   methods: {
-    // Actions
+    /**
+     * Emit close event to parent
+     */
     close: function close() {
       this.$emit('close', {
         files: this.files
       });
     },
+
+    /**
+     * Todo: write comment
+     */
     setUploadingMode: function setUploadingMode() {
       this.mode = MODES.UPLOADING;
     },
+
+    /**
+     * Todo: write comment
+     */
     setBrowsingMode: function setBrowsingMode() {
       this.mode = MODES.BROWSING;
     },
+
+    /**
+     * Call this function to prevent selection resetting by clicking layout
+     */
     preventNextLayoutClick: function preventNextLayoutClick() {
       this.isBrowserAreaClickPrevented = true;
     },
+
+    /**
+     * Reset default behavior of clicking layout area
+     */
     resetLayoutClickAbility: function resetLayoutClickAbility() {
       this.isBrowserAreaClickPrevented = false;
     },
+
+    /**
+     * Extract key from html element data attribute
+     *
+     * @param {HTMLElement} element
+     * @return {boolean|number}
+     */
     extractId: function extractId(element) {
       if (!element) {
         return false;
@@ -11084,6 +11109,10 @@ var bodyLockedClass = 'media-library-locked';
         body.classList.add(bodyLockedClass);
       }
     },
+
+    /**
+     * Show user default browser file upload interface
+     */
     triggerFileUpload: function triggerFileUpload() {
       this.getUploadInput().click();
     },
@@ -11106,7 +11135,7 @@ var bodyLockedClass = 'media-library-locked';
               case 0:
                 specifiedAction = _arguments.length > 0 && _arguments[0] !== undefined ? _arguments[0] : null;
                 // Get processing method key
-                action = specifiedAction || _this3.action; // Set loading state
+                action = typeof specifiedAction === 'string' && specifiedAction !== 'none' ? specifiedAction : _this3.action; // Set loading state
 
                 _this3.isLoading = true; // Launch common request for multiple bulk actions
 
@@ -11147,7 +11176,14 @@ var bodyLockedClass = 'media-library-locked';
         }, _callee);
       }))();
     },
-    // Events
+
+    /**
+     * Event that is triggered by clicking thumbnail
+     *
+     * @param {Object} file
+     * @param {Number} index
+     * @param {PointerEvent} event
+     */
     onThumbnailClick: function onThumbnailClick(file, index, event) {
       var shiftKey = event.shiftKey,
           ctrlKey = event.ctrlKey;
@@ -11163,10 +11199,13 @@ var bodyLockedClass = 'media-library-locked';
         this.beginSelection(file.id);
       }
     },
-    onThumbnailContextmenu: function onThumbnailContextmenu(file, event) {
-      console.log('contextmenu');
-      event.preventDefault();
-    },
+
+    /**
+     * Catch global keydown event
+     *
+     * @param {KeyboardEvent} event
+     * @return {boolean}
+     */
     onDocumentKeyDown: function onDocumentKeyDown(event) {
       var keyCode = event.keyCode; // Check for "A" key
 
@@ -11176,6 +11215,12 @@ var bodyLockedClass = 'media-library-locked';
         return false;
       }
     },
+
+    /**
+     * Triggers by clicking specified layout area
+     *
+     * @param event
+     */
     onBrowserAreaClick: function onBrowserAreaClick(event) {
       if (this.isBrowserAreaClickPrevented || (0,_shared_utils_closest__WEBPACK_IMPORTED_MODULE_9__.closest)(event.target, '.context-menu')) {
         this.resetLayoutClickAbility();

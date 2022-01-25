@@ -358,7 +358,6 @@ export default {
   mounted() {
     this.addDragAndDropEventListeners();
     this.registerDraggable();
-
   },
 
   beforeDestroy() {
@@ -393,7 +392,7 @@ export default {
      * @return {Boolean}
      */
     hasSelections() {
-      return this.filesCount && this.selectedCount;
+      return Boolean(this.filesCount && this.selectedCount);
     },
 
     /**
@@ -427,24 +426,49 @@ export default {
   },
 
   methods: {
-    // Actions
+    /**
+     * Emit close event to parent
+     */
     close() {
       this.$emit('close', {
         files: this.files,
       });
     },
+
+    /**
+     * Todo: write comment
+     */
     setUploadingMode() {
       this.mode = MODES.UPLOADING;
     },
+
+    /**
+     * Todo: write comment
+     */
     setBrowsingMode() {
       this.mode = MODES.BROWSING;
     },
+
+    /**
+     * Call this function to prevent selection resetting by clicking layout
+     */
     preventNextLayoutClick() {
       this.isBrowserAreaClickPrevented = true;
     },
+
+    /**
+     * Reset default behavior of clicking layout area
+     */
     resetLayoutClickAbility() {
       this.isBrowserAreaClickPrevented = false;
     },
+
+    /**
+     * Extract key from html element data attribute
+     *
+     * @param {HTMLElement} element
+     * @return {boolean|number}
+     */
     extractId(element) {
       if (!element) { return false; }
       return Number(element.getAttribute('data-key'));
@@ -462,6 +486,9 @@ export default {
       }
     },
 
+    /**
+     * Show user default browser file upload interface
+     */
     triggerFileUpload() {
       this.getUploadInput().click();
     },
@@ -474,7 +501,9 @@ export default {
      */
     async performBulkAction(specifiedAction = null) {
       // Get processing method key
-      const action = specifiedAction || this.action;
+      const action = (typeof specifiedAction === 'string' && specifiedAction !== 'none')
+        ? specifiedAction
+        : this.action;
 
       // Set loading state
       this.isLoading = true;
@@ -505,7 +534,13 @@ export default {
     },
 
 
-    // Events
+    /**
+     * Event that is triggered by clicking thumbnail
+     *
+     * @param {Object} file
+     * @param {Number} index
+     * @param {PointerEvent} event
+     */
     onThumbnailClick(file, index, event) {
       const { shiftKey, ctrlKey } = event;
       if (shiftKey && ctrlKey && this.selectedIndex) {
@@ -519,10 +554,13 @@ export default {
         this.beginSelection(file.id);
       }
     },
-    onThumbnailContextmenu(file, event) {
-      console.log('contextmenu');
-      event.preventDefault();
-    },
+
+    /**
+     * Catch global keydown event
+     *
+     * @param {KeyboardEvent} event
+     * @return {boolean}
+     */
     onDocumentKeyDown(event) {
       const { keyCode } = event;
       // Check for "A" key
@@ -532,6 +570,12 @@ export default {
         return false;
       }
     },
+
+    /**
+     * Triggers by clicking specified layout area
+     *
+     * @param event
+     */
     onBrowserAreaClick(event) {
       if (this.isBrowserAreaClickPrevented || closest(event.target, '.context-menu')) {
         this.resetLayoutClickAbility();
