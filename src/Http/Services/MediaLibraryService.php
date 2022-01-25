@@ -6,6 +6,7 @@ use App\Nova\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Intervention\Image\Exception\NotFoundException;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Illuminate\Database\Eloquent\Model;
 use \APIMedia\NovaMediaLibrary\Fields\HandlesConversionsTrait;
@@ -13,6 +14,8 @@ use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeUpdated;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\Conversions\FileManipulator;
+use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaLibraryMediaCannotBeUpdated;
 
 
 class MediaLibraryService
@@ -20,6 +23,7 @@ class MediaLibraryService
     use HandlesConversionsTrait;
 
     protected $object;
+    protected $fileManipulator;
 
     public function handle(Request $request, $object = null): JsonResponse
     {
@@ -119,14 +123,34 @@ class MediaLibraryService
      * @param $collection
      * @param bool $active
      * @return mixed
-     * @throws MediaCannotBeUpdated
+     * @throws MediaLibraryMediaCannotBeUpdated
      */
     public function changeActivity($object, $id, $collection, bool $active) {
         $media = $object->media->find($id);
         if (!$media) {
-            throw MediaCannotBeUpdated::doesNotBelongToCollection($id, $object, $collection);
+            throw MediaLibraryMediaCannotBeUpdated::doesNotFound($collection, $id);
         }
         return $media->update(['active' => $active]);
+    }
+
+    /**
+     * Regenerate media thumbnails
+     *
+     * @param $object
+     * @param $id
+     * @param $collection
+     * @return void
+     * @throws MediaLibraryMediaCannotBeUpdated
+     */
+    public function regenerateThumbnails($object, $id, $collection) {
+        $fileManipulator = $this->getFileManipulator();
+
+        $media = $object->media->find($id);
+        if (!$media) {
+            throw MediaLibraryMediaCannotBeUpdated::doesNotFound($collection, $id);
+        }
+
+        $fileManipulator->createDerivedFiles($media->first());
     }
 
     public function clear(Request $request, $object = null) {
@@ -194,6 +218,20 @@ class MediaLibraryService
         return $this->success('Sorted', [
             'files' => MediaResource::collection($media),
         ]);
+    }
+
+    /**
+     * Get media library file manipulator
+     *
+     * @return FileManipulator mixed
+     */
+    public function getFileManipulator(): FileManipulator
+    {
+        if (!$this->fileManipulator) {
+            $this->fileManipulator = new FileManipulator();
+        }
+
+        return $this->fileManipulator;
     }
 
     /**

@@ -496,9 +496,10 @@ export default {
      * Makes request with bulk actions
      *
      * @param {String|null} specifiedAction
+     * @param {Boolean} separately
      * @return {Promise<void>}
      */
-    async performBulkAction(specifiedAction = null) {
+    async performBulkAction(specifiedAction = null, separately = false) {
       // Get processing method key
       const action = (typeof specifiedAction === 'string' && specifiedAction !== 'none')
         ? specifiedAction
@@ -507,25 +508,53 @@ export default {
       // Set loading state
       this.isLoading = true;
 
-      // Launch common request for multiple bulk actions
-      const request = await new MultipleMediaRequest({
-        object: this.field.object,
-        objectId: this.resourceId,
-        collection: this.field.collection,
-        sources: this.extractSelectedIDs(),
-        method: action,
-      }).run();
+      // Force separate requests on 'regenerateThumbnails' action
+      if (action === 'regenerateThumbnails') {
+        separately = true;
+      }
 
-      // Ensure that response provides files
-      if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
-        this.setFiles(request.responseData.data.files);
+      // Split into multiple requests if 'separated' flag is truthy
+      let sources = [];
+      const ids = this.extractSelectedIDs();
+      if (separately) {
+        sources = ids.map((id) => ([id]));
+      } else {
+        sources.push(ids);
+      }
 
-        // Reset selection if selected method means change of files count
-        if (action === 'delete') {
-          this.unselectAll();
+      let iteration;
+      let errors = [];
+      while (iteration = sources.pop()) {
+        // Launch common request for multiple bulk actions
+        const request = await new MultipleMediaRequest({
+          object: this.field.object,
+          objectId: this.resourceId,
+          collection: this.field.collection,
+          sources: iteration,
+          method: action,
+        }).run();
+
+        // Ensure that response provides files
+        if (request.succeeded() && Array.isArray(request.responseData.data.files)) {
+          this.setFiles(request.responseData.data.files);
+
+          // Reset selection if selected method means change of files count
+          if (action === 'delete') {
+            this.unselectAll();
+          }
+        } else {
+          const message = request.responseData.message;
+          if (message) {
+            errors.push(message);
+          }
         }
+      }
 
+      if (!errors.length) {
         this.$toasted.success(this.__(`Action ":action" was completed successfully`, { action }));
+      } else {
+        this.$toasted.error(this.__('Action ":action" was completed with errors', { action }));
+        errors.forEach((error) => console.error(error));
       }
 
       // Reset loading state

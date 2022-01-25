@@ -11121,6 +11121,7 @@ var bodyLockedClass = 'media-library-locked';
      * Makes request with bulk actions
      *
      * @param {String|null} specifiedAction
+     * @param {Boolean} separately
      * @return {Promise<void>}
      */
     performBulkAction: function performBulkAction() {
@@ -11128,27 +11129,52 @@ var bodyLockedClass = 'media-library-locked';
           _this3 = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-        var specifiedAction, action, request;
+        var specifiedAction, separately, action, sources, ids, iteration, errors, request, message;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 specifiedAction = _arguments.length > 0 && _arguments[0] !== undefined ? _arguments[0] : null;
+                separately = _arguments.length > 1 && _arguments[1] !== undefined ? _arguments[1] : false;
                 // Get processing method key
                 action = typeof specifiedAction === 'string' && specifiedAction !== 'none' ? specifiedAction : _this3.action; // Set loading state
 
-                _this3.isLoading = true; // Launch common request for multiple bulk actions
+                _this3.isLoading = true; // Force separate requests on 'regenerateThumbnails' action
 
-                _context.next = 5;
+                if (action === 'regenerateThumbnails') {
+                  separately = true;
+                } // Split into multiple requests if 'separated' flag is truthy
+
+
+                sources = [];
+                ids = _this3.extractSelectedIDs();
+
+                if (separately) {
+                  sources = ids.map(function (id) {
+                    return [id];
+                  });
+                } else {
+                  sources.push(ids);
+                }
+
+                errors = [];
+
+              case 9:
+                if (!(iteration = sources.pop())) {
+                  _context.next = 16;
+                  break;
+                }
+
+                _context.next = 12;
                 return new _utils_RequestManager__WEBPACK_IMPORTED_MODULE_6__.MultipleMediaRequest({
                   object: _this3.field.object,
                   objectId: _this3.resourceId,
                   collection: _this3.field.collection,
-                  sources: _this3.extractSelectedIDs(),
+                  sources: iteration,
                   method: action
                 }).run();
 
-              case 5:
+              case 12:
                 request = _context.sent;
 
                 // Ensure that response provides files
@@ -11159,16 +11185,36 @@ var bodyLockedClass = 'media-library-locked';
                   if (action === 'delete') {
                     _this3.unselectAll();
                   }
+                } else {
+                  message = request.responseData.message;
 
+                  if (message) {
+                    errors.push(message);
+                  }
+                }
+
+                _context.next = 9;
+                break;
+
+              case 16:
+                if (!errors.length) {
                   _this3.$toasted.success(_this3.__("Action \":action\" was completed successfully", {
                     action: action
                   }));
+                } else {
+                  _this3.$toasted.error(_this3.__('Action ":action" was completed with errors', {
+                    action: action
+                  }));
+
+                  errors.forEach(function (error) {
+                    return console.error(error);
+                  });
                 } // Reset loading state
 
 
                 _this3.isLoading = false;
 
-              case 8:
+              case 18:
               case "end":
                 return _context.stop();
             }
