@@ -44977,7 +44977,7 @@ var render = function () {
                 1
               ),
               _vm._v(" "),
-              _vm.hasFiles && _vm.uploadDetailsVisible
+              _vm.uploadDetailsVisible
                 ? _c("RequestList", {
                     staticClass: "media-library-browser-uploads",
                     attrs: { requests: _vm.requests },

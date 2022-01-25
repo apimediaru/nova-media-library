@@ -244,7 +244,7 @@
           </ContextMenu>
         </div>
         <RequestList
-          v-if="hasFiles && uploadDetailsVisible"
+          v-if="uploadDetailsVisible"
           class="media-library-browser-uploads"
           :requests="requests"
           @clear="onRequestListClear"
