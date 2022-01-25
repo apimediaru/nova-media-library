@@ -376,6 +376,9 @@ body.media-library-locked {
 .media-board .media-library-layout {
   max-height: 400px;
 }
+.media-board--viewer .media-library-layout {
+  max-height: 600px;
+}
 
 .media-library-thumbnail {
   cursor: pointer;

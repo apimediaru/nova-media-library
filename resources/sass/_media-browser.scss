@@ -177,4 +177,10 @@ body.media-library-locked {
   .media-library-layout {
     max-height: 400px;
   }
+
+  &--viewer {
+    .media-library-layout {
+      max-height: 600px;
+    }
+  }
 }

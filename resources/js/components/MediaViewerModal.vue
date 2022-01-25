@@ -7,6 +7,7 @@
   >
     <div slot="container">
       <MediaBoard
+        class="media-board--viewer"
         :value="value"
       />
     </div>

@@ -12335,6 +12335,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -45432,7 +45433,12 @@ var render = function () {
       _c(
         "div",
         { attrs: { slot: "container" }, slot: "container" },
-        [_c("MediaBoard", { attrs: { value: _vm.value } })],
+        [
+          _c("MediaBoard", {
+            staticClass: "media-board--viewer",
+            attrs: { value: _vm.value },
+          }),
+        ],
         1
       ),
     ]
