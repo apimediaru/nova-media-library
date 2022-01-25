@@ -15,7 +15,10 @@
         ]"
         v-click-outside="backdropClose"
       >
-        <div class="media-library-modal-viewport-element-body">
+        <div
+          class="media-library-modal-viewport-element-body"
+          :class="elementBodyClass"
+        >
           <slot name="container" />
         </div>
         <div
@@ -54,7 +57,9 @@ export default {
   props: {
     classWhitelist: [Array, String],
 
-    elementClass: [Array, String],
+    elementClass: [Array, String, Object],
+
+    elementBodyClass: [Array, String, Object],
 
     closesViaEscape: {
       type: Boolean,

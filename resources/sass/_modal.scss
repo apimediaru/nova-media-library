@@ -82,6 +82,12 @@ $modal-controls-height: 60px;
       // Todo: temporary solution
       overflow: initial;
 
+      &--gap-less {
+        .media-library-modal-viewport-element-body {
+          padding: 0;
+        }
+      }
+
       &-body {
         padding: 1rem;
         display: flex;

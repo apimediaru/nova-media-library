@@ -137,6 +137,9 @@
   border-radius: 0.5rem;
   overflow: initial;
 }
+.media-library-modal-viewport-element--gap-less .media-library-modal-viewport-element-body {
+  padding: 0;
+}
 .media-library-modal-viewport-element-body {
   padding: 1rem;
   display: flex;
@@ -393,6 +396,9 @@ body.media-library-locked {
   border-color: var(--60);
   background-color: var(--30);
   color: var(--80);
+}
+.media-library-thumbnail--disabled.media-library-thumbnail--selected, .media-library-thumbnail--disabled.media-library-thumbnail--selected:hover {
+  opacity: 0.5;
 }
 .media-library-thumbnail--highlighted {
   border-style: dashed;

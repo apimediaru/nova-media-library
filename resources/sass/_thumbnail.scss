@@ -20,6 +20,15 @@
       background-color: var(--30);
       color: var(--80);
     }
+
+    &.media-library-thumbnail {
+      &--selected {
+        &,
+        &:hover {
+          opacity: .5;
+        }
+      }
+    }
   }
 
   &--highlighted {
