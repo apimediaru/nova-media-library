@@ -1,4 +1,5 @@
 export { axios } from './Axios';
+export * from './LazyLoad';
 
 export const keyCodes = Object.freeze({
   enter: 13,

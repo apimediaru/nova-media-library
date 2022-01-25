@@ -49,16 +49,23 @@ export default {
     context() {
       return {
         hide: this.hide,
+        ref: null,
       }
     },
   },
 
   mounted() {
-    this.getReference().addEventListener('contextmenu', this.onContextMenu, true);
+    const reference = this.getReference();
+    if (reference) {
+      reference.addEventListener('contextmenu', this.onContextMenu, true);
+    }
   },
 
   beforeDestroy() {
-    this.getReference().removeEventListener('contextmenu', this.onContextMenu, true);
+    const reference = this.getReference();
+    if (reference) {
+      reference.removeEventListener('contextmenu', this.onContextMenu, true);
+    }
   },
 
   methods: {
@@ -66,7 +73,10 @@ export default {
       return this.$refs.menu;
     },
     getReference() {
-      return this.reference();
+      if (!this.ref) {
+        this.ref = this.reference();
+      }
+      return this.ref;
     },
     hide() {
       this.visible = false;

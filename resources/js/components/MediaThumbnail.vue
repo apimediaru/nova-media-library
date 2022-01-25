@@ -13,7 +13,7 @@
   >
     <div class="media-library-thumbnail-head">
       <img
-          :src="image"
+          v-bind="imageAttributes"
           :alt="name"
           class="media-library-thumbnail-head-image"
           draggable="false"
@@ -46,6 +46,10 @@ export default {
     processContextMenu: Boolean,
     mineType: String,
     image: String,
+    lazy: {
+      type: Boolean,
+      default: true,
+    },
     file: {
       type: Object,
       default: () => ({}),
@@ -74,6 +78,11 @@ export default {
         default: {
           return null;
         }
+      }
+    },
+    imageAttributes() {
+      return {
+        [`${this.lazy ? 'data-' : ''}src`]: this.image,
       }
     },
   },

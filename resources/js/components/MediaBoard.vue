@@ -10,6 +10,7 @@
     <div
         class="media-library-layout"
         v-if="hasValue"
+        v-lazy-load-container
     >
       <MediaThumbnail
           v-if="value.length"
@@ -29,9 +30,14 @@
 <script>
 import MediaThumbnail from "./MediaThumbnail";
 import MediaLoader from "./MediaLoader";
+import { LazyLoadContainer } from "../directives";
 
 export default {
   name: "MediaBoard",
+
+  directives: {
+    LazyLoadContainer,
+  },
 
   components: {
     MediaThumbnail,

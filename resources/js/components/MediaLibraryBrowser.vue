@@ -150,6 +150,7 @@
             :class="{
               'media-library-layout--hidden': isDragging,
             }"
+            v-lazy-load-container
             ref="layout"
           >
             <div
@@ -215,7 +216,7 @@
 
           <ContextMenu
             ref="menu"
-            :reference="() => $refs.layout"
+            :reference="getContextMenuReference"
             @before-open="onContextMenuBeforeOpen"
           >
             <ContextMenuItem
@@ -264,6 +265,7 @@ import ContextMenuItem from "./ContextMenu/ContextMenuItem";
 import { RequestManager, MultipleMediaRequest, SortMediaRequest, RequestCompletedEvent, UploadMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
 import { IconDownload, IconDelete, IconSwitchOff } from "./Icons";
+import { LazyLoadContainer } from "../directives";
 import { closest } from "../shared/utils/closest";
 import { Draggable } from '@shopify/draggable';
 
@@ -280,6 +282,10 @@ export default {
   name: "MediaLibraryBrowser",
 
   mixins: [interactsWithFiles],
+
+  directives: {
+    LazyLoadContainer,
+  },
 
   components: {
     MediaLibraryModal,
@@ -1125,6 +1131,11 @@ export default {
      * @param {ContextMenuBeforeOpenEvent} event
      */
     onContextMenuBeforeOpen(event) {
+      if (this.isLoading) {
+        event.cancel();
+        return;
+      }
+
       const { target } = event.originalEvent;
       const thumbnail = closest(target, '.media-library-thumbnail');
       if (!thumbnail) {
@@ -1140,6 +1151,15 @@ export default {
       if (this.selectedCount === 0 || this.selectedCount === 1) {
         this.beginSelection(id);
       }
+    },
+
+    /**
+     * Get context menu reference
+     *
+     * @return {HTMLDivElement}
+     */
+    getContextMenuReference() {
+      return this.$refs.layout;
     },
 
     /**
