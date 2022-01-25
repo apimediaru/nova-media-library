@@ -10162,12 +10162,25 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _MediaBoard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../MediaBoard */ "./resources/js/components/MediaBoard.vue");
 //
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  props: ['resource', 'resourceName', 'resourceId', 'field']
+  props: ['resource', 'resourceName', 'resourceId', 'field'],
+  components: {
+    MediaBoard: _MediaBoard__WEBPACK_IMPORTED_MODULE_0__["default"]
+  }
 });
 
 /***/ }),
@@ -43868,7 +43881,18 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("panel-item", { attrs: { field: _vm.field } })
+  return _c("panel-item", { attrs: { field: _vm.field } }, [
+    _c(
+      "div",
+      { attrs: { slot: "value" }, slot: "value" },
+      [
+        _vm.field.value.length
+          ? _c("MediaBoard", { attrs: { value: _vm.field.value } })
+          : _c("div", [_vm._v("—")]),
+      ],
+      1
+    ),
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true
