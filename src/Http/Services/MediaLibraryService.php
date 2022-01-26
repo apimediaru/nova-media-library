@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Exception\NotFoundException;
+use Spatie\Image\Manipulations;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -240,6 +241,17 @@ class MediaLibraryService
         }
 
         return $this->fileManipulator;
+    }
+
+    /**
+     * Add conversions required by media library
+     *
+     * @param $object
+     * @return void
+     */
+    public static function addLibraryConversions($object)
+    {
+        $object->addMediaConversion('thumbnail')->fit(Manipulations::FIT_MAX, 150, 150);
     }
 
     /**

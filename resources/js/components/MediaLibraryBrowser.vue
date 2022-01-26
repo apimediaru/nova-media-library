@@ -174,7 +174,7 @@
               :key="file.id"
               :index="file.order_column"
               :name="file.file_name"
-              :image="file.original_url"
+              :image="file.__conversions__.thumbnail"
               :file="file"
               :dragged="isReordering && selected.includes(file.id)"
               :selected="isItemSelected(file.id)"
@@ -413,6 +413,7 @@ export default {
     selectAllActiveChecked() {
       return this.hasSelections
         && this.filesCount
+        && this.activeFilesCount > 0
         && this.activeFiles.every((file) => this.selected.includes(file.id));
     },
 
@@ -424,6 +425,7 @@ export default {
     selectAllInactiveChecked() {
       return this.hasSelections
         && this.filesCount
+        && this.inactiveFilesCount > 0
         && this.inactiveFiles.every((file) => this.selected.includes(file.id));
     },
   },

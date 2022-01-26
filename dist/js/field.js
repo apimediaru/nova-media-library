@@ -11062,7 +11062,7 @@ var bodyLockedClass = 'media-library-locked';
     selectAllActiveChecked: function selectAllActiveChecked() {
       var _this = this;
 
-      return this.hasSelections && this.filesCount && this.activeFiles.every(function (file) {
+      return this.hasSelections && this.filesCount && this.activeFilesCount > 0 && this.activeFiles.every(function (file) {
         return _this.selected.includes(file.id);
       });
     },
@@ -11075,7 +11075,7 @@ var bodyLockedClass = 'media-library-locked';
     selectAllInactiveChecked: function selectAllInactiveChecked() {
       var _this2 = this;
 
-      return this.hasSelections && this.filesCount && this.inactiveFiles.every(function (file) {
+      return this.hasSelections && this.filesCount && this.inactiveFilesCount > 0 && this.inactiveFiles.every(function (file) {
         return _this2.selected.includes(file.id);
       });
     }
@@ -45007,7 +45007,7 @@ var render = function () {
                               attrs: {
                                 index: file.order_column,
                                 name: file.file_name,
-                                image: file.original_url,
+                                image: file.__conversions__.thumbnail,
                                 file: file,
                                 dragged:
                                   _vm.isReordering &&
