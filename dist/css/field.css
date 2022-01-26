@@ -428,6 +428,7 @@ body.media-library-locked {
   background-color: #E5F3FF;
   border-color: #99D1FF;
   border-style: dashed;
+  opacity: 1;
 }
 .media-library-thumbnail[data-extension=png] .media-library-thumbnail-head {
   background-image: url("/vendor/nova-media-library/img/transparent.png");
