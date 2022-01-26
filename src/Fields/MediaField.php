@@ -8,8 +8,6 @@ use Laravel\Nova\Fields\Field;
 
 class MediaField extends Field
 {
-    use HandlesConversionsTrait;
-
     /**
      * The field's component.
      *
@@ -30,6 +28,13 @@ class MediaField extends Field
      * @var int
      */
     protected $limit = 0;
+
+    /**
+     * Check duplicates on file upload
+     *
+     * @var boolean|null
+     */
+    protected $checkDuplicates = null;
 
     public function getClass(): string
     {
@@ -109,6 +114,33 @@ class MediaField extends Field
     }
 
     /**
+     * Set check duplicates option for field
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function checkDuplicates(bool $value = true): self
+    {
+        $this->checkDuplicates = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get resolved check duplicates option
+     *
+     * @return bool
+     */
+    protected function getCheckDuplicates(): bool
+    {
+        if ($this->checkDuplicates === null) {
+            return (bool) config('nova-media-library.check_duplicates');
+        }
+
+        return (bool) $this->checkDuplicates;
+    }
+
+    /**
      * Resolve the field's value.
      *
      * @param  mixed  $resource
@@ -139,6 +171,7 @@ class MediaField extends Field
             'object' => $this->getClass(),
             'collection' => $this->getCollection(),
             'limit' => $this->getLimit(),
+            'checkDuplicates' => $this->getCheckDuplicates(),
         ]);
     }
 }

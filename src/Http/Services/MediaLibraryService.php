@@ -9,19 +9,15 @@ use Illuminate\Http\Request;
 use Intervention\Image\Exception\NotFoundException;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Illuminate\Database\Eloquent\Model;
-use \APIMedia\NovaMediaLibrary\Fields\HandlesConversionsTrait;
-use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeUpdated;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
 use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\Conversions\FileManipulator;
-use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaLibraryMediaCannotBeUpdated;
+use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaCannotBeUpdated;
 
 
 class MediaLibraryService
 {
-    use HandlesConversionsTrait;
-
     protected $object;
     protected $fileManipulator;
 
@@ -96,7 +92,7 @@ class MediaLibraryService
      * @param $id
      * @param $collection
      * @return mixed
-     * @throws MediaLibraryMediaCannotBeUpdated
+     * @throws MediaCannotBeUpdated
      */
     public function activate($object, $id, $collection) {
         return $this->changeActivity($object, $id, $collection, true);
@@ -109,7 +105,7 @@ class MediaLibraryService
      * @param $id
      * @param $collection
      * @return mixed
-     * @throws MediaLibraryMediaCannotBeUpdated
+     * @throws MediaCannotBeUpdated
      */
     public function deactivate($object, $id, $collection) {
         return $this->changeActivity($object, $id, $collection, false);
@@ -123,12 +119,12 @@ class MediaLibraryService
      * @param $collection
      * @param bool $active
      * @return mixed
-     * @throws MediaLibraryMediaCannotBeUpdated
+     * @throws MediaCannotBeUpdated
      */
     public function changeActivity($object, $id, $collection, bool $active) {
         $media = $object->media->find($id);
         if (!$media) {
-            throw MediaLibraryMediaCannotBeUpdated::doesNotFound($collection, $id);
+            throw MediaCannotBeUpdated::doesNotFound($collection, $id);
         }
         return $media->update(['active' => $active]);
     }
@@ -140,14 +136,14 @@ class MediaLibraryService
      * @param $id
      * @param $collection
      * @return void
-     * @throws MediaLibraryMediaCannotBeUpdated
+     * @throws MediaCannotBeUpdated
      */
     public function regenerateThumbnails($object, $id, $collection) {
         $fileManipulator = $this->getFileManipulator();
 
         $media = $object->media->find($id);
         if (!$media) {
-            throw MediaLibraryMediaCannotBeUpdated::doesNotFound($collection, $id);
+            throw MediaCannotBeUpdated::doesNotFound($collection, $id);
         }
 
         $fileManipulator->createDerivedFiles($media->first());

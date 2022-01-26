@@ -5,7 +5,7 @@ namespace APIMedia\NovaMediaLibrary\Http\Exceptions;
 use Exception;
 
 
-class MediaLibraryMediaCannotBeUpdated extends Exception
+class MediaCannotBeUpdated extends Exception
 {
     public static function doesNotFound(string $collectionName, int $id): self
     {

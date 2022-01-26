@@ -1,6 +1,6 @@
 <?php
 
-namespace APIMedia\NovaMediaLibrary\Fields;
+namespace APIMedia\NovaMediaLibrary\Support\Traits;
 
 
 trait HandlesConversionsTrait

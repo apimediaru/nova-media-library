@@ -32,6 +32,11 @@ class FieldServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../public' => public_path('vendor/nova-media-library'),
         ], 'nova-media-library-assets');
+
+        // Publish config
+        $this->publishes([
+            __DIR__.'/../config/nova-media-library.php' => config_path('nova-media-library.php')
+        ], 'nova-media-library-config');
     }
 
     /**
@@ -41,7 +46,9 @@ class FieldServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/nova-media-library.php', 'nova-media-library'
+        );
     }
 
     /**

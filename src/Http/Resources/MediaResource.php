@@ -3,7 +3,7 @@
 namespace APIMedia\NovaMediaLibrary\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use APIMedia\NovaMediaLibrary\Fields\HandlesConversionsTrait;
+use APIMedia\NovaMediaLibrary\Support\Traits\HandlesConversionsTrait;
 
 
 class MediaResource extends JsonResource
