@@ -75,6 +75,9 @@ export default {
         case 'image/png': {
           return 'png';
         }
+        case 'application/pdf': {
+          return 'pdf';
+        }
         default: {
           return null;
         }
@@ -82,7 +85,7 @@ export default {
     },
     imageAttributes() {
       return {
-        [`${this.lazy ? 'data-' : ''}src`]: this.image,
+        [`${this.lazy ? 'data-' : ''}src`]: this.getImage(),
       }
     },
   },
@@ -97,6 +100,11 @@ export default {
       event.preventDefault();
       this.$emit('contextmenu', event);
       return false;
+    },
+    getImage() {
+      return this.extension === 'pdf'
+          ? '/vendor/nova-media-library/img/pdf.svg'
+          : this.image;
     },
   },
 }

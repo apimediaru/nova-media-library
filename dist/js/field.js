@@ -12283,6 +12283,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             return 'png';
           }
 
+        case 'application/pdf':
+          {
+            return 'pdf';
+          }
+
         default:
           {
             return null;
@@ -12290,7 +12295,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     imageAttributes: function imageAttributes() {
-      return _defineProperty({}, "".concat(this.lazy ? 'data-' : '', "src"), this.image);
+      return _defineProperty({}, "".concat(this.lazy ? 'data-' : '', "src"), this.getImage());
     }
   },
   methods: {
@@ -12303,6 +12308,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       event.preventDefault();
       this.$emit('contextmenu', event);
       return false;
+    },
+    getImage: function getImage() {
+      return this.extension === 'pdf' ? '/vendor/nova-media-library/img/pdf.svg' : this.image;
     }
   }
 });
