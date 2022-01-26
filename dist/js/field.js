@@ -11578,6 +11578,7 @@ var bodyLockedClass = 'media-library-locked';
                     objectId: _this4.resourceId,
                     collection: _this4.field.collection,
                     checkDuplicates: _this4.field.checkDuplicates,
+                    limit: _this4.field.limit || 0,
                     file: item
                   });
                 });

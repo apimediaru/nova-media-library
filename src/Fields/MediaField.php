@@ -96,9 +96,22 @@ class MediaField extends Field
      *
      * @return int
      */
-    public function getLimit(): int
+    private function getLimit(): int
     {
         return $this->limit;
+    }
+
+    /**
+     * Set maximum count of possible uploaded media files
+     *
+     * @param int $limit
+     * @return $this
+     */
+    public function limit(int $limit): self
+    {
+        $this->limit = $limit;
+
+        return $this;
     }
 
     /**

@@ -846,6 +846,7 @@ export default {
         objectId: this.resourceId,
         collection: this.field.collection,
         checkDuplicates: this.field.checkDuplicates,
+        limit: this.field.limit || 0,
         file: item,
       }));
       this.requests.push(...uploads);

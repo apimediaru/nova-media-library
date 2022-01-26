@@ -60,6 +60,13 @@ class MediaLibraryService
         ], $errors);
     }
 
+    /**
+     * Media upload handler
+     *
+     * @param Request $request
+     * @param $object
+     * @return JsonResponse
+     */
     public function upload(Request $request, $object = null): JsonResponse
     {
         if (!$object) {
@@ -72,7 +79,16 @@ class MediaLibraryService
         }
 
         $collection = $request->get('collection');
+        $limit = (int) $request->get('limit') ?? 0;
         $checkDuplicates = (bool) $request->get('checkDuplicates');
+
+        if ($limit > 0) {
+            try {
+                $this->checkCollectionLimit($object, $collection, $limit);
+            } catch (MediaCannotBeUploaded $exception) {
+                return $this->failure($exception->getMessage());
+            }
+        }
 
         if ($checkDuplicates) {
             try {
@@ -272,6 +288,25 @@ class MediaLibraryService
         });
         if ($exists) {
             throw MediaCannotBeUploaded::alreadyExists($collection, $file->getClientOriginalName());
+        }
+
+        return true;
+    }
+
+    /**
+     * Check collection files limit
+     *
+     * @param Model $object
+     * @param string $collection
+     * @param int $limit
+     * @return bool
+     * @throws MediaCannotBeUploaded
+     */
+    public function checkCollectionLimit(Model $object, string $collection, int $limit): bool
+    {
+        $media = $object->getMedia($collection);
+        if ($media->count() >= $limit) {
+            throw MediaCannotBeUploaded::reachedLimitOfFiles($collection, $limit);
         }
 
         return true;
