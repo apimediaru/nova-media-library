@@ -414,9 +414,6 @@ body.media-library-locked {
   background-color: #CDE8FF;
   border-style: solid;
 }
-.media-library-thumbnail--dragged {
-  opacity: 0.5;
-}
 .media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover, .media-library-thumbnail--ghost, .media-library-thumbnail--ghost:hover {
   border-style: solid;
   border-color: #99D1FF;
@@ -429,6 +426,9 @@ body.media-library-locked {
   border-color: #99D1FF;
   border-style: dashed;
   opacity: 1;
+}
+.media-library-thumbnail--dragged, .media-library-thumbnail--dragged:hover {
+  opacity: 0.5;
 }
 .media-library-thumbnail[data-extension=png] .media-library-thumbnail-head {
   background-image: url("/vendor/nova-media-library/img/transparent.png");

@@ -53,10 +53,6 @@
     }
   }
 
-  &--dragged {
-    opacity: .5;
-  }
-
   &--dragged,
   &--ghost {
     &,
@@ -77,6 +73,13 @@
       border-color: #99D1FF;
       border-style: dashed;
       opacity: 1;
+    }
+  }
+
+  &--dragged {
+    &,
+    &:hover {
+      opacity: .5;
     }
   }
 
