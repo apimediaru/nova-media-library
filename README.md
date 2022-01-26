@@ -104,8 +104,8 @@ public function fields(Request $request)
 
 ## Nova component  
 
-- Drag-and-drop single or multiple files
-- Press `ctrl+A` to toggle select all files
+- Drag-and-drop single or multiple files to upload
+- Press `ctrl+A` to toggle all files selection
 - Click thumbnail with `ctrl`, `shift` or `ctrl+shift` modifier to select multiple media files just like in default File Explorer
 - Use context menu clicking by thumbnail to perform multiple actions
 - Change display order by dragging single or multiple files
