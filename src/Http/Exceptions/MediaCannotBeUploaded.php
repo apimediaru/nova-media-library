@@ -7,8 +7,8 @@ use Exception;
 
 class MediaCannotBeUploaded extends Exception
 {
-    public static function alreadyExists(string $collection): self
+    public static function alreadyExists(string $collection, string $filename): self
     {
-        return new static(__("Media already exists in `{$collection}` collection"));
+        return new static(__("File named \":filename\" already exists in \":collection\" collection", compact('collection', 'filename')));
     }
 }

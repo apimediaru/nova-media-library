@@ -2,10 +2,12 @@
 
 namespace APIMedia\NovaMediaLibrary\Http\Services;
 
+use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaCannotBeUploaded;
 use App\Nova\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Intervention\Image\Exception\NotFoundException;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +71,15 @@ class MediaLibraryService
         }
 
         $collection = $request->get('collection');
+        $checkDuplicates = (bool) $request->get('checkDuplicates');
+
+        if ($checkDuplicates) {
+            try {
+                $this->checkDuplicates($object, $collection, $request->file('file'));
+            } catch (MediaCannotBeUploaded $exception) {
+                return $this->failure($exception->getMessage());
+            }
+        }
 
         try {
             $media = $object->addMediaFromRequest('file')->toMediaCollection($collection);
@@ -229,6 +240,29 @@ class MediaLibraryService
         }
 
         return $this->fileManipulator;
+    }
+
+    /**
+     * Returns true if no duplicates found
+     * otherwise throws an exception
+     *
+     * @param Model $object
+     * @param string $collection
+     * @param UploadedFile $file
+     * @return bool
+     * @throws MediaCannotBeUploaded
+     */
+    public function checkDuplicates(Model $object, string $collection, UploadedFile $file): bool
+    {
+        $fileHash = md5_file($file);
+        $exists = $object->getMedia($collection)->contains(function ($mediaObject) use ($fileHash) {
+            return md5_file($mediaObject->originalUrl) === $fileHash;
+        });
+        if ($exists) {
+            throw MediaCannotBeUploaded::alreadyExists($collection, $file->getClientOriginalName());
+        }
+
+        return true;
     }
 
     /**
