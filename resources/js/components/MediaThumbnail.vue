@@ -85,8 +85,13 @@ export default {
     },
     imageAttributes() {
       return {
-        [`${this.lazy ? 'data-' : ''}src`]: this.getImage(),
+        [`${this.lazy ? 'data-' : ''}src`]: this.displayImage,
       }
+    },
+    displayImage() {
+      return this.extension === 'pdf'
+          ? '/vendor/nova-media-library/img/pdf.svg'
+          : this.image;
     },
   },
 
@@ -100,11 +105,6 @@ export default {
       event.preventDefault();
       this.$emit('contextmenu', event);
       return false;
-    },
-    getImage() {
-      return this.extension === 'pdf'
-          ? '/vendor/nova-media-library/img/pdf.svg'
-          : this.image;
     },
   },
 }

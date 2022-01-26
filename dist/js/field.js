@@ -12295,7 +12295,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     imageAttributes: function imageAttributes() {
-      return _defineProperty({}, "".concat(this.lazy ? 'data-' : '', "src"), this.getImage());
+      return _defineProperty({}, "".concat(this.lazy ? 'data-' : '', "src"), this.displayImage);
+    },
+    displayImage: function displayImage() {
+      return this.extension === 'pdf' ? '/vendor/nova-media-library/img/pdf.svg' : this.image;
     }
   },
   methods: {
@@ -12308,9 +12311,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       event.preventDefault();
       this.$emit('contextmenu', event);
       return false;
-    },
-    getImage: function getImage() {
-      return this.extension === 'pdf' ? '/vendor/nova-media-library/img/pdf.svg' : this.image;
     }
   }
 });
