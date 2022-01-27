@@ -39,6 +39,9 @@ class MediaLibraryService
         $sources = $request->get('sources');
         $method = $request->get('method');
 
+        // Manually fill object media relation
+        $object->media = static::getMedia($object, $collection);
+
         if (!method_exists($this, $method)) {
             return $this->failure('Method "' . $method . '" does not exists.');
         }
