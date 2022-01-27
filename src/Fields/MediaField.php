@@ -36,6 +36,13 @@ class MediaField extends Field
      */
     protected $checkDuplicates = null;
 
+    /**
+     * Indicates if the element should be shown on the creation view.
+     *
+     * @var \Closure|bool
+     */
+    public $showOnCreation = false;
+
     public function getClass(): string
     {
         return get_class($this->resource);
