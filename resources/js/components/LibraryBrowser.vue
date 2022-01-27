@@ -278,7 +278,7 @@ const MODES = Object.freeze({
 const bodyLockedClass = 'media-library-locked';
 
 export default {
-  name: "MediaLibraryBrowser",
+  name: "LibraryBrowser",
 
   mixins: [interactsWithFiles],
 

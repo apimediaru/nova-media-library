@@ -7,7 +7,7 @@
   >
     <template slot="field">
       <portal to="modals" transition="fade-transition">
-        <MediaLibraryBrowser
+        <LibraryBrowser
           v-if="isBrowsingModalOpen"
           @close="onBrowsingModalClose"
           :resourceId="resourceId"
@@ -64,16 +64,16 @@
 
 <script>
 import { FormField, HandlesValidationErrors } from 'laravel-nova';
-import MediaLibraryBrowser from "../MediaLibraryBrowser";
+import LibraryBrowser from "../LibraryBrowser";
 import ConfirmActionModal from "../ConfirmActionModal";
 import MediaBoard from "../MediaBoard";
-import { ClearMediaRequest } from "../../utils/RequestManager/Requests";
+import { ClearMediaRequest } from "../../utils/RequestManager";
 
 export default {
   mixins: [FormField, HandlesValidationErrors],
 
   components: {
-    MediaLibraryBrowser,
+    LibraryBrowser,
     MediaBoard,
     ConfirmActionModal,
   },
