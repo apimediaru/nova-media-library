@@ -1,6 +1,6 @@
 # Nova Media Library
 
-This [Laravel Nova](https://nova.laravel.com/) package provides frontend UI and field with some useful options for [spatie\laravel-medialibrary](https://spatie.be/docs/laravel-medialibrary/v9/introduction). Documentation how to use base media library could be found [here](https://spatie.be/docs/laravel-medialibrary/v9/introduction). 
+This [Laravel Nova](https://nova.laravel.com/) package provides frontend UI and field with some useful options over forked and modified for our usage library [spatie\laravel-medialibrary](https://spatie.be/docs/laravel-medialibrary/v9/introduction). Documentation how to use base media library could be found [here](https://spatie.be/docs/laravel-medialibrary/v9/introduction). 
 
 ## Installation
 Not published yet
