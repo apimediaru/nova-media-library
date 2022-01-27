@@ -25,12 +25,6 @@
     "config": {
         "sort-packages": true
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/apimediaru/laravel-medialibrary"
-        }
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
