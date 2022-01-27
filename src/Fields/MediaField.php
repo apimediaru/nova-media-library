@@ -82,9 +82,7 @@ class MediaField extends Field
      */
     public function multiple(int $limit = 0): self
     {
-        $this->limit = $limit;
-
-        return $this;
+        return $this->limit($limit);
     }
 
     /**
