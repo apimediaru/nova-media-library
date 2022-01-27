@@ -31,7 +31,11 @@ export default {
 
   computed: {
     help() {
-      return md.render(window.Nova.config.NovaMediaLibrary.help);
+      const content = window.Nova.config.NovaMediaLibrary.help;
+      if (content) {
+        return md.render(content);
+      }
+      return 'No instruction';
     }
   },
 };

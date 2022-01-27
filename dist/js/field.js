@@ -10519,7 +10519,13 @@ var md = new (markdown_it__WEBPACK_IMPORTED_MODULE_1___default())();
   },
   computed: {
     help: function help() {
-      return md.render(window.Nova.config.NovaMediaLibrary.help);
+      var content = window.Nova.config.NovaMediaLibrary.help;
+
+      if (content) {
+        return md.render(content);
+      }
+
+      return 'No instruction';
     }
   }
 });
