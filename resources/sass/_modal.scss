@@ -11,7 +11,7 @@ $modal-controls-height: 60px;
     > .media-library-modal-viewport {
       overflow-y: auto;
 
-      &-element {
+      > .media-library-modal-viewport-element {
         height: auto;
         max-height: initial;
       }
@@ -88,6 +88,17 @@ $modal-controls-height: 60px;
         }
       }
 
+      &-head {
+        padding: .75rem 1rem;
+        background-color: var(--30);
+        border-bottom: 1px solid $color-border;
+        border-radius: $border-radius $border-radius 0 0;
+
+        + .media-library-modal-viewport-element-body {
+          border-top-right-radius: 0;
+        }
+      }
+
       &-body {
         padding: 1rem;
         display: flex;
@@ -96,6 +107,12 @@ $modal-controls-height: 60px;
         min-height: 0;
         border-radius: $border-radius;
         overflow: hidden;
+
+        &--scrollable {
+          @include scrollbars();
+
+          overflow-y: scroll;
+        }
       }
 
       &-controls {

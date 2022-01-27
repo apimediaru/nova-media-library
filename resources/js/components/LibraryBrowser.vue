@@ -1,5 +1,5 @@
 <template>
-  <MediaLibraryModal
+  <media-library-modal
     @modal-close="close"
     :closes-via-backdrop="false"
     class="media-library-browser media-library-modal--entire-scrollable"
@@ -10,9 +10,24 @@
         class="media-library-browser-container"
     >
       <div class="media-library-browser-head">
-        <h2 class="media-library-browser-head-title">
-          <span>{{ __('Browse media library') }}<template v-if="field.name">: {{ field.name }}</template></span>
-        </h2>
+        <div class="flex align-center">
+          <h2 class="media-library-browser-head-title">
+            <span>{{ __('Browse media library') }}<template v-if="field.name">: {{ field.name }}</template></span>
+          </h2>
+
+          <tooltip
+              class="ml-auto mr-4 leading-none"
+          >
+            <IconQuestionMark
+                class="w-5 h-5 fill-primary cursor-pointer"
+                @click.native="isHelpActive = true"
+            />
+
+            <tooltip-content slot="content">
+              {{ __('Help') }}
+            </tooltip-content>
+          </tooltip>
+        </div>
 
         <div
             class="media-library-panel-actions"
@@ -101,6 +116,7 @@
                 <option value="regenerateThumbnails">{{ __('Regenerate thumbnails') }}</option>
               </select>
             </div>
+
             <div class="media-library-actions-action media-library-action">
               <button
                   class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer"
@@ -108,21 +124,15 @@
                   @click="performBulkAction"
               >{{ __('Apply') }}</button>
             </div>
-<!--            <div class="media-library-actions-action media-library-browser-actions-action-search media-library-action">-->
-<!--              <input-->
-<!--                  type="text"-->
-<!--                  class="w-full form-control form-input form-input-bordered"-->
-<!--                  :placeholder="__('Search...')"-->
-<!--              >-->
-<!--            </div>-->
           </div>
           <div class="media-library-actions-panel media-library-actions-panel-right media-library-actions">
             <div
-                class="media-library-browser-actions-action-for-selected"
+                class="media-library-browser-actions-action-for-selected media-library-actions-action"
                 v-if="files.length > 0"
             >
               {{ __('Selected:') }} <span class="media-library-browser-actions-action-for-selected-value">{{ selectedCount }} / {{ files.length }}</span>
             </div>
+
             <button
                 class="btn btn-default btn-primary whitespace-no-wrap cursor-pointer media-library-actions-action"
                 @click="uploadDetailsVisible = !uploadDetailsVisible"
@@ -168,7 +178,7 @@
                 <p class="mt-2">{{ __('Drag and drop, or click to browse and select your files') }}</p>
               </template>
             </div>
-            <MediaThumbnail
+            <media-thumbnail
               v-if="hasFiles"
               v-for="(file, index) in files"
               :key="file.id"
@@ -213,46 +223,51 @@
             </div>
           </div>
 
-          <ContextMenu
+          <context-menu
             ref="menu"
             :reference="getContextMenuReference"
             @before-open="onContextMenuBeforeOpen"
           >
-            <ContextMenuItem
+            <context-menu-item
               v-if="selectedCount === 1 && selectedIndex"
               @click="openFileOriginal(selectedIndex)"
               divider="bottom"
             >
-              <IconDownload class="mr-1" /> {{ __('Open original at new page') }}
-            </ContextMenuItem>
-            <ContextMenuItem
+              <icon-download class="mr-1" /> {{ __('Open original at new page') }}
+            </context-menu-item>
+            <context-menu-item
               @click="performBulkAction('activate')"
             >
-              <IconSwitchOff class="mr-1" /> {{ __('Activate checked') }}
-            </ContextMenuItem>
-            <ContextMenuItem
+              <icon-switch-off class="mr-1" /> {{ __('Activate checked') }}
+            </context-menu-item>
+            <context-menu-item
               @click="performBulkAction('deactivate')"
             >
-              <IconSwitchOff class="mr-1" /> {{ __('Deactivate checked') }}
-            </ContextMenuItem>
-            <ContextMenuItem
+              <icon-switch-off class="mr-1" /> {{ __('Deactivate checked') }}
+            </context-menu-item>
+            <context-menu-item
               @click="performBulkAction('delete')"
               divider="top"
             >
-              <IconDelete class="mr-1" /> {{ __('Delete checked') }}
-            </ContextMenuItem>
-          </ContextMenu>
+              <icon-delete class="mr-1" /> {{ __('Delete checked') }}
+            </context-menu-item>
+          </context-menu>
         </div>
-        <RequestList
-          v-if="uploadDetailsVisible"
-          class="media-library-browser-uploads"
-          :requests="requests"
-          @clear="onRequestListClear"
+
+        <request-list
+            v-if="uploadDetailsVisible"
+            class="media-library-browser-uploads"
+            :requests="requests"
+            @clear="onRequestListClear"
         />
       </div>
 
+      <help-modal
+        v-if="isHelpActive"
+        @modal-close="isHelpActive = false"
+      />
     </div>
-  </MediaLibraryModal>
+  </media-library-modal>
 </template>
 
 <script>
@@ -263,10 +278,11 @@ import ContextMenu from "./ContextMenu/ContextMenu";
 import ContextMenuItem from "./ContextMenu/ContextMenuItem";
 import { RequestManager, MultipleMediaRequest, SortMediaRequest, UploadMediaRequest } from "../utils/RequestManager";
 import { interactsWithFiles } from '../mixins';
-import { IconDownload, IconDelete, IconSwitchOff } from "./Icons";
+import { IconDownload, IconDelete, IconSwitchOff, IconQuestionMark } from "./Icons";
 import { LazyLoadContainer } from "../directives";
 import { closest } from "../shared/utils/closest";
 import { Draggable } from '@shopify/draggable';
+import HelpModal from "./HelpModal";
 
 const { throttle, debounce } = window._;
 
@@ -287,6 +303,7 @@ export default {
   },
 
   components: {
+    HelpModal,
     MediaLibraryModal,
     MediaThumbnail,
     RequestList,
@@ -295,6 +312,7 @@ export default {
     IconDownload,
     IconDelete,
     IconSwitchOff,
+    IconQuestionMark,
   },
 
   data() {
@@ -332,6 +350,9 @@ export default {
 
       // Loading
       isLoading: false,
+
+      // Help
+      isHelpActive: false,
     };
   },
 

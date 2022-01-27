@@ -16,17 +16,26 @@
         v-click-outside="backdropClose"
       >
         <div
+          class="media-library-modal-viewport-element-head"
+          v-if="$slots.head"
+        >
+          <slot name="head" />
+        </div>
+
+        <div
           class="media-library-modal-viewport-element-body"
           :class="elementBodyClass"
         >
           <slot name="container" />
         </div>
+
         <div
             class="media-library-modal-viewport-element-controls"
             v-if="$slots.buttons"
         >
           <slot name="buttons" />
         </div>
+
         <div
           class="media-library-modal-viewport-element-close"
           @click="crossClose"
@@ -83,6 +92,8 @@ export default {
       default: 600,
       required: false,
     },
+
+    scrollableContainer: Boolean,
   },
 
   created() {

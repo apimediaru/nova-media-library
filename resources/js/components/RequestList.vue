@@ -10,7 +10,7 @@
       >{{ __('Clear') }}</div>
     </div>
     <div class="media-uploads">
-      <RequestListItem
+      <request-list-item
         v-for="(request, i) in requests"
         :request="request"
         :name="request.name"

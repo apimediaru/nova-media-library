@@ -12,7 +12,7 @@
         v-if="hasValue"
         v-lazy-load-container
     >
-      <MediaThumbnail
+      <media-thumbnail
           v-if="value.length"
           v-for="(file, index) in value"
           :key="file.id"

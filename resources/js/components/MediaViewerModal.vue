@@ -1,17 +1,17 @@
 <template>
-  <MediaLibraryModal
+  <media-library-modal
     closes-via-backdrop
     :width="1200"
     element-class="media-library-modal-viewport-element--gap-less"
     @modal-close="$emit('modal-close')"
   >
     <div slot="container">
-      <MediaBoard
+      <media-board
         class="media-board--viewer"
         :value="value"
       />
     </div>
-  </MediaLibraryModal>
+  </media-library-modal>
 </template>
 
 <script>

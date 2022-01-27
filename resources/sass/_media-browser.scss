@@ -7,9 +7,11 @@ body.media-library-locked {
     padding: 0;
   }
 
-  .media-library-modal-viewport-element {
-    min-height: 500px;
-    height: 100%;
+  > .media-library-modal-viewport {
+    > .media-library-modal-viewport-element {
+      min-height: 500px;
+      height: 100%;
+    }
   }
 }
 
