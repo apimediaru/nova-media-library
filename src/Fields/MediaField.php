@@ -3,6 +3,7 @@
 namespace APIMedia\NovaMediaLibrary\Fields;
 
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
+use APIMedia\NovaMediaLibrary\Http\Services\MediaLibraryService;
 use Laravel\Nova\Fields\Field;
 
 
@@ -177,7 +178,7 @@ class MediaField extends Field
             $collection = call_user_func($this->computedCallback, $resource);
         }
 
-        $this->value = MediaResource::collection($this->resource->getMedia($collection));
+        $this->value = MediaResource::collection(MediaLibraryService::getMedia($resource, $collection));
     }
 
     /**

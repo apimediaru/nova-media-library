@@ -3,20 +3,19 @@
 namespace APIMedia\NovaMediaLibrary\Http\Services;
 
 use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaCannotBeUploaded;
-use App\Nova\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Intervention\Image\Exception\NotFoundException;
 use Spatie\Image\Manipulations;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
-use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use APIMedia\NovaMediaLibrary\Http\Resources\MediaResource;
 use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\Conversions\FileManipulator;
 use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaCannotBeUpdated;
+use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 
 
 class MediaLibraryService
@@ -52,8 +51,7 @@ class MediaLibraryService
             }
         }
 
-        unset($object->media);
-        $media = $object->getMedia($collection);
+        $media = static::getMedia($object, $collection);
 
         return $this->success('', [
             'files' => MediaResource::collection($media),
@@ -193,13 +191,9 @@ class MediaLibraryService
         // Todo: handle potential errors
         $object->clearMediaCollection($collection);
 
-        if ($object->relationLoaded('media')) {
-            unset($this->media);
-        }
-
         return $this->success('Cleared', [
             'collection' => $collection,
-            'files' => MediaResource::collection($object->getMedia($collection)),
+            'files' => MediaResource::collection(static::getMedia($object, $collection)),
         ]);
     }
 
@@ -237,8 +231,7 @@ class MediaLibraryService
 
         \DB::update("UPDATE `{$table}` SET `order_column` = CASE `id` {$cases} END, `updated_at` = ? WHERE `id` in ({$ids}) AND `collection_name` = ?", $params);
 
-        unset($object->media);
-        $media = $object->getMedia($collection);
+        $media = static::getMedia($object, $collection);
 
         return $this->success('Sorted', [
             'files' => MediaResource::collection($media),
@@ -274,16 +267,16 @@ class MediaLibraryService
      * Returns true if no duplicates found
      * otherwise throws an exception
      *
-     * @param Model $object
+     * @param HasMedia $object
      * @param string $collection
      * @param UploadedFile $file
      * @return bool
      * @throws MediaCannotBeUploaded
      */
-    public function checkDuplicates(Model $object, string $collection, UploadedFile $file): bool
+    public function checkDuplicates(HasMedia $object, string $collection, UploadedFile $file): bool
     {
         $fileHash = md5_file($file);
-        $exists = $object->getMedia($collection)->contains(function ($mediaObject) use ($fileHash) {
+        $exists = static::getMedia($object, $collection)->contains(function ($mediaObject) use ($fileHash) {
             return md5_file($mediaObject->originalUrl) === $fileHash;
         });
         if ($exists) {
@@ -296,20 +289,42 @@ class MediaLibraryService
     /**
      * Check collection files limit
      *
-     * @param Model $object
+     * @param HasMedia $object
      * @param string $collection
      * @param int $limit
      * @return bool
      * @throws MediaCannotBeUploaded
      */
-    public function checkCollectionLimit(Model $object, string $collection, int $limit): bool
+    public function checkCollectionLimit(HasMedia $object, string $collection, int $limit): bool
     {
-        $media = $object->getMedia($collection);
+        $media = static::getMedia($object, $collection);
         if ($media->count() >= $limit) {
             throw MediaCannotBeUploaded::reachedLimitOfFiles($collection, $limit);
         }
 
         return true;
+    }
+
+    /**
+     * Get all media by object and collection (ignores any model query filters)
+     *
+     * @param HasMedia $object
+     * @param string $collectionName
+     * @return MediaCollection
+     */
+    public static function getMedia(HasMedia $object, string $collectionName): MediaCollection
+    {
+        $collection = Media::where([
+            'model_type' => get_class($object),
+            'model_id' => $object->id,
+            'collection_name' => $collectionName,
+        ])->get();
+
+        $collection = new MediaCollection($collection);
+
+        return $collection
+            ->sortBy('order_column')
+            ->values();
     }
 
     /**
