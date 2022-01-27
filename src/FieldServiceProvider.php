@@ -28,6 +28,8 @@ class FieldServiceProvider extends ServiceProvider
             Nova::style('nova-media-library', __DIR__.'/../dist/css/field.css');
         });
 
+        $this->registerTranslations();
+
         // Publish public assets
         $this->publishes([
             __DIR__.'/../public' => public_path('vendor/nova-media-library'),
@@ -37,6 +39,11 @@ class FieldServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/nova-media-library.php' => config_path('nova-media-library.php')
         ], 'nova-media-library-config');
+
+        // Publish translations
+        $this->publishes([
+            __DIR__.'/../resources/lang' => lang_path('vendor/nova-media-library')
+        ], 'nova-media-library-lang');
     }
 
     /**
@@ -49,6 +56,23 @@ class FieldServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/nova-media-library.php', 'nova-media-library'
         );
+    }
+
+    /**
+     * Register translations for current locale
+     *
+     * @return void
+     */
+    protected function registerTranslations()
+    {
+        $currentLocale = app()->getLocale();
+
+        Nova::translations(__DIR__.'/../resources/lang'.$currentLocale.'.json');
+        Nova::translations(lang_path('vendor/nova-media-library/'.$currentLocale.'.json'));
+
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'nova-media-library');
+        $this->loadJsonTranslationsFrom(__DIR__.'/../resources/lang');
+        $this->loadJsonTranslationsFrom(lang_path('vendor/nova-media-library/'.$currentLocale.'.json'));
     }
 
     /**

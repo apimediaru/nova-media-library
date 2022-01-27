@@ -21,15 +21,15 @@
     </div>
     <div class="media-uploads-info">
       <div class="media-uploads-info-item media-uploads-info-item--queued">
-        <span class="media-uploads-info-item-name">{{ 'In queue' }}:</span>
+        <span class="media-uploads-info-item-name">{{ __('In queue:') }}</span>
         <div class="media-uploads-info-item-value">{{ queuedCount }}</div>
       </div>
       <div class="media-uploads-info-item media-uploads-info-item--succeeded">
-        <span class="media-uploads-info-item-name">{{ 'Succeeded' }}:</span>
+        <span class="media-uploads-info-item-name">{{ __('Succeeded:') }}</span>
         <div class="media-uploads-info-item-value">{{ succeededCount }}</div>
       </div>
       <div class="media-uploads-info-item media-uploads-info-item--failed">
-        <span class="media-uploads-info-item-name">{{ 'Failed' }}:</span>
+        <span class="media-uploads-info-item-name">{{ __('Failed:') }}</span>
         <div class="media-uploads-info-item-value">{{ failedCount }}</div>
       </div>
     </div>

@@ -47,7 +47,7 @@
         <template v-else-if="request.succeeded()">{{ __('Uploaded') }}</template>
         <template v-else-if="request.processed()">{{ __('Processing...') }}</template>
         <template v-else-if="request.aborted()">{{ __('Aborted') }}</template>
-        <template v-else>{{ __('Failed') }}</template>
+        <template v-else>{{ __('Failure') }}</template>
       </div>
     </div>
     <div

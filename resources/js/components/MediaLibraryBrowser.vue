@@ -201,7 +201,7 @@
                 </svg>
               </p>
               <p class="media-library-dropzone-notice">
-                {{ __('Drop your images here') }}
+                {{ __('Drop your files here') }}
               </p>
               <input
                 type="file"

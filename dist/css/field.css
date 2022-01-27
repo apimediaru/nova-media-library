@@ -300,6 +300,7 @@ body.media-library-locked {
   text-transform: uppercase;
   color: #5c6470;
   min-width: 130px;
+  line-height: 1;
 }
 .media-library-browser-actions-action-for-selected-value {
   color: #333333;
