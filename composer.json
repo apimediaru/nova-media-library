@@ -8,7 +8,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.1.0",
-        "spatie/laravel-medialibrary": "*"
+        "spatie/laravel-medialibrary": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -25,6 +25,12 @@
     "config": {
         "sort-packages": true
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/apimediaru/laravel-medialibrary"
+        }
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
