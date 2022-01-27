@@ -24,7 +24,7 @@ class MediaController extends Controller
      */
     public function index(MediaGetRequest $request): \Illuminate\Http\JsonResponse
     {
-        //
+        // Todo: implement if needed
     }
 
     /**
@@ -43,7 +43,7 @@ class MediaController extends Controller
      * @return void
      */
     public function remove(Request $request) {
-
+        // Todo: implement if needed
     }
 
     public function clear(MediaRequest $request) {
@@ -65,7 +65,7 @@ class MediaController extends Controller
      * @return void
      */
     public function activate(Request $request) {
-
+        // Todo: implement if needed
     }
 
     /**
@@ -74,7 +74,7 @@ class MediaController extends Controller
      * @return void
      */
     public function deactivate(Request $request) {
-
+        // Todo: implement if needed
     }
 
     public function multiple(MediaMultipleRequest $request): \Illuminate\Http\JsonResponse
