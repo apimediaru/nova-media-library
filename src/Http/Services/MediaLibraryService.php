@@ -280,7 +280,7 @@ class MediaLibraryService
     {
         $fileHash = md5_file($file);
         $exists = static::getMedia($object, $collection)->contains(function ($mediaObject) use ($fileHash) {
-            return md5_file($mediaObject->originalUrl) === $fileHash;
+            return $mediaObject->hash === $fileHash;
         });
         if ($exists) {
             throw MediaCannotBeUploaded::alreadyExists($collection, $file->getClientOriginalName());
