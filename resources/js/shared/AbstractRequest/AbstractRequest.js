@@ -347,7 +347,9 @@ export default class AbstractRequest {
    * @return {FormData}
    */
   serializeFormData() {
-    return serialize(this.sendData);
+    return serialize(this.sendData, {
+      booleansAsIntegers: true,
+    });
   }
 
   /**
