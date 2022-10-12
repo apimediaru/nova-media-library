@@ -105,6 +105,9 @@ class MediaLibraryService
             return $this->failure($exception->getMessage(), [], [], 400);
         }
 
+        // Activate new uploads
+        $media->active = true;
+
         return $this->success('OK', [
             'file' => new MediaResource($media),
         ]);
