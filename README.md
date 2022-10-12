@@ -15,6 +15,7 @@ use APIMedia\NovaMediaLibrary\Http\Services\MediaLibraryService;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\Image\Manipulations;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 
 class ExampleModel extends Model implements HasMedia
