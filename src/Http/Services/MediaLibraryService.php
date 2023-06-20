@@ -266,7 +266,7 @@ class MediaLibraryService
      */
     public static function addLibraryConversions($object)
     {
-        $object->addMediaConversion('thumbnail')->fit(Manipulations::FIT_MAX, 150, 150);
+        $object->addMediaConversion('thumbnail')->fit(Manipulations::FIT_MAX, 150, 150)->nonQueued();
     }
 
     /**
