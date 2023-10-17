@@ -8,6 +8,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.1.0",
+        "mavinoo/laravel-batch": "^2.3",
         "spatie/laravel-medialibrary": "^9.11.1"
     },
     "autoload": {

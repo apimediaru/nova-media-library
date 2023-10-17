@@ -16,6 +16,8 @@ use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\Conversions\FileManipulator;
 use APIMedia\NovaMediaLibrary\Http\Exceptions\MediaCannotBeUpdated;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
+use Illuminate\Database\DatabaseManager;
+use Mavinoo\Batch\Batch;
 
 
 class MediaLibraryService
@@ -216,26 +218,15 @@ class MediaLibraryService
 
         $collection = $request->get('collection');
         $sources = $request->get('sources');
+        $batch = Batch(app()->make(DatabaseManager::class));
 
-        // Reference: https://github.com/laravel/ideas/issues/575
-        $table = Media::getModel()->getTable();
-        $cases = [];
-        $ids = [];
-        $params = [];
-
-        foreach ($sources as $id => $value) {
-            $id = (int) $id;
-            $cases[] = "WHEN {$id} then ?";
-            $params[] = $value;
-            $ids[] = $id;
+        $value = [];
+        foreach ($sources as $id => $order) {
+            $value[] = ['id' => $id, 'order_column' => $order];
         }
 
-        $ids = implode(',', $ids);
-        $cases = implode(' ', $cases);
-        $params[] = Carbon::now();
-        $params[] = $collection;
-
-        \DB::update("UPDATE `{$table}` SET `order_column` = CASE `id` {$cases} END, `updated_at` = ? WHERE `id` in ({$ids}) AND `collection_name` = ?", $params);
+        // Cross database batch update
+        $batch->update(Media::getModel(), $value, 'id');
 
         $media = static::getMedia($object, $collection);
 
