@@ -17,6 +17,12 @@ trait HandlesConversionsTrait
             $thumbnail = $media->originalUrl;
         }
 
+        foreach ($media->getGeneratedConversions() as $conversionName => $isGenerated) {
+            if ($isGenerated) {
+                $conversions[$conversionName] = $media->getFullUrl($conversionName);
+            }
+        }
+
         $conversions['thumbnail'] = $thumbnail;
 
         return $conversions;

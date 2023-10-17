@@ -42,13 +42,23 @@ class FieldServiceProvider extends ServiceProvider
 
         // Publish config
         $this->publishes([
-            __DIR__.'/../config/nova-media-library.php' => config_path('nova-media-library.php')
+            __DIR__.'/../config/nova-media-library.php' => config_path('nova-media-library.php'),
+            __DIR__.'/../config/media-library.php' => config_path('media-library.php'),
         ], 'nova-media-library-config');
 
         // Publish translations
         $this->publishes([
             __DIR__.'/../resources/lang' => lang_path('vendor/nova-media-library')
         ], 'nova-media-library-lang');
+
+        // Publish migrations
+      if (! class_exists('CreateMediaTable')) {
+        $this->publishes([
+          __DIR__.'/../database/migrations/create_media_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_media_table.php'),
+        ], 'nova-media-migrations');
+      }
+
+
     }
 
     /**
@@ -61,6 +71,9 @@ class FieldServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/nova-media-library.php', 'nova-media-library'
         );
+      $this->mergeConfigFrom(
+        __DIR__.'/../config/media-library.php', 'media-library'
+      );
     }
 
     /**

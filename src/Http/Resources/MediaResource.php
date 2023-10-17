@@ -18,8 +18,11 @@ class MediaResource extends JsonResource
      */
     public function toArray($request)
     {
+        $conversions = $this->getConversionUrls($this->resource);
+
         return array_merge($this->resource->toArray(), [
-            '__conversions__' => $this->getConversionUrls($this->resource),
+            '__conversions__' => $conversions,
+            'conversions' => $conversions,
         ]);
     }
 }

@@ -6,7 +6,15 @@ This [Laravel Nova](https://nova.laravel.com/) package provides frontend UI and 
 ```
 composer require apimediaru/nova-media-library
 ```
-
+Publish assets
+```
+php artisan vendor:publish
+```
+Then choose Provider: APIMedia\NovaMediaLibrary\FieldServiceProvider.
+Run migrations
+```
+php artisan migrate
+```
 ## Usage
 
 Step 1: register model collections and conversions
@@ -15,6 +23,7 @@ use APIMedia\NovaMediaLibrary\Http\Services\MediaLibraryService;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\Image\Manipulations;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 
 class ExampleModel extends Model implements HasMedia

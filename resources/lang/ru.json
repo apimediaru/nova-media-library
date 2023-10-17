@@ -36,5 +36,7 @@
   "Failed:": "Неудачных:",
   "File named \":filename\" already exists in \":collection\" collection": "Файл с названием \":filename\" уже существует в \":collection\" коллекции",
   "Collection named \":collection\" reached it's limit of media files (Maximum possible: :count)": "Превышен лимит файлов в коллекции \":collection\" (максимальное количество: \":count\")",
-  "Help": "Справка"
+  "Help": "Справка",
+  "Action \":action\" was completed successfully": "\":action\" выполнено успешно",
+  "Action \":action\" was completed with errors": "\":action\" выполнено с ошибками"
 }
